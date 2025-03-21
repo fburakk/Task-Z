@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "dgSpecHash": "QcHchODwoS8=",
+  "success": true,
+  "projectFilePath": "/Users/burak/Desktop/Backend/CleanArchitecture/CleanArchitecture.Application/CleanArchitecture.Core.csproj",
+  "expectedPackageFiles": [
+    "/Users/burak/.nuget/packages/automapper/14.0.0/automapper.14.0.0.nupkg.sha512",
+    "/Users/burak/.nuget/packages/fluentvalidation/9.1.2/fluentvalidation.9.1.2.nupkg.sha512",
+    "/Users/burak/.nuget/packages/fluentvalidation.dependencyinjectionextensions/9.1.2/fluentvalidation.dependencyinjectionextensions.9.1.2.nupkg.sha512",
+    "/Users/burak/.nuget/packages/mediatr/12.4.1/mediatr.12.4.1.nupkg.sha512",
+    "/Users/burak/.nuget/packages/mediatr.contracts/2.0.1/mediatr.contracts.2.0.1.nupkg.sha512",
+    "/Users/burak/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/8.0.0/microsoft.extensions.dependencyinjection.abstractions.8.0.0.nupkg.sha512",
+    "/Users/burak/.nuget/packages/microsoft.extensions.options/8.0.0/microsoft.extensions.options.8.0.0.nupkg.sha512",
+    "/Users/burak/.nuget/packages/microsoft.extensions.primitives/8.0.0/microsoft.extensions.primitives.8.0.0.nupkg.sha512",
+    "/Users/burak/.nuget/packages/newtonsoft.json/13.0.3/newtonsoft.json.13.0.3.nupkg.sha512",
+    "/Users/burak/.nuget/packages/system.text.json/8.0.5/system.text.json.8.0.5.nupkg.sha512"
+  ],
+  "logs": []
+}
