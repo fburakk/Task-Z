@@ -1,3 +1,7 @@
+# Xcode user data
+*.xcuserstate
+*.xcuserdatad/
+
 # Node modules
 node_modules/
 
