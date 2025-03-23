@@ -17,7 +17,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         window = UIWindow(frame: UIScreen.main.bounds)
 
-        let initialViewController = ViewController()
+        let initialViewController = BoardsViewController()
         window?.rootViewController = initialViewController
         window?.makeKeyAndVisible()
 
