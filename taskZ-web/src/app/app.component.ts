@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { NavbarComponent } from './navbar/navbar.component';  // Import NavbarComponent
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.scss'
+  styleUrls: ['./app.component.scss'],
+  standalone: true,  // Optional: If using Angular standalone components (Angular 14+)
+  imports: [NavbarComponent],  // Make sure NavbarComponent is included in imports
 })
 export class AppComponent {
   title = 'taskz-web';
