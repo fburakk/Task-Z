@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "QcHchODwoS8=",
+  "dgSpecHash": "tqRk9EWrV7U=",
   "success": true,
-  "projectFilePath": "/Users/burak/Desktop/Backend/CleanArchitecture/CleanArchitecture.Application/CleanArchitecture.Core.csproj",
+  "projectFilePath": "/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Application/CleanArchitecture.Core.csproj",
   "expectedPackageFiles": [
     "/Users/burak/.nuget/packages/automapper/14.0.0/automapper.14.0.0.nupkg.sha512",
     "/Users/burak/.nuget/packages/fluentvalidation/9.1.2/fluentvalidation.9.1.2.nupkg.sha512",

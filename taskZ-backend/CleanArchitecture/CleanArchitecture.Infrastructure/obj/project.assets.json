@@ -6430,11 +6430,11 @@
   "project": {
     "version": "1.1.0",
     "restore": {
-      "projectUniqueName": "/Users/burak/Desktop/Backend/CleanArchitecture/CleanArchitecture.Infrastructure/CleanArchitecture.Infrastructure.csproj",
+      "projectUniqueName": "/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Infrastructure/CleanArchitecture.Infrastructure.csproj",
       "projectName": "CleanArchitecture.Infrastructure",
-      "projectPath": "/Users/burak/Desktop/Backend/CleanArchitecture/CleanArchitecture.Infrastructure/CleanArchitecture.Infrastructure.csproj",
+      "projectPath": "/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Infrastructure/CleanArchitecture.Infrastructure.csproj",
       "packagesPath": "/Users/burak/.nuget/packages/",
-      "outputPath": "/Users/burak/Desktop/Backend/CleanArchitecture/CleanArchitecture.Infrastructure/obj/",
+      "outputPath": "/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Infrastructure/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/Users/burak/.nuget/NuGet/NuGet.Config"
@@ -6449,8 +6449,8 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "/Users/burak/Desktop/Backend/CleanArchitecture/CleanArchitecture.Application/CleanArchitecture.Core.csproj": {
-              "projectPath": "/Users/burak/Desktop/Backend/CleanArchitecture/CleanArchitecture.Application/CleanArchitecture.Core.csproj"
+            "/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Application/CleanArchitecture.Core.csproj": {
+              "projectPath": "/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Application/CleanArchitecture.Core.csproj"
             }
           }
         }
