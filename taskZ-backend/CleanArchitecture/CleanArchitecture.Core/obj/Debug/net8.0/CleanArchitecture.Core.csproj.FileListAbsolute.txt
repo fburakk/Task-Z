@@ -1,0 +1,12 @@
+/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Core/bin/Debug/net8.0/CleanArchitecture.Core.deps.json
+/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Core/bin/Debug/net8.0/CleanArchitecture.Core.dll
+/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Core/bin/Debug/net8.0/CleanArchitecture.Core.pdb
+/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Core/obj/Debug/net8.0/CleanArchitecture.Core.GeneratedMSBuildEditorConfig.editorconfig
+/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Core/obj/Debug/net8.0/CleanArchitecture.Core.AssemblyInfoInputs.cache
+/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Core/obj/Debug/net8.0/CleanArchitecture.Core.AssemblyInfo.cs
+/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Core/obj/Debug/net8.0/CleanArchitecture.Core.csproj.CoreCompileInputs.cache
+/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Core/obj/Debug/net8.0/CleanArchitecture.Core.sourcelink.json
+/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Core/obj/Debug/net8.0/CleanArchitecture.Core.dll
+/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Core/obj/Debug/net8.0/refint/CleanArchitecture.Core.dll
+/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Core/obj/Debug/net8.0/CleanArchitecture.Core.pdb
+/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Core/obj/Debug/net8.0/ref/CleanArchitecture.Core.dll

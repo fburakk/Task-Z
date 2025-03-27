@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "ZxEU+jPFr9g=",
+  "dgSpecHash": "I64xTpRXq54=",
   "success": true,
-  "projectFilePath": "/Users/burak/Desktop/Backend/CleanArchitecture/CleanArchitecture.Infrastructure/CleanArchitecture.Infrastructure.csproj",
+  "projectFilePath": "/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Infrastructure/CleanArchitecture.Infrastructure.csproj",
   "expectedPackageFiles": [
     "/Users/burak/.nuget/packages/automapper/14.0.0/automapper.14.0.0.nupkg.sha512",
     "/Users/burak/.nuget/packages/azure.core/1.38.0/azure.core.1.38.0.nupkg.sha512",
