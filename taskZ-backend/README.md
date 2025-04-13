@@ -30,7 +30,9 @@ Request body:
 {
     "username": "string",
     "email": "string",
-    "password": "string"
+    "password": "string",
+    "firstName": "string",
+    "lastName": "string"
 }
 ```
 
@@ -45,6 +47,28 @@ Request body:
     "password": "string"
 }
 ```
+
+### Refresh Token
+```http
+POST /api/Account/refresh-token
+```
+Request body:
+```json
+{
+    "token": "your-expired-jwt-token",
+    "refreshToken": "your-refresh-token"
+}
+```
+
+When you login or register, you'll receive both a JWT token and a refresh token. The JWT token expires after the configured duration (default: 60 minutes), while the refresh token is valid for 7 days.
+
+To refresh your token:
+1. Store both tokens securely on the client side
+2. Use the JWT token for API requests in the Authorization header
+3. When you get a 401 Unauthorized response, call the refresh-token endpoint
+4. Use the new JWT token and refresh token pair received in the response
+
+Note: Refresh tokens are single-use. Each refresh operation invalidates the old refresh token and generates a new one.
 
 ## Account Management
 

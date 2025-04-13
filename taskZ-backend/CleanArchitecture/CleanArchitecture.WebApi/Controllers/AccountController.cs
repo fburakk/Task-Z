@@ -76,6 +76,12 @@ namespace CleanArchitecture.WebApi.Controllers
             return Ok(await _accountService.LogoutAsync(_authenticatedUserService.UserId));
         }
 
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken(TokenRequest request)
+        {
+            return Ok(await _accountService.RefreshTokenAsync(request, GenerateIPAddress()));
+        }
+
         private string GenerateIPAddress()
         {
             if (Request.Headers.ContainsKey("X-Forwarded-For"))
