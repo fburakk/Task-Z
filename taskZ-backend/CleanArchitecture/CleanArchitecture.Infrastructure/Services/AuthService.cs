@@ -41,7 +41,9 @@ namespace CleanArchitecture.Infrastructure.Services
             var user = new ApplicationUser
             {
                 UserName = request.Username,
-                Email = request.Email
+                Email = request.Email,
+                FirstName = request.FirstName,
+                LastName = request.LastName
             };
 
             var result = await _userManager.CreateAsync(user, request.Password);
