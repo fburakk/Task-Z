@@ -231,5 +231,117 @@ namespace CleanArchitecture.Infrastructure.Services
                 throw new ApiException($"Error occured while reseting the password.");
             }
         }
+
+        public async Task<ProfileResponse> GetProfileAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                throw new ApiException($"User not found.");
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+            return new ProfileResponse
+            {
+                Id = user.Id,
+                UserName = user.UserName,
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                IsVerified = user.EmailConfirmed,
+                Roles = roles.ToList()
+            };
+        }
+
+        public async Task<string> DeleteAccountAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                throw new ApiException($"User not found.");
+            }
+
+            var result = await _userManager.DeleteAsync(user);
+            if (result.Succeeded)
+            {
+                return "Account deleted successfully.";
+            }
+            else
+            {
+                throw new ApiException($"Error occurred while deleting the account: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+            }
+        }
+
+        public async Task<string> LogoutAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                throw new ApiException($"User not found.");
+            }
+
+            await _signInManager.SignOutAsync();
+            return "Logged out successfully.";
+        }
+
+        public async Task<AuthenticationResponse> RefreshTokenAsync(TokenRequest request, string ipAddress)
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = false, // Don't validate lifetime here as token might be expired
+                ClockSkew = TimeSpan.Zero,
+                ValidIssuer = _jwtSettings.Issuer,
+                ValidAudience = _jwtSettings.Audience,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.Key))
+            };
+
+            // Get the user ID from the expired token
+            var principal = handler.ValidateToken(request.Token, tokenValidationParameters, out var securityToken);
+            var userId = principal.FindFirst("uid")?.Value;
+            
+            if (userId == null)
+                throw new ApiException("Invalid token");
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                throw new ApiException("User not found");
+
+            // Validate refresh token
+            if (!user.RefreshTokens.Any(rt => rt.Token == request.RefreshToken && rt.IsActive))
+                throw new ApiException("Invalid refresh token");
+
+            var refreshToken = user.RefreshTokens.Single(rt => rt.Token == request.RefreshToken);
+
+            // Generate new tokens
+            var newJwtToken = await GenerateJWToken(user);
+            var newRefreshToken = GenerateRefreshToken(ipAddress);
+
+            // Replace old refresh token
+            refreshToken.Revoked = DateTime.UtcNow;
+            refreshToken.RevokedByIp = ipAddress;
+            refreshToken.ReplacedByToken = newRefreshToken.Token;
+            user.RefreshTokens.Add(newRefreshToken);
+
+            await _userManager.UpdateAsync(user);
+
+            var response = new AuthenticationResponse
+            {
+                Id = user.Id,
+                Email = user.Email,
+                UserName = user.UserName,
+                JWToken = new JwtSecurityTokenHandler().WriteToken(newJwtToken),
+                RefreshToken = newRefreshToken.Token,
+                IsVerified = user.EmailConfirmed
+            };
+
+            var rolesList = await _userManager.GetRolesAsync(user);
+            response.Roles = rolesList.ToList();
+
+            return response;
+        }
     }
 }

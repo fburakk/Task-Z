@@ -7,6 +7,19 @@
 - Docker Compose
 
 ### Running the Application
+
+#### First Time Setup or Rebuild
+1. Build the Docker images:
+```bash
+docker compose build --no-cache
+```
+
+2. Start the application:
+```bash
+docker compose up -d
+```
+
+#### Regular Usage
 1. Start the application:
 ```bash
 docker compose up -d
@@ -28,11 +41,22 @@ POST /api/Auth/register
 Request body:
 ```json
 {
-    "firstName": "string",
-    "lastName": "string",
+    "username": "string",
     "email": "string",
-    "userName": "string",
-    "password": "string"
+    "password": "string",
+    "firstName": "string",
+    "lastName": "string"
+}
+```
+Response:
+```json
+{
+    "success": true,
+    "message": "Registration successful",
+    "token": "jwt_token_here",
+    "refreshToken": "refresh_token_here",
+    "username": "string",
+    "email": "string"
 }
 ```
 
@@ -47,6 +71,80 @@ Request body:
     "password": "string"
 }
 ```
+Response:
+```json
+{
+    "success": true,
+    "message": "Login successful",
+    "token": "jwt_token_here",
+    "refreshToken": "refresh_token_here",
+    "username": "string",
+    "email": "string"
+}
+```
+
+### Refresh Token
+```http
+POST /api/Account/refresh-token
+```
+Request body:
+```json
+{
+    "token": "your-expired-jwt-token",
+    "refreshToken": "your-refresh-token"
+}
+```
+Response:
+```json
+{
+    "id": "user_id",
+    "userName": "string",
+    "email": "string",
+    "roles": ["string"],
+    "isVerified": boolean,
+    "jwToken": "new_jwt_token_here",
+    "refreshToken": "new_refresh_token_here"
+}
+```
+
+### Token Usage
+When you login or register, you'll receive both a JWT token and a refresh token:
+1. The JWT token expires after the configured duration (default: 60 minutes)
+2. The refresh token is valid for 7 days
+3. Use the JWT token in the Authorization header for API requests:
+   ```
+   Authorization: Bearer your_jwt_token
+   ```
+4. When the JWT token expires (401 Unauthorized response), use the refresh token endpoint to get a new token pair
+5. Each refresh operation invalidates the old refresh token and generates a new one
+6. Store both tokens securely on the client side
+
+## Account Management
+
+### Get Profile
+```http
+GET /api/Account/profile
+```
+Requires authentication. Returns user profile information including:
+- User ID
+- Username
+- Email
+- First Name
+- Last Name
+- Verification Status
+- Roles
+
+### Delete Account
+```http
+DELETE /api/Account/delete-account
+```
+Requires authentication. Permanently deletes the user's account.
+
+### Logout
+```http
+POST /api/Account/logout
+```
+Requires authentication. Logs out the current user and invalidates their session.
 
 ## Products API (v1)
 Requires authentication. Include the JWT token in the Authorization header:
@@ -124,69 +222,6 @@ Request body:
 {
     "name": "string",
     "description": "string"
-}
-```
-
-## Account Management
-
-### Authenticate
-```http
-POST /api/Account/authenticate
-```
-Request body:
-```json
-{
-    "email": "string",
-    "password": "string"
-}
-```
-
-### Register Account
-```http
-POST /api/Account/register
-```
-Request body:
-```json
-{
-    "firstName": "string",
-    "lastName": "string",
-    "email": "string",
-    "userName": "string",
-    "password": "string",
-    "confirmPassword": "string"
-}
-```
-
-### Confirm Email
-```http
-GET /api/Account/confirm-email
-```
-Query parameters:
-- userId
-- code
-
-### Forgot Password
-```http
-POST /api/Account/forgot-password
-```
-Request body:
-```json
-{
-    "email": "string"
-}
-```
-
-### Reset Password
-```http
-POST /api/Account/reset-password
-```
-Request body:
-```json
-{
-    "email": "string",
-    "token": "string",
-    "password": "string",
-    "confirmPassword": "string"
 }
 ```
 

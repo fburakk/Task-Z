@@ -1,4 +1,5 @@
 using CleanArchitecture.Core.DTOs.Auth;
+using CleanArchitecture.Core.DTOs.Account;
 using CleanArchitecture.Core.Interfaces;
 using CleanArchitecture.Infrastructure.Models;
 using Microsoft.AspNetCore.Identity;
@@ -10,6 +11,7 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -26,7 +28,7 @@ namespace CleanArchitecture.Infrastructure.Services
             _configuration = configuration;
         }
 
-        public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
+        public async Task<AuthResponse> RegisterAsync(Core.DTOs.Auth.RegisterRequest request)
         {
             var existingUser = await _userManager.FindByEmailAsync(request.Email);
             if (existingUser != null)
@@ -41,7 +43,9 @@ namespace CleanArchitecture.Infrastructure.Services
             var user = new ApplicationUser
             {
                 UserName = request.Username,
-                Email = request.Email
+                Email = request.Email,
+                FirstName = request.FirstName,
+                LastName = request.LastName
             };
 
             var result = await _userManager.CreateAsync(user, request.Password);
@@ -55,12 +59,29 @@ namespace CleanArchitecture.Infrastructure.Services
             }
 
             var token = await GenerateJwtToken(user);
+            var refreshToken = GenerateRefreshToken();
+
+            if (user.RefreshTokens == null)
+            {
+                user.RefreshTokens = new List<RefreshToken>();
+            }
+
+            user.RefreshTokens.Add(new RefreshToken
+            {
+                Token = refreshToken,
+                Expires = DateTime.UtcNow.AddDays(7),
+                Created = DateTime.UtcNow,
+                CreatedByIp = "0.0.0.0"
+            });
+
+            await _userManager.UpdateAsync(user);
 
             return new AuthResponse
             {
                 Success = true,
                 Message = "Registration successful",
                 Token = token,
+                RefreshToken = refreshToken,
                 Username = user.UserName,
                 Email = user.Email
             };
@@ -89,12 +110,29 @@ namespace CleanArchitecture.Infrastructure.Services
             }
 
             var token = await GenerateJwtToken(user);
+            var refreshToken = GenerateRefreshToken();
+
+            if (user.RefreshTokens == null)
+            {
+                user.RefreshTokens = new List<RefreshToken>();
+            }
+            
+            user.RefreshTokens.Add(new RefreshToken
+            {
+                Token = refreshToken,
+                Expires = DateTime.UtcNow.AddDays(7),
+                Created = DateTime.UtcNow,
+                CreatedByIp = "0.0.0.0"
+            });
+
+            await _userManager.UpdateAsync(user);
 
             return new AuthResponse
             {
                 Success = true,
                 Message = "Login successful",
                 Token = token,
+                RefreshToken = refreshToken,
                 Username = user.UserName,
                 Email = user.Email
             };
@@ -124,6 +162,14 @@ namespace CleanArchitecture.Infrastructure.Services
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private string GenerateRefreshToken()
+        {
+            var randomNumber = new byte[32];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomNumber);
+            return Convert.ToBase64String(randomNumber);
         }
     }
 } 
