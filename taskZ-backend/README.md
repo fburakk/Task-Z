@@ -7,6 +7,19 @@
 - Docker Compose
 
 ### Running the Application
+
+#### First Time Setup or Rebuild
+1. Build the Docker images:
+```bash
+docker compose build --no-cache
+```
+
+2. Start the application:
+```bash
+docker compose up -d
+```
+
+#### Regular Usage
 1. Start the application:
 ```bash
 docker compose up -d
@@ -35,6 +48,17 @@ Request body:
     "lastName": "string"
 }
 ```
+Response:
+```json
+{
+    "success": true,
+    "message": "Registration successful",
+    "token": "jwt_token_here",
+    "refreshToken": "refresh_token_here",
+    "username": "string",
+    "email": "string"
+}
+```
 
 ### Login
 ```http
@@ -45,6 +69,17 @@ Request body:
 {
     "email": "string",
     "password": "string"
+}
+```
+Response:
+```json
+{
+    "success": true,
+    "message": "Login successful",
+    "token": "jwt_token_here",
+    "refreshToken": "refresh_token_here",
+    "username": "string",
+    "email": "string"
 }
 ```
 
@@ -59,16 +94,30 @@ Request body:
     "refreshToken": "your-refresh-token"
 }
 ```
+Response:
+```json
+{
+    "id": "user_id",
+    "userName": "string",
+    "email": "string",
+    "roles": ["string"],
+    "isVerified": boolean,
+    "jwToken": "new_jwt_token_here",
+    "refreshToken": "new_refresh_token_here"
+}
+```
 
-When you login or register, you'll receive both a JWT token and a refresh token. The JWT token expires after the configured duration (default: 60 minutes), while the refresh token is valid for 7 days.
-
-To refresh your token:
-1. Store both tokens securely on the client side
-2. Use the JWT token for API requests in the Authorization header
-3. When you get a 401 Unauthorized response, call the refresh-token endpoint
-4. Use the new JWT token and refresh token pair received in the response
-
-Note: Refresh tokens are single-use. Each refresh operation invalidates the old refresh token and generates a new one.
+### Token Usage
+When you login or register, you'll receive both a JWT token and a refresh token:
+1. The JWT token expires after the configured duration (default: 60 minutes)
+2. The refresh token is valid for 7 days
+3. Use the JWT token in the Authorization header for API requests:
+   ```
+   Authorization: Bearer your_jwt_token
+   ```
+4. When the JWT token expires (401 Unauthorized response), use the refresh token endpoint to get a new token pair
+5. Each refresh operation invalidates the old refresh token and generates a new one
+6. Store both tokens securely on the client side
 
 ## Account Management
 
