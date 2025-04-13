@@ -45,7 +45,6 @@
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/Microsoft.EntityFrameworkCore.Design.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/Microsoft.EntityFrameworkCore.InMemory.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/Microsoft.EntityFrameworkCore.Relational.dll
-/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/Microsoft.EntityFrameworkCore.SqlServer.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/Microsoft.Extensions.Caching.Memory.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/Microsoft.Extensions.DependencyInjection.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll
@@ -105,7 +104,6 @@
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/Swashbuckle.AspNetCore.Swagger.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/Swashbuckle.AspNetCore.SwaggerGen.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/Swashbuckle.AspNetCore.SwaggerUI.dll
-/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/System.ClientModel.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/System.CodeDom.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/System.Composition.AttributedModel.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/System.Composition.Convention.dll
@@ -114,7 +112,6 @@
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/System.Composition.TypedParts.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/System.Configuration.ConfigurationManager.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/System.Drawing.Common.dll
-/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/System.Formats.Asn1.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/System.IdentityModel.Tokens.Jwt.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/System.Memory.Data.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/System.Reflection.MetadataLoadContext.dll
@@ -261,15 +258,12 @@
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/tr/Microsoft.CodeAnalysis.Workspaces.resources.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/zh-Hans/Microsoft.CodeAnalysis.Workspaces.resources.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/zh-Hant/Microsoft.CodeAnalysis.Workspaces.resources.dll
-/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/runtimes/unix/lib/net6.0/Microsoft.Data.SqlClient.dll
-/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/runtimes/win/lib/net6.0/Microsoft.Data.SqlClient.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/runtimes/win-arm/native/Microsoft.Data.SqlClient.SNI.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/runtimes/win-arm64/native/Microsoft.Data.SqlClient.SNI.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/runtimes/win-x64/native/Microsoft.Data.SqlClient.SNI.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/runtimes/win-x86/native/Microsoft.Data.SqlClient.SNI.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/runtimes/win/lib/net7.0/Microsoft.Win32.SystemEvents.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/runtimes/win/lib/net7.0/System.Drawing.Common.dll
-/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/runtimes/win/lib/net6.0/System.Runtime.Caching.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/runtimes/win/lib/net7.0/System.Security.Cryptography.ProtectedData.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/runtimes/win/lib/net7.0/System.Windows.Extensions.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/CleanArchitecture.Core.dll
@@ -298,3 +292,8 @@
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/obj/Debug/net8.0/CleanArchitecture.WebApi.pdb
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/obj/Debug/net8.0/CleanArchitecture.WebApi.genruntimeconfig.cache
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/obj/Debug/net8.0/ref/CleanArchitecture.WebApi.dll
+/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/Npgsql.dll
+/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/Npgsql.EntityFrameworkCore.PostgreSQL.dll
+/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/runtimes/unix/lib/netcoreapp3.1/Microsoft.Data.SqlClient.dll
+/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/runtimes/win/lib/netcoreapp3.1/Microsoft.Data.SqlClient.dll
+/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.WebApi/bin/Debug/net8.0/runtimes/win/lib/netstandard2.0/System.Runtime.Caching.dll
