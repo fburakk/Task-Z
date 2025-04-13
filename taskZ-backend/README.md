@@ -28,10 +28,8 @@ POST /api/Auth/register
 Request body:
 ```json
 {
-    "firstName": "string",
-    "lastName": "string",
+    "username": "string",
     "email": "string",
-    "userName": "string",
     "password": "string"
 }
 ```
@@ -47,6 +45,33 @@ Request body:
     "password": "string"
 }
 ```
+
+## Account Management
+
+### Get Profile
+```http
+GET /api/Account/profile
+```
+Requires authentication. Returns user profile information including:
+- User ID
+- Username
+- Email
+- First Name
+- Last Name
+- Verification Status
+- Roles
+
+### Delete Account
+```http
+DELETE /api/Account/delete-account
+```
+Requires authentication. Permanently deletes the user's account.
+
+### Logout
+```http
+POST /api/Account/logout
+```
+Requires authentication. Logs out the current user and invalidates their session.
 
 ## Products API (v1)
 Requires authentication. Include the JWT token in the Authorization header:
@@ -124,69 +149,6 @@ Request body:
 {
     "name": "string",
     "description": "string"
-}
-```
-
-## Account Management
-
-### Authenticate
-```http
-POST /api/Account/authenticate
-```
-Request body:
-```json
-{
-    "email": "string",
-    "password": "string"
-}
-```
-
-### Register Account
-```http
-POST /api/Account/register
-```
-Request body:
-```json
-{
-    "firstName": "string",
-    "lastName": "string",
-    "email": "string",
-    "userName": "string",
-    "password": "string",
-    "confirmPassword": "string"
-}
-```
-
-### Confirm Email
-```http
-GET /api/Account/confirm-email
-```
-Query parameters:
-- userId
-- code
-
-### Forgot Password
-```http
-POST /api/Account/forgot-password
-```
-Request body:
-```json
-{
-    "email": "string"
-}
-```
-
-### Reset Password
-```http
-POST /api/Account/reset-password
-```
-Request body:
-```json
-{
-    "email": "string",
-    "token": "string",
-    "password": "string",
-    "confirmPassword": "string"
 }
 ```
 

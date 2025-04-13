@@ -231,5 +231,57 @@ namespace CleanArchitecture.Infrastructure.Services
                 throw new ApiException($"Error occured while reseting the password.");
             }
         }
+
+        public async Task<ProfileResponse> GetProfileAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                throw new ApiException($"User not found.");
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+            return new ProfileResponse
+            {
+                Id = user.Id,
+                UserName = user.UserName,
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                IsVerified = user.EmailConfirmed,
+                Roles = roles.ToList()
+            };
+        }
+
+        public async Task<string> DeleteAccountAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                throw new ApiException($"User not found.");
+            }
+
+            var result = await _userManager.DeleteAsync(user);
+            if (result.Succeeded)
+            {
+                return "Account deleted successfully.";
+            }
+            else
+            {
+                throw new ApiException($"Error occurred while deleting the account: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+            }
+        }
+
+        public async Task<string> LogoutAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                throw new ApiException($"User not found.");
+            }
+
+            await _signInManager.SignOutAsync();
+            return "Logged out successfully.";
+        }
     }
 }

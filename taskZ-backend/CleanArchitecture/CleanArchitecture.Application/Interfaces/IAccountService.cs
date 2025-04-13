@@ -12,5 +12,8 @@ namespace CleanArchitecture.Core.Interfaces
         Task<string> ConfirmEmailAsync(string userId, string code);
         Task<EmailRequest> ForgotPassword(ForgotPasswordRequest model, string origin);
         Task<string> ResetPassword(ResetPasswordRequest model);
+        Task<ProfileResponse> GetProfileAsync(string userId);
+        Task<string> DeleteAccountAsync(string userId);
+        Task<string> LogoutAsync(string userId);
     }
 }
