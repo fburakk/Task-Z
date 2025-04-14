@@ -13,12 +13,12 @@
   
       <div class="form-outline mb-3">
         <label class="form-label" for="loginName">Email or Username</label>
-        <input type="email" id="loginName" class="form-control form-control-lg" placeholder="example@email.com" />
+        <input name="username" [(ngModel)]="userLogin.Username" type="email" id="loginName" class="form-control form-control-lg" placeholder="example@email.com" />
       </div>
   
       <div class="form-outline mb-3">
         <label class="form-label" for="loginPassword">Password</label>
-        <input type="password" id="loginPassword" class="form-control form-control-lg" placeholder="••••••••" />
+        <input name="password" [(ngModel)]="userLogin.Password" type="password" id="loginPassword" class="form-control form-control-lg" placeholder="••••••••" />
       </div>
   
       <div class="d-flex justify-content-between align-items-center mb-4">
@@ -29,7 +29,7 @@
         <a class="text-decoration-none" routerLink="/forgot-password">Forgot password?</a>
       </div>
   
-      <button type="submit" class="btn btn-primary w-100 btn-lg mb-3" >Sign in</button>
+      <button (click)="onLogin()" type="button" class="btn btn-primary w-100 btn-lg mb-3" >Sign in</button>
   
       <div class="text-center">
         <p class="mb-0">Don't have an account? <a class="fw-semibold" routerLink="/register">Register</a></p>
