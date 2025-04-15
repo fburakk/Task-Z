@@ -13,7 +13,7 @@ import { FormsModule } from '@angular/forms';
 export class LoginComponent {
 
   userLogin: any = {
-    Username:'',
+    Email:'',
     Password:''
   }
 
@@ -24,7 +24,7 @@ export class LoginComponent {
     if(isLocalData != null){
       const users = JSON.parse(isLocalData);
 
-      const isUserFound = users.find((m:any)=> m.Username == this.userLogin.Username && m.Password == this.userLogin.Password);
+      const isUserFound = users.find((m:any)=> m.Email == this.userLogin.Email && m.Password == this.userLogin.Password);
       if(isUserFound != undefined){ 
 
         localStorage.setItem('loggedInUser', JSON.stringify(isUserFound));
