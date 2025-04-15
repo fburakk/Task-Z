@@ -1,0 +1,59 @@
+<form class="p-4 shadow rounded-4 mx-auto" style="max-width: 400px;">
+    
+  
+    <div class="text-center mb-3">
+        <h4 class="text-center mb-4 fw-bold" style="font-size: 2.5rem;">Create Account</h4>
+    </div>
+  
+    
+  
+    <!-- Name -->
+    <div class="form-outline mb-3">
+      <label class="form-label" for="registerName">Name</label>
+      <input name="name" [(ngModel)]="userRegisterObj.Name" type="text" id="registerName" class="form-control form-control-lg" placeholder="Name" />
+    </div>
+
+    <div class="form-outline mb-3">
+        <label class="form-label" for="registerName">Surname</label>
+        <input name="surname" [(ngModel)]="userRegisterObj.Surname" type="text" id="registerSurname" class="form-control form-control-lg" placeholder="Surname" />
+      </div>
+  
+    <!-- Username -->
+    <div class="form-outline mb-3">
+      <label class="form-label" for="registerUsername">Username</label>
+      <input name="username" [(ngModel)]="userRegisterObj.Username"type="text" id="registerUsername" class="form-control form-control-lg" placeholder="Username" />
+    </div>
+  
+    <!-- Email -->
+    <div class="form-outline mb-3">
+      <label class="form-label" for="registerEmail">Email</label>
+      <input name="email" [(ngModel)]="userRegisterObj.Email" type="email" id="registerEmail" class="form-control form-control-lg" placeholder="example@email.com" />
+    </div>
+  
+    <!-- Password -->
+    <div class="form-outline mb-3">
+      <label class="form-label" for="registerPassword">Password</label>
+      <input name="password" [(ngModel)]="userRegisterObj.Password" type="password" id="registerPassword" class="form-control form-control-lg" placeholder="••••••••" />
+    </div>
+  
+    <!-- Repeat Password -->
+    <div class="form-outline mb-3">
+      <label class="form-label" for="registerRepeatPassword">Repeat Password</label>
+      <input type="password" id="registerRepeatPassword" class="form-control form-control-lg" placeholder="••••••••" />
+    </div>
+  
+    <!-- Checkbox -->
+    <div class="form-check d-flex justify-content-center mb-4">
+      <input class="form-check-input me-2" type="checkbox" id="registerCheck" checked />
+      <label class="form-check-label" for="registerCheck">I agree to the terms</label>
+    </div>
+  
+    <!-- Submit -->
+    <button (click)="onRegister()" type="button" class="btn btn-success w-100 btn-lg mb-3">Sign up</button>
+  
+    <!-- Already have account -->
+    <div class="text-center">
+      <p class="mb-0">Already have an account? <a class="fw-semibold" routerLink="/login">Login here</a></p>
+    </div>
+  </form>
+  
