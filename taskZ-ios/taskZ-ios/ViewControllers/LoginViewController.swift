@@ -160,42 +160,10 @@ class LoginViewController: UIViewController {
     }
     
     @objc private func loginButtonTapped() {
-        guard let email = emailTextField.text, !email.isEmpty,
-              let password = passwordTextField.text, !password.isEmpty else {
-            showAlert(title: "Error", message: "Please fill in all fields")
-            return
-        }
-        
-        // Show loading indicator
-        loadingIndicator.startAnimating()
-        loginButton.isEnabled = false
-        
-        Task {
-            do {
-                let response = try await AuthService.shared.login(email: email, password: password)
-                // Save user session
-                UserDefaultsManager.shared.saveUserSession(authResponse: response)
-                
-                // Navigate to boards screen
-                await MainActor.run {
-                    loadingIndicator.stopAnimating()
-                    loginButton.isEnabled = true
-                    
-                    let boardsVC = BoardsViewController()
-                    let navController = UINavigationController(rootViewController: boardsVC)
-                    navController.modalPresentationStyle = .fullScreen
-                    present(navController, animated: true)
-                }
-            } catch {
-                await MainActor.run {
-                    loadingIndicator.stopAnimating()
-                    loginButton.isEnabled = true
-                    
-                    let apiError = APIError.handleError(error)
-                    showAlert(title: "Login Failed", message: apiError.localizedDescription)
-                }
-            }
-        }
+        // Navigate to main tab bar
+        let mainTabBar = MainTabBarController()
+        mainTabBar.modalPresentationStyle = .fullScreen
+        present(mainTabBar, animated: true)
     }
     
     @objc private func registerButtonTapped() {
