@@ -1,0 +1,205 @@
+.navbar {
+  padding: 0.4rem 0.8rem;
+  background-color: #1a1a1a !important;
+}
+
+.nav-btn {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.875rem;
+  border-radius: 3px;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+  }
+}
+
+.create-btn {
+  background: #0052cc;
+  color: white;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.875rem;
+  border-radius: 3px;
+
+  &:hover {
+    background: #0065ff;
+    color: white;
+  }
+}
+
+.search-wrapper {
+  .search-input {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    padding: 0.4rem 2rem 0.4rem 0.8rem;
+    font-size: 0.875rem;
+    width: 180px;
+    border-radius: 3px;
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    &:focus {
+      background: white;
+      color: #172b4d;
+      width: 280px;
+      box-shadow: none;
+      
+      &::placeholder {
+        color: #172b4d;
+      }
+
+      & + .search-icon {
+        color: #172b4d;
+        background: white;
+      }
+    }
+  }
+
+  .search-icon {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background: transparent;
+    border: none;
+    color: white;
+    padding: 0 8px;
+    display: flex;
+    align-items: center;
+    z-index: 4;
+  }
+}
+
+// Variables
+$primary-blue: #0052cc;
+$dark-blue: #0747a6;
+$white: #ffffff;
+$light-gray: #f4f5f7;
+$border-color: #dfe1e6;
+$text-primary: #172b4d;
+$hover-bg: #f4f5f7;
+
+.profile-section {
+  position: relative;
+  
+  .profile-trigger {
+    cursor: pointer;
+    
+    .profile-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: $primary-blue;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      i {
+        color: $white;
+        font-size: 14px;
+      }
+    }
+  }
+
+  .profile-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 304px;
+    background: $white;
+    border-radius: 3px;
+    box-shadow: 0 8px 16px -4px rgba(9, 30, 66, 0.25), 0 0 0 1px rgba(9, 30, 66, 0.08);
+    margin-top: 8px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: all 0.2s ease;
+    z-index: 100;
+
+    &.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .dropdown-section {
+      padding: 12px;
+      border-bottom: 1px solid $border-color;
+
+      &.header {
+        .user-info {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+
+          .profile-avatar {
+            width: 36px;
+            height: 36px;
+            background-color: $primary-blue;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            i {
+              color: $white;
+              font-size: 16px;
+            }
+          }
+
+          .user-details {
+            .user-name {
+              color: $text-primary;
+              font-weight: 600;
+              font-size: 14px;
+              line-height: 20px;
+            }
+
+            .user-email {
+              color: $text-primary;
+              font-size: 12px;
+              line-height: 16px;
+            }
+          }
+        }
+      }
+
+      .menu-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 12px;
+        color: $text-primary;
+        text-decoration: none;
+        font-size: 14px;
+        line-height: 20px;
+        border-radius: 3px;
+        transition: background-color 0.2s ease;
+
+        &:hover {
+          background-color: $hover-bg;
+        }
+
+        i {
+          color: $text-primary;
+          font-size: 12px;
+        }
+      }
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+  }
+}
+
+// Add click outside detection
+:host {
+  display: contents;
+}
