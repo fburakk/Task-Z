@@ -19,10 +19,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         // Check if user is logged in
         if UserDefaultsManager.shared.isLoggedIn {
-            // User is logged in, show boards screen
-            let boardsVC = BoardsViewController()
-            let navController = UINavigationController(rootViewController: boardsVC)
-            window?.rootViewController = navController
+            // User is logged in, show main tab bar
+            let mainTabBar = MainTabBarController()
+            window?.rootViewController = mainTabBar
         } else {
             // User is not logged in, show login screen
             let loginVC = LoginViewController()
