@@ -1,6 +1,8 @@
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../core/services/auth.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 
 @Component({
@@ -12,27 +14,45 @@ import { FormsModule } from '@angular/forms';
 export class RegisterComponent {
 
   userRegisterObj: any = {
-    Name:'',
-    Surname:'',
-    Username:'',
-    Email:'',
-    Password:''
-  }
+    username: '',
+    email: '',
+    password: '',
+    firstName: '',
+    lastName: ''
+  };
+  
+  
+  router = inject(Router);
+  authService = inject(AuthService);
 
   onRegister(){
-    const isLocalData = localStorage.getItem("angular19Local");
-    if(isLocalData != null){
-      const localArray = JSON.parse(isLocalData);
-      localArray.push(this.userRegisterObj);
-      localStorage.setItem("angular19Local",JSON.stringify(localArray));
-    }
-    else {
-      const localArray = [];
-      localArray.push(this.userRegisterObj);
-      localStorage.setItem("angular19Local",JSON.stringify(localArray));
+    this.authService.register(this.userRegisterObj).subscribe({
+      next: (response) => {
+        // Kayıt başarılı olduysa
+        alert("Kayıt başarılı!");
+        // this.router.navigateByUrl('/login');
+      },
+      error: (error: HttpErrorResponse) => {
+        // Hata durumunda daha fazla bilgi alıyoruz
+        console.error("Kayıt işlemi başarısız:", error);
+  
+        // HTTP hata kodu
+        console.error("Hata Kodu:", error.status);
+  
+        // HTTP hata mesajı
+        console.error("Hata Mesajı:", error.message);
+  
+        // Geri dönen hata verisi (Backend'in döndürdüğü detaylı mesajlar)
+        if (error.error) {
+          console.error("Backend Hata Mesajı:", error.error);
+        }
+  
+        alert("Kayıt sırasında bir hata oluştu!");
+      },
+      complete: () => {
+        console.log("Register işlemi tamamlandı.");
+      }
+    });
 
-    }
-    alert("Registerated!");
-  }
-
+}
 }
