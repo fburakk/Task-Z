@@ -1,25 +1,123 @@
 <nav *ngIf="showNavbar" class="navbar navbar-expand-sm navbar-dark bg-dark">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="javascript:void(0)">TaskZ</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mynavbar">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="mynavbar">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item" >
-          <a class="nav-link active" href="javascript:void(0)">Link</a>
-        </li>
-        <li class="nav-item" >
-          <a class="nav-link" href="javascript:void(0)">Link</a>
-        </li>
-        <li class="nav-item" >
-          <a class="nav-link" href="javascript:void(0)">Link</a>
-        </li>
-      </ul>
-      <form class="d-flex">
-        <input class="form-control me-2" type="text" placeholder="Search">
-        <button class="btn btn-primary" type="button">Search</button>
-      </form>
+  <div class="container-fluid px-2">
+    <!-- Left Side -->
+    <div class="d-flex align-items-center">
+      <a class="navbar-brand me-3" href="javascript:void(0)">TaskZ</a>
+      <div class="nav-links d-flex">
+        <div class="dropdown me-2">
+          <button class="btn nav-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            Çalışma Alanları
+          </button>
+        </div>
+        <div class="dropdown me-2">
+          <button class="btn nav-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            Geçmiş
+          </button>
+        </div>
+        <div class="dropdown me-2">
+          <button class="btn nav-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            Yıldızlı
+          </button>
+        </div>
+        <div class="dropdown me-2">
+          <button class="btn nav-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            Şablonlar
+          </button>
+        </div>
+        <button class="btn create-btn">
+          Oluştur
+        </button>
+      </div>
+    </div>
+
+    <!-- Right Side -->
+    <div class="d-flex align-items-center">
+      <!-- Search -->
+      <div class="search-wrapper me-2">
+        <div class="input-group">
+          <input type="text" class="form-control search-input" placeholder="Arama">
+          <span class="input-group-text search-icon">
+            <i class="fas fa-search"></i>
+          </span>
+        </div>
+      </div>
+
+      <!-- Profile -->
+      <div class="profile-section" (clickOutside)="closeProfileMenu()">
+        <div class="profile-trigger" (click)="toggleProfileMenu()">
+          <div class="profile-avatar">
+            <i class="fas fa-user"></i>
+          </div>
+        </div>
+        
+        <div class="profile-dropdown" [class.show]="showProfileMenu">
+          <!-- Header Section -->
+          <div class="dropdown-section header">
+            <div class="user-info">
+              <div class="profile-avatar">
+                <i class="fas fa-user"></i>
+              </div>
+              <div class="user-details">
+                <div class="user-name">Umut Ölmez</div>
+                <div class="user-email">umutolmezz&#64;gmail.com</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Account Actions -->
+          <div class="dropdown-section">
+            <a href="javascript:void(0)" class="menu-item">
+              <span>Change Account</span>
+            </a>
+            <a href="javascript:void(0)" class="menu-item">
+              <span>Manage Account</span>
+              <i class="fas fa-external-link-alt"></i>
+            </a>
+          </div>
+
+          <!-- Menu Options -->
+          <div class="dropdown-section">
+            <a href="javascript:void(0)" class="menu-item">
+              <span>Profile & Visibility</span>
+            </a>
+            <a href="javascript:void(0)" class="menu-item">
+              <span>Activity</span>
+            </a>
+            <a href="javascript:void(0)" class="menu-item">
+              <span>Boards</span>
+            </a>
+            <a href="javascript:void(0)" class="menu-item">
+              <span>Settings</span>
+            </a>
+            <a href="javascript:void(0)" class="menu-item">
+              <span>Theme</span>
+              <i class="fas fa-chevron-right"></i>
+            </a>
+          </div>
+
+          <!-- Bottom Items -->
+          <div class="dropdown-section">
+            <a href="javascript:void(0)" class="menu-item">
+              <span>Create Workspace</span>
+            </a>
+          </div>
+
+          <div class="dropdown-section">
+            <a href="javascript:void(0)" class="menu-item">
+              <span>Help</span>
+            </a>
+            <a href="javascript:void(0)" class="menu-item">
+              <span>Shortcuts</span>
+            </a>
+          </div>
+
+          <div class="dropdown-section">
+            <a href="javascript:void(0)" class="menu-item" (click)="logout()">
+              <span>Log Out</span>
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </nav>
