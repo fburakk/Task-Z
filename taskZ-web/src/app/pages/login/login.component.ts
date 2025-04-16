@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../core/services/auth.service';
 
 
 
@@ -18,23 +19,30 @@ export class LoginComponent {
   }
 
   router = inject(Router);
+  authService = inject(AuthService);
 
   onLogin(){
-    const isLocalData = localStorage.getItem("angular19Local");
-    if(isLocalData != null){
-      const users = JSON.parse(isLocalData);
-
-      const isUserFound = users.find((m:any)=> m.Email == this.userLogin.Email && m.Password == this.userLogin.Password);
-      if(isUserFound != undefined){ 
-
-        localStorage.setItem('loggedInUser', JSON.stringify(isUserFound));
-        this.router.navigateByUrl('home')
-
+    this.authService.login(this.userLogin).subscribe({
+      next: (response) => {
+        // Backend'den gelen cevap, JWT token ve refresh token'ı localStorage'a kaydediyoruz
+        if (response?.token && response?.refreshToken) {
+          this.authService.storeTokens(response.token, response.refreshToken);
+          
+          // Başarılı giriş sonrası kullanıcıyı ana sayfaya yönlendiriyoruz
+          this.router.navigateByUrl('home');
+        } else {
+          alert("Error! Could not get token.");
+        }
+      },
+      error: (error) => {
+        // Hata durumu
+        console.error("Log in failed:", error);
+        alert("Giriş başarısız! Lütfen bilgilerinizi kontrol edin.");
+      },
+      complete: () => {
+        console.log("Login attempt complete");
       }
-      else {
-        alert("ERROR!")
-      }
-    }
+    });
   }
 
 }
