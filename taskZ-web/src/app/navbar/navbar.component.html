@@ -43,10 +43,10 @@
       </div>
 
       <!-- Profile -->
-      <div class="profile-section" (clickOutside)="closeProfileMenu()">
+      <div class="profile-section" *ngIf="isLoggedIn" (clickOutside)="closeProfileMenu()">
         <div class="profile-trigger" (click)="toggleProfileMenu()">
           <div class="profile-avatar">
-            <i class="fas fa-user"></i>
+            <span>{{getInitials()}}</span>
           </div>
         </div>
         
@@ -55,62 +55,26 @@
           <div class="dropdown-section header">
             <div class="user-info">
               <div class="profile-avatar">
-                <i class="fas fa-user"></i>
+                <span>{{getInitials()}}</span>
               </div>
               <div class="user-details">
-                <div class="user-name">Umut Ölmez</div>
-                <div class="user-email">umutolmezz&#64;gmail.com</div>
+                <div class="user-name">{{userProfile?.firstName}} {{userProfile?.lastName}}</div>
+                <div class="user-email">{{userProfile?.email}}</div>
               </div>
             </div>
           </div>
 
           <!-- Account Actions -->
           <div class="dropdown-section">
-            <a href="javascript:void(0)" class="menu-item">
-              <span>Change Account</span>
-            </a>
-            <a href="javascript:void(0)" class="menu-item">
-              <span>Manage Account</span>
-              <i class="fas fa-external-link-alt"></i>
-            </a>
-          </div>
-
-          <!-- Menu Options -->
-          <div class="dropdown-section">
-            <a href="javascript:void(0)" class="menu-item">
+            <a routerLink="/profile" class="menu-item">
               <span>Profile & Visibility</span>
             </a>
-            <a href="javascript:void(0)" class="menu-item">
-              <span>Activity</span>
-            </a>
-            <a href="javascript:void(0)" class="menu-item">
-              <span>Boards</span>
-            </a>
-            <a href="javascript:void(0)" class="menu-item">
+            <a routerLink="/settings" class="menu-item">
               <span>Settings</span>
-            </a>
-            <a href="javascript:void(0)" class="menu-item">
-              <span>Theme</span>
-              <i class="fas fa-chevron-right"></i>
             </a>
           </div>
 
           <!-- Bottom Items -->
-          <div class="dropdown-section">
-            <a href="javascript:void(0)" class="menu-item">
-              <span>Create Workspace</span>
-            </a>
-          </div>
-
-          <div class="dropdown-section">
-            <a href="javascript:void(0)" class="menu-item">
-              <span>Help</span>
-            </a>
-            <a href="javascript:void(0)" class="menu-item">
-              <span>Shortcuts</span>
-            </a>
-          </div>
-
           <div class="dropdown-section">
             <a href="javascript:void(0)" class="menu-item" (click)="logout()">
               <span>Log Out</span>

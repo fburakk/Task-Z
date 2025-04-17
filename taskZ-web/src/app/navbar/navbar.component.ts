@@ -2,7 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, HostListener, inject, OnInit } from '@angular/core';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { ProfileService, UserProfile } from '../services/profile.service';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { HttpClient, HttpClientModule, HttpErrorResponse } from '@angular/common/http';
+import { AuthService } from '../core/services/auth.service';
 
 @Component({
   selector: 'app-navbar',
@@ -15,21 +16,38 @@ export class NavbarComponent implements OnInit {
   showNavbar = true;
   showProfileMenu = false;
   userProfile: UserProfile | null = null;
+  isLoggedIn = false;
   
   private router = inject(Router);
   private profileService = inject(ProfileService);
+  private authService = inject(AuthService);
 
   constructor() {
     this.router.events.subscribe((event: any) => {
       if (event instanceof NavigationEnd) {
         const hiddenRoutes = ['/login', '/register'];
         this.showNavbar = !hiddenRoutes.includes(event.urlAfterRedirects);
+        
+        // Check login status and load profile when route changes
+        if (!hiddenRoutes.includes(event.urlAfterRedirects)) {
+          this.checkLoginAndLoadProfile();
+        }
       }
     });
   }
 
   ngOnInit() {
-    this.loadProfile();
+    this.checkLoginAndLoadProfile();
+  }
+
+  private checkLoginAndLoadProfile() {
+    this.isLoggedIn = this.authService.isLoggedIn();
+    this.showProfileMenu = false;
+    if (this.isLoggedIn) {
+      this.loadProfile();
+    } else {
+      this.userProfile = null;
+    }
   }
 
   loadProfile() {
@@ -37,13 +55,21 @@ export class NavbarComponent implements OnInit {
       next: (profile) => {
         this.userProfile = profile;
       },
-      error: (error) => {
+      error: (error: HttpErrorResponse) => {
         console.error('Error loading profile:', error);
+        if (error.status === 401) {
+          // If unauthorized, clear profile and redirect to login
+          this.userProfile = null;
+          this.isLoggedIn = false;
+          this.authService.clearTokens();
+          this.router.navigate(['/login']);
+        }
       }
     });
   }
 
   toggleProfileMenu() {
+    if (!this.isLoggedIn) return;
     this.showProfileMenu = !this.showProfileMenu;
   }
 
@@ -67,12 +93,21 @@ export class NavbarComponent implements OnInit {
   }
 
   logout() {
-    this.profileService.logout().subscribe({
+    this.showProfileMenu = false;
+    this.authService.logout().subscribe({
       next: () => {
+        this.authService.clearTokens();
+        this.isLoggedIn = false;
+        this.userProfile = null;
         this.router.navigate(['/login']);
       },
       error: (error) => {
         console.error('Error during logout:', error);
+        // Even if the server logout fails, clear local state
+        this.authService.clearTokens();
+        this.isLoggedIn = false;
+        this.userProfile = null;
+        this.router.navigate(['/login']);
       }
     });
   }
