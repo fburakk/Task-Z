@@ -1,6 +1,7 @@
-import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Injectable, PLATFORM_ID, Inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { isPlatformBrowser } from '@angular/common';
 
 export interface UserProfile {
   id: string;
@@ -17,20 +18,35 @@ export interface UserProfile {
 })
 export class ProfileService {
   private apiUrl = 'http://localhost:5001/api';
-  private httpOptions = {
-    withCredentials: true,
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  };
+  private isBrowser: boolean;
 
-  constructor(private http: HttpClient) { }
+  constructor(
+    private http: HttpClient,
+    @Inject(PLATFORM_ID) platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
+  }
+
+  isLoggedIn(): boolean {
+    if (!this.isBrowser) return false;
+    return !!localStorage.getItem('jwtToken');
+  }
+
+  private getAuthHeaders(): { headers: HttpHeaders } {
+    const token = localStorage.getItem('jwtToken');
+    return {
+      headers: new HttpHeaders({
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      })
+    };
+  }
 
   getProfile(): Observable<UserProfile> {
-    return this.http.get<UserProfile>(`${this.apiUrl}/Account/profile`, this.httpOptions);
+    return this.http.get<UserProfile>(`${this.apiUrl}/Account/profile`, this.getAuthHeaders());
   }
 
   logout(): Observable<any> {
-    return this.http.post(`${this.apiUrl}/Account/logout`, {}, this.httpOptions);
+    return this.http.post(`${this.apiUrl}/Account/logout`, {}, this.getAuthHeaders());
   }
 } 
