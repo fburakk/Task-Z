@@ -38,7 +38,7 @@ class BoardsViewController: UIViewController {
     }
     
     private func setupTabBar() {
-        tabBarItem = UITabBarItem(title: "Panolar", image: UIImage(systemName: "square.grid.2x2"), tag: 0)
+        tabBarItem = UITabBarItem(title: "Panolar", image: UIImage(systemName: "mail.stack"), tag: 0)
     }
     
     private func updateWelcomeMessage() {

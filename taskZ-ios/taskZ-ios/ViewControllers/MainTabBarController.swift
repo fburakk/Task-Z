@@ -11,13 +11,13 @@ class MainTabBarController: UITabBarController {
     private func setupTabs() {
         let boardsVC = BoardsViewController()
         let boardsNav = UINavigationController(rootViewController: boardsVC)
-        boardsNav.tabBarItem = UITabBarItem(title: "Panolar", image: UIImage(systemName: "square.grid.2x2"), tag: 0)
+        boardsNav.tabBarItem = UITabBarItem(title: "Panolar", image: UIImage(systemName: "mail.stack"), tag: 0)
         
         let cardsVC = UIViewController() // Placeholder for cards screen
         cardsVC.view.backgroundColor = .black
         cardsVC.title = "Kartlarım"
         let cardsNav = UINavigationController(rootViewController: cardsVC)
-        cardsNav.tabBarItem = UITabBarItem(title: "Kartlarım", image: UIImage(systemName: "list.bullet"), tag: 1)
+        cardsNav.tabBarItem = UITabBarItem(title: "Kartlarım", image: UIImage(systemName: "list.bullet.below.rectangle"), tag: 1)
         
         let profileVC = ProfileViewController()
         let profileNav = UINavigationController(rootViewController: profileVC)
@@ -28,7 +28,7 @@ class MainTabBarController: UITabBarController {
     }
     
     private func setupAppearance() {
-        tabBar.tintColor = .systemBlue
+        tabBar.tintColor = .cyan
         tabBar.unselectedItemTintColor = .gray
         tabBar.backgroundColor = UIColor(white: 0.1, alpha: 1.0)
         
