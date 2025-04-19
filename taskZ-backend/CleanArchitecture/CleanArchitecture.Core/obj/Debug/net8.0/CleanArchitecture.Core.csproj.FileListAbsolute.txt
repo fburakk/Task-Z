@@ -10,3 +10,4 @@
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Core/obj/Debug/net8.0/refint/CleanArchitecture.Core.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Core/obj/Debug/net8.0/CleanArchitecture.Core.pdb
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Core/obj/Debug/net8.0/ref/CleanArchitecture.Core.dll
+/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Core/obj/Debug/net8.0/CleanArchitecture.Core.csproj.AssemblyReference.cache
