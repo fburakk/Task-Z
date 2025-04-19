@@ -46,7 +46,7 @@ namespace CleanArchitecture.WebApi.Controllers
             var status = new BoardStatus
             {
                 BoardId = request.BoardId,
-                Name = request.Name,
+                Title = request.Name,
                 Position = maxPosition + 1
             };
 
