@@ -22,8 +22,46 @@ namespace CleanArchitecture.Infrastructure.Contexts
             _authenticatedUser = authenticatedUser;
         }
 
-        public DbSet<Category> Categories { get; set; }
-        public DbSet<Product> Products { get; set; }
+        public DbSet<Workspace> Workspaces { get; set; }
+        public DbSet<Board> Boards { get; set; }
+        public DbSet<BoardUser> BoardUsers { get; set; }
+        public DbSet<BoardStatus> BoardStatuses { get; set; }
+        public DbSet<BoardTask> BoardTasks { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Board>()
+                .HasOne(b => b.Workspace)
+                .WithMany()
+                .HasForeignKey(b => b.WorkspaceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<BoardUser>()
+                .HasOne(bu => bu.Board)
+                .WithMany(b => b.Users)
+                .HasForeignKey(bu => bu.BoardId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<BoardStatus>()
+                .HasOne(bs => bs.Board)
+                .WithMany(b => b.Statuses)
+                .HasForeignKey(bs => bs.BoardId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<BoardTask>()
+                .HasOne(t => t.Board)
+                .WithMany()
+                .HasForeignKey(t => t.BoardId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<BoardTask>()
+                .HasOne(t => t.Status)
+                .WithMany()
+                .HasForeignKey(t => t.StatusId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
         {
@@ -42,53 +80,6 @@ namespace CleanArchitecture.Infrastructure.Contexts
                 }
             }
             return base.SaveChangesAsync(cancellationToken);
-        }
-        protected override void OnModelCreating(ModelBuilder builder)
-        {
-
-            builder.Entity<ApplicationUser>(entity =>
-            {
-                entity.ToTable(name: "User");
-            });
-
-            builder.Entity<IdentityRole>(entity =>
-            {
-                entity.ToTable(name: "Role");
-            });
-            builder.Entity<IdentityUserRole<string>>(entity =>
-            {
-                entity.ToTable("UserRoles");
-            });
-
-            builder.Entity<IdentityUserClaim<string>>(entity =>
-            {
-                entity.ToTable("UserClaims");
-            });
-
-            builder.Entity<IdentityUserLogin<string>>(entity =>
-            {
-                entity.ToTable("UserLogins");
-            });
-
-            builder.Entity<IdentityRoleClaim<string>>(entity =>
-            {
-                entity.ToTable("RoleClaims");
-
-            });
-
-            builder.Entity<IdentityUserToken<string>>(entity =>
-            {
-                entity.ToTable("UserTokens");
-            });
-
-            //All Decimals will have 18,6 Range
-            foreach (var property in builder.Model.GetEntityTypes()
-            .SelectMany(t => t.GetProperties())
-            .Where(p => p.ClrType == typeof(decimal) || p.ClrType == typeof(decimal?)))
-            {
-                property.SetColumnType("decimal(18,6)");
-            }
-            base.OnModelCreating(builder);
         }
     }
 }
