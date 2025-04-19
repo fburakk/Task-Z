@@ -284,4 +284,141 @@ Returns version and last update information of the API.
 Access the Swagger UI documentation at:
 ```
 http://localhost:5001/swagger
-``` 
+```
+
+## Task Management API
+
+All task endpoints require authentication. Include the JWT token in the Authorization header:
+```
+Authorization: Bearer {your_token}
+```
+
+### Get Board Tasks
+```http
+GET /api/Task/board/{boardId}
+```
+Returns all tasks in a board, ordered by status and position.
+
+Response:
+```json
+[
+    {
+        "id": number,
+        "boardId": number,
+        "statusId": number,
+        "title": "string",
+        "description": "string",
+        "priority": "string", // "low", "medium", "high"
+        "dueDate": "string", // ISO 8601 date format
+        "assigneeId": "string",
+        "position": number,
+        "createdBy": "string",
+        "created": "string",
+        "lastModifiedBy": "string",
+        "lastModified": "string"
+    }
+]
+```
+
+### Get Status Tasks
+```http
+GET /api/Task/status/{statusId}
+```
+Returns all tasks in a specific status column, ordered by position.
+
+Response: Same as Get Board Tasks
+
+### Create Task
+```http
+POST /api/Task/board/{boardId}
+```
+Creates a new task in the specified board. The task will be placed in the first status column.
+
+Request body:
+```json
+{
+    "title": "string",
+    "description": "string",
+    "priority": "string", // "low", "medium", "high"
+    "dueDate": "string", // ISO 8601 date format
+    "assigneeId": "string" // optional
+}
+```
+
+Response: Single task object (same structure as in Get Board Tasks)
+
+### Update Task
+```http
+PUT /api/Task/{id}
+```
+Updates an existing task. Can be used to update task details, change status, or reorder within a status column.
+
+Request body:
+```json
+{
+    "title": "string",
+    "description": "string",
+    "priority": "string", // "low", "medium", "high"
+    "dueDate": "string", // ISO 8601 date format
+    "assigneeId": "string", // optional
+    "statusId": number,
+    "position": number
+}
+```
+
+Response: Updated task object (same structure as in Get Board Tasks)
+
+### Delete Task
+```http
+DELETE /api/Task/{id}
+```
+Deletes the specified task.
+
+Response: 204 No Content
+
+## Board Status API
+
+### Create Status
+```http
+POST /api/BoardStatus
+```
+Creates a new status column in a board.
+
+Request body:
+```json
+{
+    "boardId": number,
+    "name": "string"
+}
+```
+
+Response:
+```json
+{
+    "id": number,
+    "boardId": number,
+    "name": "string",
+    "position": number
+}
+```
+
+## Task Features
+
+### Position Management
+- When creating a task, it's automatically placed at the end of the first status column
+- When updating a task's status, it's placed at the end of the new status column
+- When updating a task's position within the same status:
+  - Other tasks' positions are automatically adjusted
+  - Tasks between the old and new positions are shifted accordingly
+  - Position values are kept sequential without gaps
+
+### Authorization
+- All endpoints verify that the user has access to the board
+- Board access is determined by workspace ownership
+- Users can only access tasks in boards they have access to
+
+### Validation
+- Status ID must belong to the same board when moving tasks
+- Position values are automatically bounded to valid ranges
+- Required fields are enforced (title, priority)
+- Priority must be one of: "low", "medium", "high" 
