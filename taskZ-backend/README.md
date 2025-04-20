@@ -32,9 +32,16 @@ docker compose down
 
 The API will be available at `http://localhost:5001`
 
-## Authentication
+## API Documentation
 
-### Register
+All authenticated endpoints require the JWT token in the Authorization header:
+```
+Authorization: Bearer {your_token}
+```
+
+### Authentication
+
+#### Register
 ```http
 POST /api/Auth/register
 ```
@@ -60,7 +67,7 @@ Response:
 }
 ```
 
-### Login
+#### Login
 ```http
 POST /api/Auth/login
 ```
@@ -83,15 +90,125 @@ Response:
 }
 ```
 
-### Refresh Token
+### Account Management
+
+#### Get Profile
+```http
+GET /api/Account/profile
+```
+Response:
+```json
+{
+    "id": "string",
+    "userName": "string",
+    "email": "string",
+    "firstName": "string",
+    "lastName": "string",
+    "isVerified": true,
+    "roles": ["string"]
+}
+```
+
+#### Authenticate
+```http
+POST /api/Account/authenticate
+```
+Request body:
+```json
+{
+    "email": "string",
+    "password": "string"
+}
+```
+Response: Same as login response
+
+#### Confirm Email
+```http
+GET /api/Account/confirm-email
+```
+Query parameters:
+- userId (string)
+- code (string)
+
+Response:
+```json
+{
+    "success": true,
+    "message": "Account confirmed successfully"
+}
+```
+
+#### Forgot Password
+```http
+POST /api/Account/forgot-password
+```
+Request body:
+```json
+{
+    "email": "string"
+}
+```
+Response:
+```json
+{
+    "success": true,
+    "message": "Password reset instructions sent to email"
+}
+```
+
+#### Reset Password
+```http
+POST /api/Account/reset-password
+```
+Request body:
+```json
+{
+    "email": "string",
+    "token": "string",
+    "password": "string"
+}
+```
+Response:
+```json
+{
+    "success": true,
+    "message": "Password reset successful"
+}
+```
+
+#### Delete Account
+```http
+DELETE /api/Account/delete-account
+```
+Response:
+```json
+{
+    "success": true,
+    "message": "Account deleted successfully"
+}
+```
+
+#### Logout
+```http
+POST /api/Account/logout
+```
+Response:
+```json
+{
+    "success": true,
+    "message": "Logged out successfully"
+}
+```
+
+#### Refresh Token
 ```http
 POST /api/Account/refresh-token
 ```
 Request body:
 ```json
 {
-    "token": "your-expired-jwt-token",
-    "refreshToken": "your-refresh-token"
+    "token": "expired-jwt-token",
+    "refreshToken": "refresh-token"
 }
 ```
 Response:
@@ -101,131 +218,322 @@ Response:
     "userName": "string",
     "email": "string",
     "roles": ["string"],
-    "isVerified": boolean,
-    "jwToken": "new_jwt_token_here",
-    "refreshToken": "new_refresh_token_here"
+    "isVerified": true,
+    "jwToken": "new_jwt_token",
+    "refreshToken": "new_refresh_token"
 }
 ```
 
-### Token Usage
-When you login or register, you'll receive both a JWT token and a refresh token:
-1. The JWT token expires after the configured duration (default: 60 minutes)
-2. The refresh token is valid for 7 days
-3. Use the JWT token in the Authorization header for API requests:
-   ```
-   Authorization: Bearer your_jwt_token
-   ```
-4. When the JWT token expires (401 Unauthorized response), use the refresh token endpoint to get a new token pair
-5. Each refresh operation invalidates the old refresh token and generates a new one
-6. Store both tokens securely on the client side
+### Workspace Management
 
-## Account Management
-
-### Get Profile
+#### Create Workspace
 ```http
-GET /api/Account/profile
-```
-Requires authentication. Returns user profile information including:
-- User ID
-- Username
-- Email
-- First Name
-- Last Name
-- Verification Status
-- Roles
-
-### Delete Account
-```http
-DELETE /api/Account/delete-account
-```
-Requires authentication. Permanently deletes the user's account.
-
-### Logout
-```http
-POST /api/Account/logout
-```
-Requires authentication. Logs out the current user and invalidates their session.
-
-## Products API (v1)
-Requires authentication. Include the JWT token in the Authorization header:
-```
-Authorization: Bearer {your_token}
-```
-
-### Get All Products
-```http
-GET /api/v1/Product
-```
-Query parameters:
-- pageSize (optional)
-- pageNumber (optional)
-
-### Get Product by ID
-```http
-GET /api/v1/Product/{id}
-```
-
-### Create Product
-```http
-POST /api/v1/Product
+POST /api/Workspace
 ```
 Request body:
 ```json
 {
-    "name": "string",
-    "barcode": "string",
-    "description": "string",
-    "rate": number
+    "name": "string"
 }
 ```
-
-### Update Product
-```http
-PUT /api/v1/Product/{id}
-```
-Request body:
+Response:
 ```json
 {
     "id": number,
     "name": "string",
-    "barcode": "string",
-    "description": "string",
-    "rate": number
+    "userId": "string",
+    "createdBy": "string",
+    "created": "datetime"
 }
 ```
 
-### Delete Product
+#### Get All Workspaces
 ```http
-DELETE /api/v1/Product/{id}
+GET /api/Workspace
+```
+Response:
+```json
+[
+    {
+        "id": number,
+        "name": "string",
+        "userId": "string",
+        "createdBy": "string",
+        "created": "datetime"
+    }
+]
 ```
 
-## Categories API (v1)
-Requires Admin role. Include the JWT token in the Authorization header:
+#### Get Workspace
+```http
+GET /api/Workspace/{id}
 ```
-Authorization: Bearer {your_token}
+Response: Same as create workspace response
+
+#### Update Workspace
+```http
+PUT /api/Workspace/{id}
+```
+Request body:
+```json
+{
+    "name": "string"
+}
+```
+Response: 204 No Content
+
+#### Delete Workspace
+```http
+DELETE /api/Workspace/{id}
+```
+Response: 204 No Content
+
+### Board Management
+
+#### Create Board
+```http
+POST /api/Board
+```
+Request body:
+```json
+{
+    "workspaceId": number,
+    "name": "string",
+    "background": "string" // Optional, hex color code
+}
+```
+Response:
+```json
+{
+    "id": number,
+    "workspaceId": number,
+    "name": "string",
+    "background": "string",
+    "isArchived": false
+}
 ```
 
-### Get All Categories
+#### Get Boards
 ```http
-GET /api/v1/Category
+GET /api/Board?workspaceId={workspaceId}
 ```
-Query parameters:
-- pageSize (optional)
-- pageNumber (optional)
+Response:
+```json
+[
+    {
+        "id": number,
+        "workspaceId": number,
+        "name": "string",
+        "background": "string",
+        "isArchived": boolean
+    }
+]
+```
 
-### Create Category
+#### Get Board
 ```http
-POST /api/v1/Category
+GET /api/Board/{id}
+```
+Response: Same as create board response
+
+#### Update Board
+```http
+PUT /api/Board/{id}
 ```
 Request body:
 ```json
 {
     "name": "string",
-    "description": "string"
+    "background": "string"
+}
+```
+Response: 204 No Content
+
+#### Archive Board
+```http
+PUT /api/Board/{id}/archive
+```
+Response: 204 No Content
+
+#### Get Board Statuses
+```http
+GET /api/Board/{id}/statuses
+```
+Response:
+```json
+[
+    {
+        "id": number,
+        "title": "string",
+        "position": number
+    }
+]
+```
+
+#### Get Board Users
+```http
+GET /api/Board/{id}/users
+```
+Response:
+```json
+[
+    {
+        "id": number,
+        "userId": "string",
+        "username": "string",
+        "role": "string"
+    }
+]
+```
+
+#### Add User to Board
+```http
+POST /api/Board/{id}/users
+```
+Request body:
+```json
+{
+    "username": "string",
+    "role": "string"  // must be either "viewer" or "editor"
+}
+```
+Response:
+```json
+{
+    "id": number,
+    "userId": "string",
+    "username": "string",
+    "role": "string"
 }
 ```
 
-## Response Format
+### Board Status Management
+
+#### Create Status
+```http
+POST /api/BoardStatus
+```
+Request body:
+```json
+{
+    "boardId": number,
+    "name": "string"
+}
+```
+Response:
+```json
+{
+    "id": number,
+    "boardId": number,
+    "title": "string",
+    "position": number
+}
+```
+
+### Task Management
+
+#### Get Board Tasks
+```http
+GET /api/Task/board/{boardId}
+```
+Response:
+```json
+[
+    {
+        "id": number,
+        "boardId": number,
+        "statusId": number,
+        "title": "string",
+        "description": "string",
+        "priority": "string",
+        "dueDate": "datetime",
+        "assigneeId": "string",
+        "position": number,
+        "createdBy": "string",
+        "created": "datetime",
+        "lastModifiedBy": "string",
+        "lastModified": "datetime"
+    }
+]
+```
+
+#### Get Status Tasks
+```http
+GET /api/Task/status/{statusId}
+```
+Response: Same as get board tasks response
+
+#### Create Task
+```http
+POST /api/Task/board/{boardId}
+```
+Request body:
+```json
+{
+    "title": "string",
+    "description": "string",
+    "priority": "string",
+    "dueDate": "datetime",
+    "assigneeId": "string"
+}
+```
+Response: Single task object (same as in get board tasks)
+
+#### Update Task
+```http
+PUT /api/Task/{id}
+```
+Request body:
+```json
+{
+    "title": "string",
+    "description": "string",
+    "priority": "string",
+    "dueDate": "datetime",
+    "assigneeId": "string",
+    "statusId": number,
+    "position": number
+}
+```
+Response: Updated task object
+
+#### Delete Task
+```http
+DELETE /api/Task/{id}
+```
+Response: 204 No Content
+
+## Documentation
+
+### Swagger Documentation
+Access the Swagger UI documentation at:
+```
+http://localhost:5001/swagger
+```
+
+### Health Check
+Check API health status at:
+```
+http://localhost:5001/health
+```
+
+## Additional Information
+
+### Meta Information
+
+#### Get API Info
+```http
+GET /info
+```
+Response:
+```json
+{
+    "version": "string",
+    "lastUpdated": "datetime"
+}
+```
+
+## Response Formats
 
 ### Success Response
 ```json
@@ -233,6 +541,15 @@ Request body:
     "success": true,
     "message": "string",
     "data": {}
+}
+```
+
+### Error Response
+```json
+{
+    "success": false,
+    "message": "string",
+    "errors": []
 }
 ```
 
@@ -247,43 +564,6 @@ Request body:
     "succeeded": true,
     "message": "string"
 }
-```
-
-### Error Response
-```json
-{
-    "success": false,
-    "message": "string",
-    "errors": []
-}
-```
-
-## Database Access
-
-### Using pgAdmin
-1. Access pgAdmin at `http://localhost:5050`
-2. Login credentials:
-   - Email: admin@admin.com
-   - Password: admin
-3. Connect to database:
-   - Host: db
-   - Port: 5432
-   - Database: CleanArchitectureDb
-   - Username: sa
-   - Password: YourStrong@Passw0rd
-
-## Additional Information
-
-### Meta Information
-```http
-GET /info
-```
-Returns version and last update information of the API.
-
-### Swagger Documentation
-Access the Swagger UI documentation at:
-```
-http://localhost:5001/swagger
 ```
 
 ## Task Management API

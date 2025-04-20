@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using CleanArchitecture.Core.DTOs.Board;
+using Microsoft.AspNetCore.Identity;
+using CleanArchitecture.Infrastructure.Models;
 
 namespace CleanArchitecture.WebApi.Controllers
 {
@@ -16,10 +19,12 @@ namespace CleanArchitecture.WebApi.Controllers
     public class BoardController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public BoardController(ApplicationDbContext context)
+        public BoardController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         [HttpPost]
@@ -57,6 +62,7 @@ namespace CleanArchitecture.WebApi.Controllers
             
             // Verify workspace access
             var hasAccess = await _context.Workspaces
+                .AsNoTracking()
                 .AnyAsync(w => w.Id == workspaceId && w.UserId == userId);
                 
             if (!hasAccess)
@@ -65,6 +71,7 @@ namespace CleanArchitecture.WebApi.Controllers
             }
 
             var boards = await _context.Boards
+                .AsNoTracking()
                 .Where(b => b.WorkspaceId == workspaceId && !b.IsArchived)
                 .ToListAsync();
 
@@ -77,6 +84,7 @@ namespace CleanArchitecture.WebApi.Controllers
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             
             var board = await _context.Boards
+                .AsNoTracking()  // Explicitly state no tracking for read-only operation
                 .Include(b => b.Workspace)
                 .FirstOrDefaultAsync(b => b.Id == id && b.Workspace.UserId == userId);
 
@@ -95,6 +103,7 @@ namespace CleanArchitecture.WebApi.Controllers
             
             var board = await _context.Boards
                 .Include(b => b.Workspace)
+                .AsTracking()  // Enable tracking for this query
                 .FirstOrDefaultAsync(b => b.Id == id && b.Workspace.UserId == userId);
 
             if (board == null)
@@ -104,6 +113,8 @@ namespace CleanArchitecture.WebApi.Controllers
 
             board.Name = request.Name;
             board.Background = request.Background;
+            
+            _context.Boards.Update(board);  // Explicitly mark the entity as modified
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -147,6 +158,114 @@ namespace CleanArchitecture.WebApi.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        [HttpGet("{id}/statuses")]
+        public async Task<ActionResult<List<BoardStatusResponse>>> GetBoardStatuses(int id)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            // Verify board access
+            var hasAccess = await _context.Boards
+                .Include(b => b.Workspace)
+                .AnyAsync(b => b.Id == id && b.Workspace.UserId == userId);
+                
+            if (!hasAccess)
+            {
+                return NotFound("Board not found or access denied.");
+            }
+
+            var statuses = await _context.BoardStatuses
+                .Where(s => s.BoardId == id)
+                .OrderBy(s => s.Position)
+                .Select(s => new BoardStatusResponse
+                {
+                    Id = s.Id,
+                    Title = s.Title,
+                    Position = s.Position
+                })
+                .ToListAsync();
+
+            return statuses;
+        }
+
+        [HttpGet("{id}/users")]
+        public async Task<ActionResult<List<BoardUserResponse>>> GetBoardUsers(int id)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            // Verify board access
+            var hasAccess = await _context.Boards
+                .Include(b => b.Workspace)
+                .AnyAsync(b => b.Id == id && b.Workspace.UserId == userId);
+                
+            if (!hasAccess)
+            {
+                return NotFound("Board not found or access denied.");
+            }
+
+            var users = await _context.BoardUsers
+                .Where(u => u.BoardId == id)
+                .Select(u => new BoardUserResponse
+                {
+                    Id = u.Id,
+                    UserId = u.UserId,
+                    Username = u.UserId, // TODO: Join with AspNetUsers to get actual username
+                    Role = u.Role
+                })
+                .ToListAsync();
+
+            return users;
+        }
+
+        [HttpPost("{id}/users")]
+        public async Task<ActionResult<BoardUserResponse>> AddBoardUser(int id, AddBoardUserRequest request)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            // Verify board access
+            var board = await _context.Boards
+                .Include(b => b.Workspace)
+                .FirstOrDefaultAsync(b => b.Id == id && b.Workspace.UserId == userId);
+                
+            if (board == null)
+            {
+                return NotFound("Board not found or access denied.");
+            }
+
+            // Find user by username
+            var userToAdd = await _userManager.FindByNameAsync(request.Username);
+            if (userToAdd == null)
+            {
+                return NotFound($"User '{request.Username}' not found.");
+            }
+
+            // Check if user is already added to the board
+            var existingBoardUser = await _context.BoardUsers
+                .FirstOrDefaultAsync(bu => bu.BoardId == id && bu.UserId == userToAdd.Id);
+                
+            if (existingBoardUser != null)
+            {
+                return BadRequest($"User '{request.Username}' is already added to this board.");
+            }
+
+            var boardUser = new BoardUser
+            {
+                BoardId = id,
+                UserId = userToAdd.Id,
+                Role = request.Role
+            };
+
+            _context.BoardUsers.Add(boardUser);
+            await _context.SaveChangesAsync();
+
+            return new BoardUserResponse
+            {
+                Id = boardUser.Id,
+                UserId = boardUser.UserId,
+                Username = request.Username,
+                Role = boardUser.Role
+            };
         }
     }
 
