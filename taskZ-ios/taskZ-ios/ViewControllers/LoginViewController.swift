@@ -169,28 +169,26 @@ class LoginViewController: UIViewController {
         loadingIndicator.startAnimating()
         loginButton.isEnabled = false
         
-        Task {
-            do {
-                let response = try await AuthService.shared.login(email: email, password: password)
-                // Save user session
-                UserDefaultsManager.shared.saveUserSession(authResponse: response)
+        AuthService.shared.login(email: email, password: password) { [weak self] result in
+            guard let self = self else { return }
+            
+            DispatchQueue.main.async {
+                self.loadingIndicator.stopAnimating()
+                self.loginButton.isEnabled = true
                 
-                // Navigate to boards screen
-                await MainActor.run {
-                    loadingIndicator.stopAnimating()
-                    loginButton.isEnabled = true
+                switch result {
+                case .success(let response):
+                    // Save user session
+                    UserDefaultsManager.shared.saveUserSession(authResponse: response)
                     
+                    // Navigate to boards screen
                     let mainTabBar = MainTabBarController()
                     mainTabBar.modalPresentationStyle = .fullScreen
-                    present(mainTabBar, animated: true)
-                }
-            } catch {
-                await MainActor.run {
-                    loadingIndicator.stopAnimating()
-                    loginButton.isEnabled = true
+                    self.present(mainTabBar, animated: true)
                     
+                case .failure(let error):
                     let apiError = APIError.handleError(error)
-                    showAlert(title: "Login Failed", message: apiError.localizedDescription)
+                    self.showAlert(title: "Login Failed", message: apiError.localizedDescription)
                 }
             }
         }

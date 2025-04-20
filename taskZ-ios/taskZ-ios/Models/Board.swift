@@ -1,51 +1,43 @@
 import Foundation
 
 struct Board: Codable {
-    let id: String
+    let id: Int
     var name: String
-    var workspaceId: String
+    var workspaceId: Int
     var background: String
     var isArchived: Bool
-    var createdAt: Date
-    var updatedAt: Date
     
     enum CodingKeys: String, CodingKey {
         case id
         case name
-        case workspaceId = "workspace_id"
+        case workspaceId = "workspaceId"
         case background
-        case isArchived = "is_archived"
-        case createdAt = "created_at"
-        case updatedAt = "updated_at"
+        case isArchived = "isArchived"
     }
 }
 
 struct BoardUser: Codable {
-    let id: String
-    let boardId: String
+    let id: Int
+    let userId: String
     let username: String
     var role: String
     
     enum CodingKeys: String, CodingKey {
         case id
-        case boardId = "board_id"
+        case userId = "userId"
         case username
         case role
     }
 }
 
 struct BoardStatus: Codable {
-    let id: String
-    let boardId: String
-    var title: String
-    var position: Int
-    var color: String
+    let id: Int
+    let title: String
+    let position: Int
     
     enum CodingKeys: String, CodingKey {
         case id
-        case boardId = "board_id"
         case title
         case position
-        case color
     }
 } 

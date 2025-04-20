@@ -7,10 +7,16 @@
 
 import UIKit
 
+protocol BoardDetailViewControllerDelegate: AnyObject {
+    func boardDetailViewController(_ viewController: BoardDetailViewController, didDeleteBoard board: Board)
+    func boardDetailViewController(_ viewController: BoardDetailViewController, didUpdateBoard board: Board)
+}
+
 class BoardDetailViewController: UIViewController {
-    private let board: Board
+    private var board: Board
     private var statuses: [BoardStatus] = []
     private var users: [BoardUser] = []
+    weak var delegate: BoardDetailViewControllerDelegate?
     
     private let loadingIndicator: UIActivityIndicatorView = {
         let indicator = UIActivityIndicatorView(style: .medium)
@@ -61,23 +67,50 @@ class BoardDetailViewController: UIViewController {
     }
     
     private func loadData() {
-        Task {
-            do {
-                loadingIndicator.startAnimating()
-                
-                async let statusesResult = APIService.shared.getBoardStatuses(boardId: board.id)
-                async let usersResult = APIService.shared.getBoardUsers(boardId: board.id)
-                
-                let (statuses, users) = try await (statusesResult, usersResult)
+        loadingIndicator.startAnimating()
+        
+        let group = DispatchGroup()
+        var loadedStatuses: [BoardStatus]?
+        var loadedUsers: [BoardUser]?
+        var errors: [Error] = []
+        
+        // Load statuses
+        group.enter()
+        APIService.shared.getBoardStatuses(boardId: board.id) { [weak self] result in
+            defer { group.leave() }
+            switch result {
+            case .success(let statuses):
+                loadedStatuses = statuses
+            case .failure(let error):
+                errors.append(error)
+            }
+        }
+        
+        // Load users
+        group.enter()
+        APIService.shared.getBoardUsers(boardId: board.id) { [weak self] result in
+            defer { group.leave() }
+            switch result {
+            case .success(let users):
+                loadedUsers = users
+            case .failure(let error):
+                errors.append(error)
+            }
+        }
+        
+        group.notify(queue: .main) { [weak self] in
+            guard let self = self else { return }
+            self.loadingIndicator.stopAnimating()
+            
+            if let error = errors.first {
+                self.showError(error)
+                return
+            }
+            
+            if let statuses = loadedStatuses, let users = loadedUsers {
                 self.statuses = statuses
                 self.users = users
-                
-                loadingIndicator.stopAnimating()
                 // Setup your board view with statuses here
-                
-            } catch {
-                loadingIndicator.stopAnimating()
-                showError(error)
             }
         }
     }
@@ -105,12 +138,6 @@ class BoardDetailViewController: UIViewController {
             self?.showAddUserDialog()
         })
         
-        // Archive/Unarchive
-        let archiveTitle = board.isArchived ? "Arşivden Çıkar" : "Arşivle"
-        alertController.addAction(UIAlertAction(title: archiveTitle, style: .default) { [weak self] _ in
-            self?.toggleArchive()
-        })
-        
         // Edit Board
         alertController.addAction(UIAlertAction(title: "Düzenle", style: .default) { [weak self] _ in
             self?.showEditBoardDialog()
@@ -127,65 +154,72 @@ class BoardDetailViewController: UIViewController {
     }
     
     private func showAddStatusDialog() {
-        let alert = UIAlertController(title: "Yeni Durum", message: nil, preferredStyle: .alert)
-        
+        let alert = UIAlertController(title: "Add Status", message: "Enter a title for the new status", preferredStyle: .alert)
         alert.addTextField { textField in
-            textField.placeholder = "Durum Adı"
+            textField.placeholder = "Status Title"
         }
         
-        alert.addTextField { textField in
-            textField.placeholder = "Renk (örn: #FF0000)"
-            textField.text = "#007AFF"
-        }
-        
-        alert.addAction(UIAlertAction(title: "İptal", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Ekle", style: .default) { [weak self, weak alert] _ in
+        let addAction = UIAlertAction(title: "Add", style: .default) { [weak self] _ in
             guard let self = self,
-                  let title = alert?.textFields?[0].text,
-                  let color = alert?.textFields?[1].text,
+                  let title = alert.textFields?.first?.text,
                   !title.isEmpty else { return }
             
-            Task {
-                do {
-                    let newStatus = try await APIService.shared.createBoardStatus(
-                        boardId: self.board.id,
-                        title: title,
-                        color: color
-                    )
-                    self.statuses.append(newStatus)
-                    // Update your board view
-                } catch {
-                    self.showError(error)
+            self.loadingIndicator.startAnimating()
+            APIService.shared.createBoardStatus(boardId: self.board.id, title: title) { [weak self] result in
+                guard let self = self else { return }
+                
+                DispatchQueue.main.async {
+                    self.loadingIndicator.stopAnimating()
+                    
+                    switch result {
+                    case .success(let status):
+                        self.statuses.append(status)
+                        // Update your board view
+                    case .failure(let error):
+                        self.showError(error)
+                    }
                 }
             }
-        })
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        
+        alert.addAction(addAction)
+        alert.addAction(cancelAction)
         
         present(alert, animated: true)
     }
     
     private func showAddUserDialog() {
-        let alert = UIAlertController(title: "Kullanıcı Ekle", message: nil, preferredStyle: .alert)
+        let alert = UIAlertController(title: "Add User", message: nil, preferredStyle: .alert)
         
         alert.addTextField { textField in
-            textField.placeholder = "Kullanıcı Adı"
+            textField.placeholder = "Username"
         }
         
-        alert.addAction(UIAlertAction(title: "İptal", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Ekle", style: .default) { [weak self, weak alert] _ in
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Add", style: .default) { [weak self, weak alert] _ in
             guard let self = self,
                   let username = alert?.textFields?[0].text,
                   !username.isEmpty else { return }
             
-            Task {
-                do {
-                    let newUser = try await APIService.shared.addUserToBoard(
-                        boardId: self.board.id,
-                        username: username,
-                        role: "member"  // Default role
-                    )
-                    self.users.append(newUser)
-                } catch {
-                    self.showError(error)
+            self.loadingIndicator.startAnimating()
+            APIService.shared.addUserToBoard(
+                boardId: self.board.id,
+                username: username  // role will default to "viewer"
+            ) { [weak self] result in
+                guard let self = self else { return }
+                
+                DispatchQueue.main.async {
+                    self.loadingIndicator.stopAnimating()
+                    
+                    switch result {
+                    case .success(let newUser):
+                        self.users.append(newUser)
+                        // Update UI if needed
+                    case .failure(let error):
+                        self.showError(error)
+                    }
                 }
             }
         })
@@ -194,59 +228,57 @@ class BoardDetailViewController: UIViewController {
     }
     
     private func showEditBoardDialog() {
-        let alert = UIAlertController(title: "Pano Düzenle", message: nil, preferredStyle: .alert)
+        let alert = UIAlertController(title: "Edit Board", message: "Both name and background color are required", preferredStyle: .alert)
         
         alert.addTextField { textField in
-            textField.placeholder = "Pano Adı"
+            textField.placeholder = "Board Name (required)"
             textField.text = self.board.name
         }
         
         alert.addTextField { textField in
-            textField.placeholder = "Arkaplan Rengi (örn: #FF0000)"
+            textField.placeholder = "Background Color (e.g. #FF0000, required)"
             textField.text = self.board.background
         }
         
-        alert.addAction(UIAlertAction(title: "İptal", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Kaydet", style: .default) { [weak self, weak alert] _ in
-            guard let self = self else { return }
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Save", style: .default) { [weak self, weak alert] _ in
+            guard let self = self,
+                  let name = alert?.textFields?[0].text?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  let background = alert?.textFields?[1].text?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !name.isEmpty,
+                  !background.isEmpty else {
+                self?.showError(NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey: "Name and background color are required"]))
+                return
+            }
             
-            let name = alert?.textFields?[0].text
-            let background = alert?.textFields?[1].text
-            
-            Task {
-                do {
-                    let updatedBoard = try await APIService.shared.updateBoard(
-                        id: self.board.id,
-                        name: name,
-                        background: background
-                    )
-                    // Update UI with new board details
-                    self.title = updatedBoard.name
-                    self.view.backgroundColor = UIColor(hex: updatedBoard.background)
-                } catch {
-                    self.showError(error)
+            self.loadingIndicator.startAnimating()
+            APIService.shared.updateBoard(
+                id: self.board.id,
+                name: name,
+                background: background
+            ) { [weak self] result in
+                guard let self = self else { return }
+                
+                DispatchQueue.main.async {
+                    self.loadingIndicator.stopAnimating()
+                    
+                    switch result {
+                    case .success:
+                        // Update local board data since API returns 204
+                        self.board.name = name
+                        self.title = name
+                        self.board.background = background
+                        self.view.backgroundColor = UIColor(hex: background)
+                        // Notify delegate about the update
+                        self.delegate?.boardDetailViewController(self, didUpdateBoard: self.board)
+                    case .failure(let error):
+                        self.showError(error)
+                    }
                 }
             }
         })
         
         present(alert, animated: true)
-    }
-    
-    private func toggleArchive() {
-        Task {
-            do {
-                let updatedBoard = try await APIService.shared.toggleBoardArchive(
-                    id: board.id,
-                    archived: !board.isArchived
-                )
-                // Update UI or navigate back if needed
-                if updatedBoard.isArchived {
-                    navigationController?.popViewController(animated: true)
-                }
-            } catch {
-                showError(error)
-            }
-        }
     }
     
     private func showDeleteConfirmation() {
@@ -260,15 +292,58 @@ class BoardDetailViewController: UIViewController {
         alert.addAction(UIAlertAction(title: "Sil", style: .destructive) { [weak self] _ in
             guard let self = self else { return }
             
-            Task {
-                do {
-                    try await APIService.shared.deleteBoard(id: self.board.id)
-                    self.navigationController?.popViewController(animated: true)
-                } catch {
-                    self.showError(error)
+            self.loadingIndicator.startAnimating()
+            APIService.shared.deleteBoard(id: self.board.id) { [weak self] result in
+                guard let self = self else { return }
+                
+                DispatchQueue.main.async {
+                    self.loadingIndicator.stopAnimating()
+                    
+                    switch result {
+                    case .success:
+                        self.delegate?.boardDetailViewController(self, didDeleteBoard: self.board)
+                        self.navigationController?.popViewController(animated: true)
+                    case .failure(let error):
+                        self.showError(error)
+                    }
                 }
             }
         })
+        
+        present(alert, animated: true)
+    }
+    
+    func showEditStatusAlert(for status: BoardStatus) {
+        let alert = UIAlertController(title: "Edit Status", message: "Enter a new title for the status", preferredStyle: .alert)
+        alert.addTextField { textField in
+            textField.text = status.title
+        }
+        
+        let saveAction = UIAlertAction(title: "Save", style: .default) { [weak self] _ in
+            guard let self = self,
+                  let newTitle = alert.textFields?.first?.text,
+                  !newTitle.isEmpty else { return }
+            
+            APIService.shared.updateBoardStatus(boardId: self.board.id, statusId: status.id, title: newTitle) { [weak self] result in
+                guard let self = self else { return }
+                
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success(let updatedStatus):
+                        if let index = self.statuses.firstIndex(where: { $0.id == status.id }) {
+                            self.statuses[index] = updatedStatus
+                        }
+                    case .failure(let error):
+                        self.showError(error)
+                    }
+                }
+            }
+        }
+        
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
+        
+        alert.addAction(saveAction)
+        alert.addAction(cancelAction)
         
         present(alert, animated: true)
     }

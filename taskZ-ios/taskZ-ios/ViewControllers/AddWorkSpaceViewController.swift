@@ -140,14 +140,20 @@ class WorkspaceSelectionViewController: UIViewController {
     
     private func loadWorkspaces() {
         loadingIndicator.startAnimating()
-        Task {
-            do {
-                workspaces = try await APIService.shared.getAllWorkspaces()
-                collectionView.reloadData()
-                loadingIndicator.stopAnimating()
-            } catch {
-                loadingIndicator.stopAnimating()
-                showError(error)
+        
+        APIService.shared.getAllWorkspaces { [weak self] result in
+            guard let self = self else { return }
+            
+            DispatchQueue.main.async {
+                self.loadingIndicator.stopAnimating()
+                
+                switch result {
+                case .success(let workspaces):
+                    self.workspaces = workspaces
+                    self.collectionView.reloadData()
+                case .failure(let error):
+                    self.showError(error)
+                }
             }
         }
     }
@@ -198,18 +204,26 @@ class WorkspaceSelectionViewController: UIViewController {
             
             alert.addAction(UIAlertAction(title: "Sil", style: .destructive) { [weak self] _ in
                 guard let self = self else { return }
-                Task {
-                    do {
-                        try await APIService.shared.deleteWorkspace(id: workspace.id)
-                        self.workspaces.remove(at: indexPath.item)
-                        self.collectionView.performBatchUpdates({
-                            self.collectionView.deleteItems(at: [indexPath])
-                        }, completion: { _ in
-                            completion(true)
-                        })
-                    } catch {
-                        self.showError(error)
-                        completion(false)
+                
+                self.loadingIndicator.startAnimating()
+                APIService.shared.deleteWorkspace(id: workspace.id) { [weak self] result in
+                    guard let self = self else { return }
+                    
+                    DispatchQueue.main.async {
+                        self.loadingIndicator.stopAnimating()
+                        
+                        switch result {
+                        case .success:
+                            self.workspaces.remove(at: indexPath.item)
+                            self.collectionView.performBatchUpdates({
+                                self.collectionView.deleteItems(at: [indexPath])
+                            }, completion: { _ in
+                                completion(true)
+                            })
+                        case .failure(let error):
+                            self.showError(error)
+                            completion(false)
+                        }
                     }
                 }
             })
@@ -233,13 +247,20 @@ class WorkspaceSelectionViewController: UIViewController {
                   let name = alert.textFields?.first?.text,
                   !name.isEmpty else { return }
             
-            Task {
-                do {
-                    let newWorkspace = try await APIService.shared.createWorkspace(name: name, ownerId: "current_user_id") // Replace with actual user ID
-                    self.workspaces.append(newWorkspace)
-                    self.collectionView.reloadData()
-                } catch {
-                    self.showError(error)
+            self.loadingIndicator.startAnimating()
+            APIService.shared.createWorkspace(name: name) { [weak self] result in
+                guard let self = self else { return }
+                
+                DispatchQueue.main.async {
+                    self.loadingIndicator.stopAnimating()
+                    
+                    switch result {
+                    case .success(let newWorkspace):
+                        self.workspaces.append(newWorkspace)
+                        self.collectionView.reloadData()
+                    case .failure(let error):
+                        self.showError(error)
+                    }
                 }
             }
         }

@@ -231,15 +231,19 @@ class CreateBoardViewController: UIViewController {
     }
     
     private func loadWorkspaces() {
-        Task {
-            do {
-                let workspaces = try await APIService.shared.getAllWorkspaces()
-                if let firstWorkspace = workspaces.first {
-                    selectedWorkspace = firstWorkspace
-                    collectionView.reloadData()
+        APIService.shared.getAllWorkspaces { [weak self] result in
+            guard let self = self else { return }
+            
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let workspaces):
+                    if let firstWorkspace = workspaces.first {
+                        self.selectedWorkspace = firstWorkspace
+                        self.collectionView.reloadData()
+                    }
+                case .failure(let error):
+                    self.showError(error)
                 }
-            } catch {
-                showError(error)
             }
         }
     }
@@ -269,17 +273,30 @@ class CreateBoardViewController: UIViewController {
     @objc private func createButtonTapped() {
         guard let workspace = selectedWorkspace else { return }
         
-        Task {
-            do {
-                let board = try await APIService.shared.createBoard(
-                    name: boardName,
-                    workspaceId: workspace.id,
-                    background: selectedColor.toHex() ?? "FFFFFF"
-                )
-                delegate?.didCreateBoard()
-                dismiss(animated: true)
-            } catch {
-                showError(error)
+        // Disable create button and show loading state
+        navigationItem.rightBarButtonItem?.isEnabled = false
+        let originalTitle = navigationItem.rightBarButtonItem?.title
+        navigationItem.rightBarButtonItem?.title = "Oluşturuluyor..."
+        
+        APIService.shared.createBoard(
+            name: boardName,
+            workspaceId: workspace.id,
+            background: selectedColor.toHex() ?? "FFFFFF"
+        ) { [weak self] result in
+            guard let self = self else { return }
+            
+            DispatchQueue.main.async {
+                // Reset button state
+                self.navigationItem.rightBarButtonItem?.isEnabled = true
+                self.navigationItem.rightBarButtonItem?.title = originalTitle
+                
+                switch result {
+                case .success:
+                    self.delegate?.didCreateBoard()
+                    self.dismiss(animated: true)
+                case .failure(let error):
+                    self.showError(error)
+                }
             }
         }
     }

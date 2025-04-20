@@ -82,9 +82,19 @@ class BoardsViewController: UIViewController {
     }()
     
     private var workspaces: [Workspace] = []
-    private var boards: [String: [Board]] = [:] // Workspace ID -> Boards
-    private var filteredBoards: [String: [Board]] = [:]
+    private var boards: [Int: [Board]] = [:] // Workspace ID -> Boards
+    private var filteredBoards: [Int: [Board]] = [:]
     private var isSearching: Bool = false
+    
+    // Computed property for visible workspaces
+    private var visibleWorkspaces: [Workspace] {
+        return workspaces.filter { workspace in
+            let boardCount = isSearching ? 
+                (filteredBoards[workspace.id]?.count ?? 0) : 
+                (boards[workspace.id]?.count ?? 0)
+            return boardCount > 0
+        }
+    }
     
     private let loadingIndicator: UIActivityIndicatorView = {
         let indicator = UIActivityIndicatorView(style: .medium)
@@ -167,21 +177,52 @@ class BoardsViewController: UIViewController {
     }
     
     private func loadData() {
-        Task {
-            do {
-                loadingIndicator.startAnimating()
-                workspaces = try await APIService.shared.getAllWorkspaces()
+        loadingIndicator.startAnimating()
+        
+        APIService.shared.getAllWorkspaces { [weak self] result in
+            guard let self = self else { return }
+            
+            switch result {
+            case .success(let workspaces):
+                self.workspaces = workspaces
+                
+                let group = DispatchGroup()
+                var errors: [Error] = []
                 
                 for workspace in workspaces {
-                    let workspaceBoards = try await APIService.shared.getBoardsInWorkspace(workspaceId: workspace.id)
-                    boards[workspace.id] = workspaceBoards
+                    group.enter()
+                    
+                    APIService.shared.getBoardsInWorkspace(workspaceId: workspace.id) { [weak self] result in
+                        defer { group.leave() }
+                        guard let self = self else { return }
+                        
+                        switch result {
+                        case .success(let workspaceBoards):
+                            self.boards[workspace.id] = workspaceBoards
+                        case .failure(let error):
+                            errors.append(error)
+                        }
+                    }
                 }
                 
-                loadingIndicator.stopAnimating()
-                tableView.reloadData()
-            } catch {
-                loadingIndicator.stopAnimating()
-                showError(error)
+                group.notify(queue: .main) { [weak self] in
+                    guard let self = self else { return }
+                    
+                    self.loadingIndicator.stopAnimating()
+                    
+                    if !errors.isEmpty {
+                        // If there were any errors, show the first one
+                        self.showError(errors[0])
+                    }
+                    
+                    self.tableView.reloadData()
+                }
+                
+            case .failure(let error):
+                DispatchQueue.main.async {
+                    self.loadingIndicator.stopAnimating()
+                    self.showError(error)
+                }
             }
         }
     }
@@ -259,7 +300,11 @@ extension BoardsViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        return workspaces[section].name.uppercased()
+        let workspace = workspaces[section]
+        let boardCount = isSearching ? 
+            (filteredBoards[workspace.id]?.count ?? 0) : 
+            (boards[workspace.id]?.count ?? 0)
+        return "\(workspace.name.uppercased()) (\(boardCount))"
     }
     
     func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
@@ -275,8 +320,8 @@ extension BoardsViewController: UITableViewDelegate, UITableViewDataSource {
         let boardsArray = isSearching ? filteredBoards[workspace.id] : boards[workspace.id]
         
         if let board = boardsArray?[indexPath.row] {
-            // Navigate to board detail view controller
             let boardDetailVC = BoardDetailViewController(board: board)
+            boardDetailVC.delegate = self
             navigationController?.pushViewController(boardDetailVC, animated: true)
         }
     }
@@ -305,5 +350,42 @@ extension BoardsViewController: UISearchResultsUpdating, UISearchBarDelegate {
 extension BoardsViewController: CreateBoardViewControllerDelegate {
     func didCreateBoard() {
         loadData() // Reload all data when a new board is created
+    }
+}
+
+// MARK: - BoardDetailViewControllerDelegate
+extension BoardsViewController: BoardDetailViewControllerDelegate {
+    func boardDetailViewController(_ viewController: BoardDetailViewController, didDeleteBoard board: Board) {
+        // Remove the deleted board from both boards and filteredBoards
+        if var workspaceBoards = boards[board.workspaceId] {
+            workspaceBoards.removeAll { $0.id == board.id }
+            boards[board.workspaceId] = workspaceBoards
+        }
+        
+        if var filteredWorkspaceBoards = filteredBoards[board.workspaceId] {
+            filteredWorkspaceBoards.removeAll { $0.id == board.id }
+            filteredBoards[board.workspaceId] = filteredWorkspaceBoards
+        }
+        
+        tableView.reloadData()
+    }
+    
+    func boardDetailViewController(_ viewController: BoardDetailViewController, didUpdateBoard board: Board) {
+        // Update the board in both boards and filteredBoards
+        if var workspaceBoards = boards[board.workspaceId] {
+            if let index = workspaceBoards.firstIndex(where: { $0.id == board.id }) {
+                workspaceBoards[index] = board
+                boards[board.workspaceId] = workspaceBoards
+            }
+        }
+        
+        if var filteredWorkspaceBoards = filteredBoards[board.workspaceId] {
+            if let index = filteredWorkspaceBoards.firstIndex(where: { $0.id == board.id }) {
+                filteredWorkspaceBoards[index] = board
+                filteredBoards[board.workspaceId] = filteredWorkspaceBoards
+            }
+        }
+        
+        tableView.reloadData()
     }
 }

@@ -1,17 +1,17 @@
 import Foundation
 
 struct Workspace: Codable {
-    let id: String
+    let id: Int
     var name: String
-    var ownerId: String
-    var createdAt: Date
-    var updatedAt: Date
+    var userId: String
+    var createdBy: String
+    var created: Date
     
     enum CodingKeys: String, CodingKey {
         case id
         case name
-        case ownerId = "owner_id"
-        case createdAt = "created_at"
-        case updatedAt = "updated_at"
+        case userId = "userId"
+        case createdBy = "createdBy"
+        case created = "created"
     }
 } 

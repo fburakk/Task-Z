@@ -266,31 +266,28 @@ class RegisterViewController: UIViewController {
         loadingIndicator.startAnimating()
         registerButton.isEnabled = false
         
-        Task {
-            do {
-                let response = try await AuthService.shared.register(
-                    username: username,
-                    email: email,
-                    password: password,
-                    firstName: firstName,
-                    lastName: lastName
-                )
+        AuthService.shared.register(
+            username: username,
+            email: email,
+            password: password,
+            firstName: firstName,
+            lastName: lastName
+        ) { [weak self] result in
+            guard let self = self else { return }
+            
+            DispatchQueue.main.async {
+                self.loadingIndicator.stopAnimating()
+                self.registerButton.isEnabled = true
                 
-                await MainActor.run {
-                    loadingIndicator.stopAnimating()
-                    registerButton.isEnabled = true
-                    
-                    showAlert(title: "Success", message: "Registration successful! Please login.") { [weak self] _ in
-                        self?.dismiss(animated: true)
+                switch result {
+                case .success:
+                    self.showAlert(title: "Success", message: "Registration successful! Please login.") { _ in
+                        self.dismiss(animated: true)
                     }
-                }
-            } catch {
-                await MainActor.run {
-                    loadingIndicator.stopAnimating()
-                    registerButton.isEnabled = true
                     
+                case .failure(let error):
                     let apiError = APIError.handleError(error)
-                    showAlert(title: "Registration Failed", message: apiError.localizedDescription)
+                    self.showAlert(title: "Registration Failed", message: apiError.localizedDescription)
                 }
             }
         }
