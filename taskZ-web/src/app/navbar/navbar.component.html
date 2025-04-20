@@ -4,31 +4,33 @@
     <div class="d-flex align-items-center">
       <a class="navbar-brand me-3" href="javascript:void(0)">TaskZ</a>
       <div class="nav-links d-flex">
-        <div class="dropdown me-2">
-          <button class="btn nav-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
-            Çalışma Alanları
-          </button>
-        </div>
-        <div class="dropdown me-2">
-          <button class="btn nav-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
-            Geçmiş
-          </button>
-        </div>
-        <div class="dropdown me-2">
-          <button class="btn nav-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
-            Yıldızlı
-          </button>
-        </div>
-        <div class="dropdown me-2">
-          <button class="btn nav-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
-            Şablonlar
-          </button>
-        </div>
+        <!-- Çalışma Alanları Butonu -->
+        <button class="btn nav-btn me-2" routerLink="/projects">
+          Projelerim
+        </button>
+    
+        <!-- Geçmiş Butonu -->
+        <button class="btn nav-btn me-2" routerLink="/gecmis">
+          Görevlerim
+        </button>
+    
+        <!-- Yıldızlı Butonu -->
+        <button class="btn nav-btn me-2" routerLink="/yildizli">
+          Yıldızlı
+        </button>
+    
+        <!-- Şablonlar Butonu -->
+        <button class="btn nav-btn me-2" routerLink="/sablonlar">
+          Şablonlar
+        </button>
+    
+        <!-- Oluştur Butonu -->
         <button class="btn create-btn">
           Oluştur
         </button>
       </div>
     </div>
+    
 
     <!-- Right Side -->
     <div class="d-flex align-items-center">
