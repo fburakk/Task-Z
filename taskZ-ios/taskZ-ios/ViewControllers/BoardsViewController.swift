@@ -7,46 +7,385 @@
 
 import UIKit
 
+class BoardCell: UITableViewCell {
+    private let squareView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.layer.cornerRadius = 6
+        return view
+    }()
+    
+    private let titleLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.textColor = .white
+        label.font = .systemFont(ofSize: 16)
+        return label
+    }()
+    
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        setupUI()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        squareView.backgroundColor = nil
+        titleLabel.text = nil
+    }
+    
+    private func setupUI() {
+        backgroundColor = .secondarySystemGroupedBackground
+        
+        contentView.addSubview(squareView)
+        contentView.addSubview(titleLabel)
+        
+        NSLayoutConstraint.activate([
+            squareView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
+            squareView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 14),
+            squareView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -14),
+            squareView.widthAnchor.constraint(equalToConstant: 32),
+            squareView.heightAnchor.constraint(equalToConstant: 24),
+            
+            titleLabel.leadingAnchor.constraint(equalTo: squareView.trailingAnchor, constant: 16),
+            titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            titleLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor)
+        ])
+    }
+    
+    func configure(with title: String, color: UIColor) {
+        titleLabel.text = title
+        squareView.backgroundColor = color
+    }
+}
+
 class BoardsViewController: UIViewController {
     
-    private let welcomeLabel: UILabel = {
-        let label = UILabel()
-        label.textColor = .white
-        label.font = .systemFont(ofSize: 24, weight: .bold)
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
+    private let tableView: UITableView = {
+        let table = UITableView(frame: .zero, style: .insetGrouped)
+        table.backgroundColor = .clear
+        table.translatesAutoresizingMaskIntoConstraints = false
+        table.register(BoardCell.self, forCellReuseIdentifier: "BoardCell")
+        return table
+    }()
+    
+    private let searchController: UISearchController = {
+        let controller = UISearchController(searchResultsController: nil)
+        controller.searchBar.placeholder = "Panolar"
+        controller.obscuresBackgroundDuringPresentation = false
+        controller.searchBar.tintColor = .white
+        return controller
+    }()
+    
+    private var workspaces: [Workspace] = []
+    private var boards: [Int: [Board]] = [:] // Workspace ID -> Boards
+    private var filteredBoards: [Int: [Board]] = [:]
+    private var isSearching: Bool = false
+    
+    // Computed property for visible workspaces
+    private var visibleWorkspaces: [Workspace] {
+        return workspaces.filter { workspace in
+            let boardCount = isSearching ? 
+                (filteredBoards[workspace.id]?.count ?? 0) : 
+                (boards[workspace.id]?.count ?? 0)
+            return boardCount > 0
+        }
+    }
+    
+    private let loadingIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .medium)
+        indicator.hidesWhenStopped = true
+        indicator.color = .white
+        return indicator
     }()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        setupTableView()
         setupTabBar()
-        updateWelcomeMessage()
+        setupNavigationBar()
+        setupSearchController()
+        setupNavigationBarButtons()
+        setupLoadingIndicator()
+        loadData()
     }
     
     private func setupUI() {
         view.backgroundColor = .black
         navigationItem.hidesBackButton = true
         
-        view.addSubview(welcomeLabel)
+        view.addSubview(tableView)
         
         NSLayoutConstraint.activate([
-            welcomeLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
-            welcomeLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            welcomeLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            tableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
+    }
+    
+    private func setupNavigationBar() {
+        navigationController?.navigationBar.prefersLargeTitles = true
+        navigationItem.title = "TaskZ"
+        
+        if #available(iOS 13.0, *) {
+            let navBarAppearance = UINavigationBarAppearance()
+            navBarAppearance.configureWithOpaqueBackground()
+            navBarAppearance.backgroundColor = .black
+            navBarAppearance.titleTextAttributes = [.foregroundColor: UIColor.white]
+            navBarAppearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
+            
+            navigationController?.navigationBar.standardAppearance = navBarAppearance
+            navigationController?.navigationBar.scrollEdgeAppearance = navBarAppearance
+        }
+    }
+    
+    private func setupSearchController() {
+        searchController.searchResultsUpdater = self
+        searchController.searchBar.delegate = self
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.searchBar.placeholder = "Panolar"
+        navigationItem.searchController = searchController
+        definesPresentationContext = true
+        
+        searchController.searchBar.searchTextField.backgroundColor = .systemGroupedBackground
+        searchController.searchBar.tintColor = .white
+    }
+    
+    private func setupTableView() {
+        tableView.delegate = self
+        tableView.dataSource = self
     }
     
     private func setupTabBar() {
         tabBarItem = UITabBarItem(title: "Panolar", image: UIImage(systemName: "mail.stack"), tag: 0)
     }
     
-    private func updateWelcomeMessage() {
-        if let username = UserDefaultsManager.shared.username {
-            welcomeLabel.text = "Welcome, \(username)!"
-        } else {
-            welcomeLabel.text = "Welcome to TaskZ!"
+    private func setupLoadingIndicator() {
+        view.addSubview(loadingIndicator)
+        loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+        ])
+    }
+    
+    private func loadData() {
+        loadingIndicator.startAnimating()
+        
+        APIService.shared.getAllWorkspaces { [weak self] result in
+            guard let self = self else { return }
+            
+            switch result {
+            case .success(let workspaces):
+                self.workspaces = workspaces
+                
+                let group = DispatchGroup()
+                var errors: [Error] = []
+                
+                for workspace in workspaces {
+                    group.enter()
+                    
+                    APIService.shared.getBoardsInWorkspace(workspaceId: workspace.id) { [weak self] result in
+                        defer { group.leave() }
+                        guard let self = self else { return }
+                        
+                        switch result {
+                        case .success(let workspaceBoards):
+                            self.boards[workspace.id] = workspaceBoards
+                        case .failure(let error):
+                            errors.append(error)
+                        }
+                    }
+                }
+                
+                group.notify(queue: .main) { [weak self] in
+                    guard let self = self else { return }
+                    
+                    self.loadingIndicator.stopAnimating()
+                    
+                    if !errors.isEmpty {
+                        // If there were any errors, show the first one
+                        self.showError(errors[0])
+                    }
+                    
+                    self.tableView.reloadData()
+                }
+                
+            case .failure(let error):
+                DispatchQueue.main.async {
+                    self.loadingIndicator.stopAnimating()
+                    self.showError(error)
+                }
+            }
+        }
+    }
+    
+    private func showError(_ error: Error) {
+        let alert = UIAlertController(
+            title: "Hata",
+            message: "Veriler yüklenirken bir hata oluştu: \(error.localizedDescription)",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Tamam", style: .default))
+        present(alert, animated: true)
+    }
+    
+    private func filterBoards(for searchText: String) {
+        filteredBoards.removeAll()
+        
+        for (workspaceId, workspaceBoards) in boards {
+            let filtered = workspaceBoards.filter { board in
+                board.name.lowercased().contains(searchText.lowercased())
+            }
+            if !filtered.isEmpty {
+                filteredBoards[workspaceId] = filtered
+            }
+        }
+        
+        tableView.reloadData()
+    }
+    
+    private func setupNavigationBarButtons() {
+        let addButton = UIBarButtonItem(
+            image: UIImage(systemName: "plus"),
+            style: .plain,
+            target: self,
+            action: #selector(addButtonTapped)
+        )
+        addButton.tintColor = .tintColor
+        navigationItem.rightBarButtonItem = addButton
+    }
+    
+    @objc private func addButtonTapped() {
+        let createBoardVC = CreateBoardViewController()
+        createBoardVC.delegate = self
+        let navController = UINavigationController(rootViewController: createBoardVC)
+        present(navController, animated: true)
+    }
+}
+
+// MARK: - UITableViewDelegate & UITableViewDataSource
+extension BoardsViewController: UITableViewDelegate, UITableViewDataSource {
+    func numberOfSections(in tableView: UITableView) -> Int {
+        return workspaces.count
+    }
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        let workspace = workspaces[section]
+        return isSearching ? 
+            (filteredBoards[workspace.id]?.count ?? 0) : 
+            (boards[workspace.id]?.count ?? 0)
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: "BoardCell", for: indexPath) as? BoardCell else {
+            return UITableViewCell()
+        }
+        
+        let workspace = workspaces[indexPath.section]
+        let boardsArray = isSearching ? filteredBoards[workspace.id] : boards[workspace.id]
+        
+        if let board = boardsArray?[indexPath.row] {
+            cell.configure(with: board.name, color: UIColor(hex: board.background) ?? .blue)
+        }
+        
+        return cell
+    }
+    
+    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        let workspace = workspaces[section]
+        let boardCount = isSearching ? 
+            (filteredBoards[workspace.id]?.count ?? 0) : 
+            (boards[workspace.id]?.count ?? 0)
+        return "\(workspace.name.uppercased()) (\(boardCount))"
+    }
+    
+    func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
+        if let header = view as? UITableViewHeaderFooterView {
+            header.textLabel?.textColor = .white
+        }
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        
+        let workspace = workspaces[indexPath.section]
+        let boardsArray = isSearching ? filteredBoards[workspace.id] : boards[workspace.id]
+        
+        if let board = boardsArray?[indexPath.row] {
+            let boardDetailVC = BoardDetailViewController(board: board)
+            boardDetailVC.delegate = self
+            navigationController?.pushViewController(boardDetailVC, animated: true)
         }
     }
 }
 
+// MARK: - UISearchResultsUpdating & UISearchBarDelegate
+extension BoardsViewController: UISearchResultsUpdating, UISearchBarDelegate {
+    func updateSearchResults(for searchController: UISearchController) {
+        guard let searchText = searchController.searchBar.text, !searchText.isEmpty else {
+            isSearching = false
+            tableView.reloadData()
+            return
+        }
+        
+        isSearching = true
+        filterBoards(for: searchText)
+    }
+    
+    func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
+        isSearching = false
+        tableView.reloadData()
+    }
+}
+
+// MARK: - CreateBoardViewControllerDelegate
+extension BoardsViewController: CreateBoardViewControllerDelegate {
+    func didCreateBoard() {
+        loadData() // Reload all data when a new board is created
+    }
+}
+
+// MARK: - BoardDetailViewControllerDelegate
+extension BoardsViewController: BoardDetailViewControllerDelegate {
+    func boardDetailViewController(_ viewController: BoardDetailViewController, didDeleteBoard board: Board) {
+        // Remove the deleted board from both boards and filteredBoards
+        if var workspaceBoards = boards[board.workspaceId] {
+            workspaceBoards.removeAll { $0.id == board.id }
+            boards[board.workspaceId] = workspaceBoards
+        }
+        
+        if var filteredWorkspaceBoards = filteredBoards[board.workspaceId] {
+            filteredWorkspaceBoards.removeAll { $0.id == board.id }
+            filteredBoards[board.workspaceId] = filteredWorkspaceBoards
+        }
+        
+        tableView.reloadData()
+    }
+    
+    func boardDetailViewController(_ viewController: BoardDetailViewController, didUpdateBoard board: Board) {
+        // Update the board in both boards and filteredBoards
+        if var workspaceBoards = boards[board.workspaceId] {
+            if let index = workspaceBoards.firstIndex(where: { $0.id == board.id }) {
+                workspaceBoards[index] = board
+                boards[board.workspaceId] = workspaceBoards
+            }
+        }
+        
+        if var filteredWorkspaceBoards = filteredBoards[board.workspaceId] {
+            if let index = filteredWorkspaceBoards.firstIndex(where: { $0.id == board.id }) {
+                filteredWorkspaceBoards[index] = board
+                filteredBoards[board.workspaceId] = filteredWorkspaceBoards
+            }
+        }
+        
+        tableView.reloadData()
+    }
+}

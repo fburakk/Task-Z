@@ -1,6 +1,7 @@
 import Foundation
 
 enum APIError: LocalizedError {
+    case invalidURL
     case invalidCredentials
     case userAlreadyExists
     case networkError
@@ -11,6 +12,8 @@ enum APIError: LocalizedError {
     
     var errorDescription: String? {
         switch self {
+        case .invalidURL:
+            return "Invalid URL. Please check the endpoint."
         case .invalidCredentials:
             return "Invalid email or password. Please try again."
         case .userAlreadyExists:
@@ -39,6 +42,8 @@ enum APIError: LocalizedError {
             switch nsError.code {
             case NSURLErrorNotConnectedToInternet:
                 return .networkError
+            case NSURLErrorBadURL:
+                return .invalidURL
             default:
                 return .unknown("Network error: \(error.localizedDescription)")
             }

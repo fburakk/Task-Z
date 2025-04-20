@@ -13,6 +13,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sa"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   webapi:
     build:
@@ -21,10 +26,11 @@ services:
     ports:
       - "5001:8080"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=db;Database=CleanArchitectureDb;Username=sa;Password=YourStrong@Passw0rd
+      - ConnectionStrings__DefaultConnection=Host=db;Database=CleanArchitectureDb;Username=sa;Password=YourStrong@Passw0rd;Port=5432
     networks:
       - backend
 

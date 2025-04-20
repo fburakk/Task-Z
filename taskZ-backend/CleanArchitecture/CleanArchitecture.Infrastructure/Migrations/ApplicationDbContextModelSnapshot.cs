@@ -61,7 +61,7 @@ namespace CleanArchitecture.Infrastructure.Migrations
                     b.ToTable("RefreshToken");
                 });
 
-            modelBuilder.Entity("CleanArchitecture.Core.Entities.Category", b =>
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.Board", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -69,14 +69,17 @@ namespace CleanArchitecture.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Background")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTime?>("LastModified")
                         .HasColumnType("timestamp with time zone");
@@ -87,12 +90,17 @@ namespace CleanArchitecture.Infrastructure.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("text");
 
+                    b.Property<int>("WorkspaceId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
-                    b.ToTable("Categories");
+                    b.HasIndex("WorkspaceId");
+
+                    b.ToTable("Boards");
                 });
 
-            modelBuilder.Entity("CleanArchitecture.Core.Entities.Product", b =>
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.BoardStatus", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -100,8 +108,47 @@ namespace CleanArchitecture.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Barcode")
+                    b.Property<int>("BoardId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
                         .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BoardId");
+
+                    b.ToTable("BoardStatuses");
+                });
+
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.BoardTask", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AssigneeId")
+                        .HasColumnType("text");
+
+                    b.Property<int>("BoardId")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone");
@@ -110,6 +157,86 @@ namespace CleanArchitecture.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DueDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Priority")
+                        .HasColumnType("text");
+
+                    b.Property<int>("StatusId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BoardId");
+
+                    b.HasIndex("StatusId");
+
+                    b.ToTable("BoardTasks");
+                });
+
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.BoardUser", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BoardId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Role")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BoardId");
+
+                    b.ToTable("BoardUsers");
+                });
+
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.Workspace", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
                         .HasColumnType("text");
 
                     b.Property<DateTime?>("LastModified")
@@ -121,12 +248,12 @@ namespace CleanArchitecture.Infrastructure.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("text");
 
-                    b.Property<decimal>("Rate")
-                        .HasColumnType("decimal(18,6)");
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Products");
+                    b.ToTable("Workspaces");
                 });
 
             modelBuilder.Entity("CleanArchitecture.Infrastructure.Models.ApplicationUser", b =>
@@ -338,6 +465,58 @@ namespace CleanArchitecture.Infrastructure.Migrations
                         .HasForeignKey("ApplicationUserId");
                 });
 
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.Board", b =>
+                {
+                    b.HasOne("CleanArchitecture.Core.Entities.Workspace", "Workspace")
+                        .WithMany()
+                        .HasForeignKey("WorkspaceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Workspace");
+                });
+
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.BoardStatus", b =>
+                {
+                    b.HasOne("CleanArchitecture.Core.Entities.Board", "Board")
+                        .WithMany("Statuses")
+                        .HasForeignKey("BoardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Board");
+                });
+
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.BoardTask", b =>
+                {
+                    b.HasOne("CleanArchitecture.Core.Entities.Board", "Board")
+                        .WithMany()
+                        .HasForeignKey("BoardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CleanArchitecture.Core.Entities.BoardStatus", "Status")
+                        .WithMany()
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Board");
+
+                    b.Navigation("Status");
+                });
+
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.BoardUser", b =>
+                {
+                    b.HasOne("CleanArchitecture.Core.Entities.Board", "Board")
+                        .WithMany("Users")
+                        .HasForeignKey("BoardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Board");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -387,6 +566,13 @@ namespace CleanArchitecture.Infrastructure.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.Board", b =>
+                {
+                    b.Navigation("Statuses");
+
+                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("CleanArchitecture.Infrastructure.Models.ApplicationUser", b =>
