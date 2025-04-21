@@ -87,7 +87,8 @@ namespace CleanArchitecture.Infrastructure.Services
                 Email = request.Email,
                 FirstName = request.FirstName,
                 LastName = request.LastName,
-                UserName = request.UserName
+                UserName = request.UserName,
+                EmailConfirmed = true  // Auto-confirm email for testing
             };
             var userWithSameEmail = await _userManager.FindByEmailAsync(request.Email);
             if (userWithSameEmail == null)
@@ -96,10 +97,7 @@ namespace CleanArchitecture.Infrastructure.Services
                 if (result.Succeeded)
                 {
                     await _userManager.AddToRoleAsync(user, Roles.Basic.ToString());
-                    var verificationUri = await SendVerificationEmail(user, origin);
-                    //TODO: Attach Email Service here and configure it via appsettings
-                    //await _emailService.SendAsync(new Core.DTOs.Email.EmailRequest() { From = "mail@codewithmukesh.com", To = user.Email, Body = $"Please confirm your account by visiting this URL {verificationUri}", Subject = "Confirm Registration" });
-                    return  $"User Registered. Please confirm your account by visiting this URL {verificationUri}";
+                    return "User registered successfully. You can now login.";
                 }
                 else
                 {

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("codewithmukesh")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.1.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.1.0+920e6ba23a1347d3caf87e4ab75d82e67adc36f8")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.1.0+d4cec9af86940600495d39aa1fc0a556ba6e5d66")]
 [assembly: System.Reflection.AssemblyProductAttribute("CleanArchitecture.WebApi")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CleanArchitecture.WebApi")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.1.0.0")]

@@ -1,39 +1,39 @@
 import Foundation
 
+enum TaskPriority: String, Codable {
+    case low = "low"
+    case medium = "medium"
+    case high = "high"
+}
+
 struct Task: Codable {
     let id: Int
     let boardId: Int
-    let statusId: Int
-    let title: String
-    let description: String
-    let priority: TaskPriority
-    let dueDate: Date?
-    let assigneeId: Int?
-    let position: Int
+    var statusId: Int
+    var title: String
+    var description: String
+    var priority: TaskPriority
+    var dueDate: Date?
+    var assigneeId: String?
+    var position: Int
     let createdBy: String
     let created: Date
-    let lastModifiedBy: String?
-    let lastModified: Date?
+    let lastModifiedBy: String
+    let lastModified: Date
     
     enum CodingKeys: String, CodingKey {
         case id
-        case boardId = "board_id"
-        case statusId = "status_id"
+        case boardId = "boardId"
+        case statusId = "statusId"
         case title
         case description
         case priority
-        case dueDate = "due_date"
-        case assigneeId = "assignee_id"
+        case dueDate = "dueDate"
+        case assigneeId = "assigneeId"
         case position
-        case createdBy = "created_by"
+        case createdBy = "createdBy"
         case created
-        case lastModifiedBy = "last_modified_by"
-        case lastModified = "last_modified"
+        case lastModifiedBy = "lastModifiedBy"
+        case lastModified = "lastModified"
     }
-}
-
-enum TaskPriority: String, Codable {
-    case low
-    case medium
-    case high
 } 
