@@ -1,22 +1,56 @@
 <div class="home-container" style="padding: 40px; max-width: 1200px; margin: 0 auto; width: 100%;">
-    <h2 style="font-size: 22px; font-weight: 600; color: #1a1a1a; margin: 40px 0 24px 0; font-family: 'Inter', sans-serif;">
-        WorkSpaces
-    </h2>
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 24px;">
-        <div *ngFor="let workspace of workspaces" class="project-card" 
-            [style.background]="workspace.id % 2 === 0 ? '#E1F5FE' : '#F0F4C3'" 
-            style="border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; min-height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
-            <h3 style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin: 0;">
-                {{ workspace.name }}
-            </h3>
-            <p style="font-size: 14px; color: #888;">Created by: {{ workspace.createdBy }}</p>
+  
+    <div *ngFor="let workspace of workspaces" style="margin-bottom: 40px;">
+      <!-- Workspace adı -->
+      <h2 style="font-size: 22px; font-weight: 600; color: #1a1a1a; margin: 40px 0 24px 0; font-family: 'Inter', sans-serif;">
+        {{ workspace.name }}
+      </h2>
+  
+      <!-- Kartlar -->
+      <div class="card-grid">
+        <div class="project-card" style="background: #E1F5FE;">
+          <h3 class="card-title">Empty</h3>
         </div>
+        <div class="project-card" style="background: #F0F4C3;">
+          <h3 class="card-title">Empty</h3>
+        </div>
+        <div class="project-card" style="background: #FFECB3;">
+          <h3 class="card-title" style="color: #4a90e2; font-weight: 500;">+ Yeni proje</h3>
+        </div>
+      </div>
     </div>
-</div>
-
-<style>
-    .project-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+  </div>
+  
+  <style>
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 24px;
     }
-</style>
+  
+    .project-card {
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: transform 0.2s;
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+  
+    .project-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    }
+  
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin: 0;
+    }
+  </style>
+  
