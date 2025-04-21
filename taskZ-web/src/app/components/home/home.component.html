@@ -1,0 +1,20 @@
+<div class="workspace-container">
+  <div class="workspace-header">
+    <div class="workspace-label">WORKSPACE</div>
+    <h1 class="workspace-title">{{ workspaceName }}</h1>
+  </div>
+  
+  <div class="cards-grid">
+    <div class="card" *ngFor="let card of cards" [style.border-top-color]="card.color">
+      <h2 class="card-title">{{ card.title }}</h2>
+    </div>
+    
+    <div class="card new-card">
+      <div class="new-card-content">
+        <span class="plus-icon">+</span>
+        <h2 class="new-card-title">Yeni pano oluştur</h2>
+        <p class="remaining-text">{{ remainingCards }} kaldı</p>
+      </div>
+    </div>
+  </div>
+</div> 
