@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, inject, OnInit } from '@angular/core';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
-import { ProfileService, UserProfile } from '../services/profile.service';
+import { ProfileService, UserProfile } from '../core/services/profile.service';
 import { HttpClient, HttpClientModule, HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../core/services/auth.service';
 
