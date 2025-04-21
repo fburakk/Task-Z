@@ -1,5 +1,70 @@
-<div style="height: 100vh; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; text-align: center; margin-top: 100px;">
-    <h1 style="font-size: 5rem; font-weight: bold;">Task-Z</h1>
-    <p style="font-size: 1.5rem;">"Taskımı geri ver!"</p>
-  </div>
+<div class="workspace-container" style="padding: 40px; max-width: 1200px; margin: 0 auto; width: 100%;">
+    <!-- Workspace Title -->
+    <h1 style="font-size: 24px; font-weight: 600; color: #1a1a1a; margin-bottom: 32px; font-family: 'Inter', sans-serif;">
+        WorkSpace1
+    </h1>
+
+    <!-- Project Cards Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 24px;">
+        <!-- Project Card 1 -->
+        <div class="project-card" style="background: #E8F5E9; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; min-height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <h3 style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin: 0;">Empty</h3>
+        </div>
+
+        <!-- Project Card 2 -->
+        <div class="project-card" style="background: #E3F2FD; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; min-height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <h3 style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin: 0;">Empty</h3>
+        </div>
+
+        <!-- Project Card 3 -->
+        <div class="project-card" style="background: #F3E5F5; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; min-height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <h3 style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin: 0;">Empty</h3>
+        </div>
+
+        <!-- New Board Card -->
+        <div class="project-card" style="background: #FFF3E0; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; min-height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <h3 style="font-size: 18px; font-weight: 500; color: #4a90e2; margin: 0;">+ Yeni pano oluştur</h3>
+            <p style="font-size: 14px; color: #666; margin: 8px 0 0 0;">6 kaldı</p>
+        </div>
+    </div>
+
+    <!-- Software Engineering Section -->
+    <h2 style="font-size: 22px; font-weight: 600; color: #1a1a1a; margin: 40px 0 24px 0; font-family: 'Inter', sans-serif;">
+        WorkSpace2
+    </h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 24px;">
+        <div class="project-card" style="background: #E1F5FE; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; min-height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <h3 style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin: 0;">Empty</h3>
+        </div>
+        <div class="project-card" style="background: #F0F4C3; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; min-height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <h3 style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin: 0;">Empty</h3>
+        </div>
+        <div class="project-card" style="background: #FFECB3; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; min-height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <h3 style="font-size: 18px; font-weight: 500; color: #4a90e2; margin: 0;">+ Yeni proje</h3>
+        </div>
+    </div>
+
+    <!-- Computer Networks Section -->
+    <h2 style="font-size: 22px; font-weight: 600; color: #1a1a1a; margin: 40px 0 24px 0; font-family: 'Inter', sans-serif;">
+        WorkSpace3
+    </h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 24px;">
+        <div class="project-card" style="background: #F8BBD0; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; min-height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <h3 style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin: 0;">Empty</h3>
+        </div>
+        <div class="project-card" style="background: #B3E5FC; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; min-height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <h3 style="font-size: 18px; font-weight: 600; color: #1a1a1a; margin: 0;">Empty</h3>
+        </div>
+        <div class="project-card" style="background: #C8E6C9; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; min-height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <h3 style="font-size: 18px; font-weight: 500; color: #4a90e2; margin: 0;">+ Yeni proje</h3>
+        </div>
+    </div>
+</div>
+
+<style>
+    .project-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    }
+</style>
   
