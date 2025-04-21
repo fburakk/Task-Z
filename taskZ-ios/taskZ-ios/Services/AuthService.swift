@@ -159,18 +159,19 @@ class AuthService {
                     // Update stored tokens
                     UserDefaultsManager.shared.authToken = refreshResponse.jwToken
                     UserDefaultsManager.shared.refreshToken = refreshResponse.refreshToken
+                    print("🔄 Token refreshed: \(refreshResponse.jwToken.prefix(20))...")
                     completion(.success(refreshResponse))
                 } catch {
                     completion(.failure(.unknown("Failed to decode response: \(error.localizedDescription)")))
                 }
             case 401:
-                completion(.failure(.unauthorized))
                 // Clear tokens on unauthorized
                 UserDefaultsManager.shared.clearUserSession()
+                completion(.failure(.unauthorized))
             default:
                 completion(.failure(.unknown("Unexpected error occurred")))
             }
         }
         task.resume()
     }
-} 
+}

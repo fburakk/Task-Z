@@ -89,8 +89,8 @@ class BoardsViewController: UIViewController {
     // Computed property for visible workspaces
     private var visibleWorkspaces: [Workspace] {
         return workspaces.filter { workspace in
-            let boardCount = isSearching ? 
-                (filteredBoards[workspace.id]?.count ?? 0) : 
+            let boardCount = isSearching ?
+                (filteredBoards[workspace.id]?.count ?? 0) :
                 (boards[workspace.id]?.count ?? 0)
             return boardCount > 0
         }
@@ -113,6 +113,13 @@ class BoardsViewController: UIViewController {
         setupNavigationBarButtons()
         setupLoadingIndicator()
         loadData()
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(workspaceChanged(_:)), name: .workspaceCreated, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(workspaceChanged(_:)), name: .workspaceDeleted, object: nil)
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
     
     private func setupUI() {
@@ -269,6 +276,10 @@ class BoardsViewController: UIViewController {
         let navController = UINavigationController(rootViewController: createBoardVC)
         present(navController, animated: true)
     }
+    
+    @objc private func workspaceChanged(_ notification: Notification) {
+        loadData()
+    }
 }
 
 // MARK: - UITableViewDelegate & UITableViewDataSource
@@ -279,8 +290,8 @@ extension BoardsViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         let workspace = workspaces[section]
-        return isSearching ? 
-            (filteredBoards[workspace.id]?.count ?? 0) : 
+        return isSearching ?
+            (filteredBoards[workspace.id]?.count ?? 0) :
             (boards[workspace.id]?.count ?? 0)
     }
     
@@ -301,8 +312,8 @@ extension BoardsViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         let workspace = workspaces[section]
-        let boardCount = isSearching ? 
-            (filteredBoards[workspace.id]?.count ?? 0) : 
+        let boardCount = isSearching ?
+            (filteredBoards[workspace.id]?.count ?? 0) :
             (boards[workspace.id]?.count ?? 0)
         return "\(workspace.name.uppercased()) (\(boardCount))"
     }

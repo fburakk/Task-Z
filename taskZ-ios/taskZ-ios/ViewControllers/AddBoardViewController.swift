@@ -389,6 +389,7 @@ extension CreateBoardViewController: UICollectionViewDelegate {
 // MARK: - UIColorPickerViewControllerDelegate
 extension CreateBoardViewController: UIColorPickerViewControllerDelegate {
     func colorPickerViewControllerDidSelectColor(_ viewController: UIColorPickerViewController) {
+        viewController.dismiss(animated: true)
         selectedColor = viewController.selectedColor
         if let cell = collectionView.cellForItem(at: IndexPath(item: 1, section: 1)) as? CreateBoardBackgroundCell {
             cell.colorPreview.backgroundColor = selectedColor

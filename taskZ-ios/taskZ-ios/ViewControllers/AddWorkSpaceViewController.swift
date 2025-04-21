@@ -7,6 +7,11 @@
 
 import UIKit
 
+extension Notification.Name {
+    static let workspaceCreated = Notification.Name("workspaceCreated")
+    static let workspaceDeleted = Notification.Name("workspaceDeleted")
+}
+
 class WorkspaceCell: UICollectionViewCell {
     static let identifier = "WorkspaceCell"
     
@@ -218,6 +223,7 @@ class WorkspaceSelectionViewController: UIViewController {
                             self.collectionView.performBatchUpdates({
                                 self.collectionView.deleteItems(at: [indexPath])
                             }, completion: { _ in
+                                NotificationCenter.default.post(name: .workspaceDeleted, object: nil, userInfo: ["workspace": workspace])
                                 completion(true)
                             })
                         case .failure(let error):
@@ -258,6 +264,7 @@ class WorkspaceSelectionViewController: UIViewController {
                     case .success(let newWorkspace):
                         self.workspaces.append(newWorkspace)
                         self.collectionView.reloadData()
+                        NotificationCenter.default.post(name: .workspaceCreated, object: nil, userInfo: ["workspace": newWorkspace])
                     case .failure(let error):
                         self.showError(error)
                     }
