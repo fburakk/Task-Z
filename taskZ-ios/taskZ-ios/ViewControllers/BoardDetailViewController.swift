@@ -16,7 +16,40 @@ class BoardDetailViewController: UIViewController {
     private var board: Board
     private var statuses: [BoardStatus] = []
     private var users: [BoardUser] = []
+    private var tasks: [Int: [Task]] = [:] // statusId -> [Task]
     weak var delegate: BoardDetailViewControllerDelegate?
+    
+    private let collectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .horizontal
+        layout.minimumInteritemSpacing = 16
+        layout.minimumLineSpacing = 16
+        layout.sectionInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+        
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        collectionView.translatesAutoresizingMaskIntoConstraints = false
+        collectionView.backgroundColor = .clear
+        collectionView.showsHorizontalScrollIndicator = false
+        return collectionView
+    }()
+    
+    private let addTaskButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.backgroundColor = .systemBlue
+        button.tintColor = .white
+        button.layer.cornerRadius = 28
+        button.layer.shadowColor = UIColor.black.cgColor
+        button.layer.shadowOffset = CGSize(width: 0, height: 2)
+        button.layer.shadowRadius = 4
+        button.layer.shadowOpacity = 0.25
+        
+        let config = UIImage.SymbolConfiguration(pointSize: 24, weight: .medium)
+        let image = UIImage(systemName: "plus", withConfiguration: config)
+        button.setImage(image, for: .normal)
+        
+        return button
+    }()
     
     private let loadingIndicator: UIActivityIndicatorView = {
         let indicator = UIActivityIndicatorView(style: .medium)
@@ -37,20 +70,43 @@ class BoardDetailViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        setupCollectionView()
         setupNavigationBar()
+        setupAddTaskButton()
         loadData()
     }
     
     private func setupUI() {
         view.backgroundColor = UIColor(hex: board.background)
         
+        view.addSubview(collectionView)
+        view.addSubview(addTaskButton)
         view.addSubview(loadingIndicator)
+        
         loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
+            collectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            collectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            
+            addTaskButton.widthAnchor.constraint(equalToConstant: 56),
+            addTaskButton.heightAnchor.constraint(equalToConstant: 56),
+            addTaskButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -24),
+            addTaskButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -24),
+            
             loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
+        
+        addTaskButton.addTarget(self, action: #selector(addTaskButtonTapped), for: .touchUpInside)
+    }
+    
+    private func setupCollectionView() {
+        collectionView.delegate = self
+        collectionView.dataSource = self
+        collectionView.register(StatusColumnCell.self, forCellWithReuseIdentifier: StatusColumnCell.identifier)
     }
     
     private func setupNavigationBar() {
@@ -66,17 +122,22 @@ class BoardDetailViewController: UIViewController {
         navigationItem.rightBarButtonItem = moreButton
     }
     
+    private func setupAddTaskButton() {
+        // Implementation of setupAddTaskButton method
+    }
+    
     private func loadData() {
         loadingIndicator.startAnimating()
         
         let group = DispatchGroup()
         var loadedStatuses: [BoardStatus]?
         var loadedUsers: [BoardUser]?
+        var loadedTasks: [Task]?
         var errors: [Error] = []
         
         // Load statuses
         group.enter()
-        APIService.shared.getBoardStatuses(boardId: board.id) { [weak self] result in
+        APIService.shared.getBoardStatuses(boardId: board.id) { result in
             defer { group.leave() }
             switch result {
             case .success(let statuses):
@@ -88,11 +149,23 @@ class BoardDetailViewController: UIViewController {
         
         // Load users
         group.enter()
-        APIService.shared.getBoardUsers(boardId: board.id) { [weak self] result in
+        APIService.shared.getBoardUsers(boardId: board.id) { result in
             defer { group.leave() }
             switch result {
             case .success(let users):
                 loadedUsers = users
+            case .failure(let error):
+                errors.append(error)
+            }
+        }
+        
+        // Load tasks
+        group.enter()
+        APIService.shared.getBoardTasks(boardId: board.id) { result in
+            defer { group.leave() }
+            switch result {
+            case .success(let tasks):
+                loadedTasks = tasks
             case .failure(let error):
                 errors.append(error)
             }
@@ -107,10 +180,15 @@ class BoardDetailViewController: UIViewController {
                 return
             }
             
-            if let statuses = loadedStatuses, let users = loadedUsers {
+            if let statuses = loadedStatuses,
+               let users = loadedUsers,
+               let tasks = loadedTasks {
                 self.statuses = statuses
                 self.users = users
-                // Setup your board view with statuses here
+                
+                // Group tasks by status
+                self.tasks = Dictionary(grouping: tasks, by: { $0.statusId })
+                self.collectionView.reloadData()
             }
         }
     }
@@ -346,5 +424,135 @@ class BoardDetailViewController: UIViewController {
         alert.addAction(cancelAction)
         
         present(alert, animated: true)
+    }
+    
+    @objc private func addTaskButtonTapped() {
+        let alert = UIAlertController(title: "Yeni Görev", message: nil, preferredStyle: .alert)
+        
+        alert.addTextField { textField in
+            textField.placeholder = "Görev Başlığı"
+        }
+        
+        alert.addTextField { textField in
+            textField.placeholder = "Açıklama"
+        }
+        
+        let priorities = ["Düşük", "Orta", "Yüksek"]
+        alert.addTextField { textField in
+            textField.placeholder = "Öncelik"
+            
+            let pickerView = UIPickerView()
+            pickerView.delegate = self
+            pickerView.dataSource = self
+            textField.inputView = pickerView
+            textField.text = priorities[1] // Default to medium priority
+        }
+        
+        let createAction = UIAlertAction(title: "Oluştur", style: .default) { [weak self] _ in
+            guard let self = self,
+                  let title = alert.textFields?[0].text,
+                  let description = alert.textFields?[1].text,
+                  !title.isEmpty else { return }
+            
+            let priorityText = alert.textFields?[2].text ?? priorities[1]
+            let priority: TaskPriority
+            switch priorityText {
+            case "Düşük":
+                priority = .low
+            case "Yüksek":
+                priority = .high
+            default:
+                priority = .medium
+            }
+            
+            self.loadingIndicator.startAnimating()
+            APIService.shared.createTask(
+                boardId: self.board.id,
+                title: title,
+                description: description,
+                priority: priority.rawValue,
+                dueDate: nil,
+                assigneeId: nil
+            ) { [weak self] result in
+                guard let self = self else { return }
+                
+                DispatchQueue.main.async {
+                    self.loadingIndicator.stopAnimating()
+                    
+                    switch result {
+                    case .success(let task):
+                        // Add the new task to the first status
+                        if let firstStatus = self.statuses.first {
+                            var statusTasks = self.tasks[firstStatus.id] ?? []
+                            statusTasks.append(task)
+                            self.tasks[firstStatus.id] = statusTasks
+                            self.collectionView.reloadData()
+                        }
+                    case .failure(let error):
+                        self.showError(error)
+                    }
+                }
+            }
+        }
+        
+        let cancelAction = UIAlertAction(title: "İptal", style: .cancel)
+        
+        alert.addAction(createAction)
+        alert.addAction(cancelAction)
+        
+        present(alert, animated: true)
+    }
+}
+
+// MARK: - UICollectionViewDataSource & UICollectionViewDelegate
+extension BoardDetailViewController: UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return statuses.count
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: StatusColumnCell.identifier, for: indexPath) as? StatusColumnCell else {
+            return UICollectionViewCell()
+        }
+        
+        let status = statuses[indexPath.item]
+        let statusTasks = tasks[status.id] ?? []
+        cell.configure(with: status, tasks: statusTasks)
+        
+        return cell
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        let width = view.bounds.width * 0.85
+        let height = collectionView.bounds.height
+        return CGSize(width: width, height: height)
+    }
+}
+
+// MARK: - UIPickerViewDelegate & UIPickerViewDataSource
+extension BoardDetailViewController: UIPickerViewDelegate, UIPickerViewDataSource {
+    func numberOfComponents(in pickerView: UIPickerView) -> Int {
+        return 1
+    }
+    
+    func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+        return 3 // Low, Medium, High
+    }
+    
+    func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
+        switch row {
+        case 0: return "Düşük"
+        case 1: return "Orta"
+        case 2: return "Yüksek"
+        default: return nil
+        }
+    }
+    
+    func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+        let priorities = ["Düşük", "Orta", "Yüksek"]
+        if let textField = pickerView.superview?.superview as? UITextField {
+            textField.text = priorities[row]
+            textField.resignFirstResponder()
+        }
     }
 }

@@ -681,7 +681,6 @@ Response:
     "position": number
 }
 ```
-
 ## Task Features
 
 ### Position Management
