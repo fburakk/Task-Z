@@ -4,8 +4,8 @@ services:
   db:
     image: postgres:14-alpine
     environment:
-      - POSTGRES_USER=sa
-      - POSTGRES_PASSWORD=YourStrong@Passw0rd
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=CleanArchitectureDb
     ports:
       - "5432:5432"
@@ -14,7 +14,7 @@ services:
     networks:
       - backend
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sa"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -30,7 +30,7 @@ services:
         condition: service_healthy
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Host=db;Database=CleanArchitectureDb;Username=sa;Password=YourStrong@Passw0rd;Port=5432
+      - ConnectionStrings__DefaultConnection=Host=db;Database=CleanArchitectureDb;Username=postgres;Password=postgres;Port=5432
     networks:
       - backend
 
