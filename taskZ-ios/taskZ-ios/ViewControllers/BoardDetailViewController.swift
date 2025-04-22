@@ -22,14 +22,17 @@ class BoardDetailViewController: UIViewController {
     private let collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .horizontal
-        layout.minimumInteritemSpacing = 16
-        layout.minimumLineSpacing = 16
-        layout.sectionInset = UIEdgeInsets(top: 0, left: 16, bottom: 0, right: 16)
+        layout.minimumInteritemSpacing = 0
+        layout.minimumLineSpacing = 0
+        layout.sectionInset = .zero
         
         let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         collectionView.backgroundColor = .clear
         collectionView.showsHorizontalScrollIndicator = false
+        collectionView.isPagingEnabled = true
+        collectionView.decelerationRate = .fast
+        collectionView.contentInsetAdjustmentBehavior = .never
         return collectionView
     }()
     
@@ -58,6 +61,15 @@ class BoardDetailViewController: UIViewController {
         return indicator
     }()
     
+    private let pageControl: UIPageControl = {
+        let pageControl = UIPageControl()
+        pageControl.translatesAutoresizingMaskIntoConstraints = false
+        pageControl.currentPageIndicatorTintColor = .white
+        pageControl.pageIndicatorTintColor = .gray
+        pageControl.backgroundColor = .clear
+        return pageControl
+    }()
+    
     init(board: Board) {
         self.board = board
         super.init(nibName: nil, bundle: nil)
@@ -77,11 +89,12 @@ class BoardDetailViewController: UIViewController {
     }
     
     private func setupUI() {
-        view.backgroundColor = UIColor(hex: board.background)
+        view.backgroundColor = UIColor.black
         
         view.addSubview(collectionView)
         view.addSubview(addTaskButton)
         view.addSubview(loadingIndicator)
+        view.addSubview(pageControl)
         
         loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
         
@@ -97,7 +110,11 @@ class BoardDetailViewController: UIViewController {
             addTaskButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -24),
             
             loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+            loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            
+            pageControl.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            pageControl.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
+            pageControl.heightAnchor.constraint(equalToConstant: 20)
         ])
         
         addTaskButton.addTarget(self, action: #selector(addTaskButtonTapped), for: .touchUpInside)
@@ -107,6 +124,7 @@ class BoardDetailViewController: UIViewController {
         collectionView.delegate = self
         collectionView.dataSource = self
         collectionView.register(StatusColumnCell.self, forCellWithReuseIdentifier: StatusColumnCell.identifier)
+        collectionView.register(AddStatusCell.self, forCellWithReuseIdentifier: AddStatusCell.identifier)
     }
     
     private func setupNavigationBar() {
@@ -189,6 +207,10 @@ class BoardDetailViewController: UIViewController {
                 // Group tasks by status
                 self.tasks = Dictionary(grouping: tasks, by: { $0.statusId })
                 self.collectionView.reloadData()
+                
+                // Update page control
+                self.pageControl.numberOfPages = statuses.count + 1 // +1 for Add Status
+                self.pageControl.currentPage = 0
             }
         }
     }
@@ -252,7 +274,15 @@ class BoardDetailViewController: UIViewController {
                     switch result {
                     case .success(let status):
                         self.statuses.append(status)
-                        // Update your board view
+                        self.tasks[status.id] = []
+                        self.pageControl.numberOfPages = self.statuses.count + 1
+                        self.collectionView.reloadData()
+                        
+                        // Scroll to the newly added status after a brief delay to ensure layout is updated
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            let indexPath = IndexPath(item: self.statuses.count - 1, section: 0)
+                            self.collectionView.scrollToItem(at: indexPath, at: .centeredHorizontally, animated: true)
+                        }
                     case .failure(let error):
                         self.showError(error)
                     }
@@ -502,15 +532,32 @@ class BoardDetailViewController: UIViewController {
         
         present(alert, animated: true)
     }
+    
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let page = round(scrollView.contentOffset.x / scrollView.bounds.width)
+        pageControl.currentPage = Int(page)
+    }
 }
 
 // MARK: - UICollectionViewDataSource & UICollectionViewDelegate
 extension BoardDetailViewController: UICollectionViewDataSource, UICollectionViewDelegate, UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return statuses.count
+        return statuses.count + 1  // +1 for Add Status cell
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        if indexPath.item == statuses.count {
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: AddStatusCell.identifier, for: indexPath) as? AddStatusCell else {
+                return UICollectionViewCell()
+            }
+            
+            cell.configure { [weak self] in
+                self?.showAddStatusDialog()
+            }
+            
+            return cell
+        }
+        
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: StatusColumnCell.identifier, for: indexPath) as? StatusColumnCell else {
             return UICollectionViewCell()
         }
@@ -523,9 +570,19 @@ extension BoardDetailViewController: UICollectionViewDataSource, UICollectionVie
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let width = view.bounds.width * 0.85
-        let height = collectionView.bounds.height
-        return CGSize(width: width, height: height)
+        return CGSize(width: collectionView.bounds.width, height: collectionView.bounds.height)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
+        return .zero
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
+        return 0
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
+        return 0
     }
 }
 
@@ -554,5 +611,51 @@ extension BoardDetailViewController: UIPickerViewDelegate, UIPickerViewDataSourc
             textField.text = priorities[row]
             textField.resignFirstResponder()
         }
+    }
+}
+
+class AddStatusCell: UICollectionViewCell {
+    static let identifier = "AddStatusCell"
+    
+    private let addButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.backgroundColor = .systemGray6
+        button.layer.cornerRadius = 8
+        button.setTitle("Add Status", for: .normal)
+        button.setTitleColor(.systemBlue, for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 16, weight: .medium)
+        return button
+    }()
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupUI()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    private func setupUI() {
+        contentView.addSubview(addButton)
+        
+        NSLayoutConstraint.activate([
+            addButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 8),
+            addButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
+            addButton.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+            addButton.heightAnchor.constraint(equalToConstant: 55)
+        ])
+    }
+    
+    func configure(action: @escaping () -> Void) {
+        addButton.addTarget(self, action: #selector(buttonTapped), for: .touchUpInside)
+        self.action = action
+    }
+    
+    private var action: (() -> Void)?
+    
+    @objc private func buttonTapped() {
+        action?()
     }
 }
