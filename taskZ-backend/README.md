@@ -432,10 +432,12 @@ Response:
 
 ### Task Management
 
-#### Get Board Tasks
+#### Get Assigned Tasks
 ```http
-GET /api/Task/board/{boardId}
+GET /api/Task/assigned
 ```
+Returns all tasks assigned to the current user across all boards they have access to, ordered by due date and priority.
+
 Response:
 ```json
 [
@@ -445,7 +447,7 @@ Response:
         "statusId": number,
         "title": "string",
         "description": "string",
-        "priority": "string",
+        "priority": "string", // "low", "medium", "high"
         "dueDate": "datetime",
         "assigneeId": "string",
         "position": number,
@@ -457,50 +459,87 @@ Response:
 ]
 ```
 
+#### Get Board Tasks
+```http
+GET /api/Task/board/{boardId}
+```
+Returns all tasks in a board, ordered by status and position.
+
+Response:
+```json
+[
+    {
+        "id": number,
+        "boardId": number,
+        "statusId": number,
+        "title": "string",
+        "description": "string",
+        "priority": "string", // "low", "medium", "high"
+        "dueDate": "string", // ISO 8601 date format
+        "assigneeId": "string",
+        "position": number,
+        "createdBy": "string",
+        "created": "string",
+        "lastModifiedBy": "string",
+        "lastModified": "string"
+    }
+]
+```
+
 #### Get Status Tasks
 ```http
 GET /api/Task/status/{statusId}
 ```
-Response: Same as get board tasks response
+Returns all tasks in a specific status column, ordered by position.
+
+Response: Same as Get Board Tasks
 
 #### Create Task
 ```http
 POST /api/Task/board/{boardId}
 ```
+Creates a new task in the specified board. The task will be placed in the first status column.
+
 Request body:
 ```json
 {
     "title": "string",
     "description": "string",
-    "priority": "string",
-    "dueDate": "datetime",
-    "assigneeId": "string"
+    "priority": "string", // "low", "medium", "high"
+    "dueDate": "string", // ISO 8601 date format
+    "assigneeId": "string" // optional
 }
 ```
-Response: Single task object (same as in get board tasks)
+
+Response: Single task object (same structure as in Get Board Tasks)
 
 #### Update Task
 ```http
 PUT /api/Task/{id}
 ```
+Updates an existing task. Can be used to update task details, change status, or reorder within a status column.
+
 Request body:
 ```json
 {
     "title": "string",
     "description": "string",
-    "priority": "string",
-    "dueDate": "datetime",
-    "assigneeId": "string",
+    "priority": "string", // "low", "medium", "high"
+    "dueDate": "string", // ISO 8601 date format
+    "assigneeId": "string", // optional
     "statusId": number,
     "position": number
 }
 ```
-Response: Updated task object
+
+Response: Updated task object (same structure as in Get Board Tasks)
 
 #### Delete Task
 ```http
 DELETE /api/Task/{id}
 ```
+Deletes the specified task.
+
 Response: 204 No Content
 
 ## Documentation
@@ -571,6 +610,33 @@ Response:
 All task endpoints require authentication. Include the JWT token in the Authorization header:
 ```
 Authorization: Bearer {your_token}
+```
+
+### Get Assigned Tasks
+```http
+GET /api/Task/assigned
+```
+Returns all tasks assigned to the current user across all boards they have access to, ordered by due date and priority.
+
+Response:
+```json
+[
+    {
+        "id": number,
+        "boardId": number,
+        "statusId": number,
+        "title": "string",
+        "description": "string",
+        "priority": "string", // "low", "medium", "high"
+        "dueDate": "datetime",
+        "assigneeId": "string",
+        "position": number,
+        "createdBy": "string",
+        "created": "datetime",
+        "lastModifiedBy": "string",
+        "lastModified": "datetime"
+    }
+]
 ```
 
 ### Get Board Tasks

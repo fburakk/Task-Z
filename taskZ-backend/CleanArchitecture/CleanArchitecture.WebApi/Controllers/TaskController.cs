@@ -24,6 +24,40 @@ namespace CleanArchitecture.WebApi.Controllers
             _context = context;
         }
 
+        [HttpGet("assigned")]
+        public async Task<ActionResult<List<TaskDto>>> GetAssignedTasks()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            var tasks = await _context.BoardTasks
+                .Include(t => t.Board)
+                .ThenInclude(b => b.Workspace)
+                .Where(t => t.AssigneeId == userId &&
+                    (t.Board.Workspace.UserId == userId || // User owns the workspace
+                     t.Board.Users.Any(u => u.UserId == userId))) // User is a board member
+                .OrderBy(t => t.DueDate)
+                .ThenBy(t => t.Priority)
+                .Select(t => new TaskDto
+                {
+                    Id = t.Id,
+                    BoardId = t.BoardId,
+                    StatusId = t.StatusId,
+                    Title = t.Title,
+                    Description = t.Description,
+                    Priority = t.Priority,
+                    DueDate = t.DueDate,
+                    AssigneeId = t.AssigneeId,
+                    Position = t.Position,
+                    CreatedBy = t.CreatedBy,
+                    Created = t.Created,
+                    LastModifiedBy = t.LastModifiedBy,
+                    LastModified = t.LastModified
+                })
+                .ToListAsync();
+
+            return tasks;
+        }
+
         [HttpGet("board/{boardId}")]
         public async Task<ActionResult<List<TaskDto>>> GetBoardTasks(int boardId)
         {
