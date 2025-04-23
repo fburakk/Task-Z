@@ -63,6 +63,43 @@ class BoardCell: UITableViewCell {
     }
 }
 
+class WorkspaceHeaderView: UITableViewHeaderFooterView {
+    static let identifier = "WorkspaceHeaderView"
+    
+    private let titleLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.textColor = .white
+        label.font = .systemFont(ofSize: 15, weight: .semibold)
+        return label
+    }()
+    
+    override init(reuseIdentifier: String?) {
+        super.init(reuseIdentifier: reuseIdentifier)
+        setupUI()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    private func setupUI() {
+        contentView.backgroundColor = .black
+        
+        contentView.addSubview(titleLabel)
+        
+        NSLayoutConstraint.activate([
+            titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
+            titleLabel.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16)
+        ])
+    }
+    
+    func configure(with workspace: Workspace, boardCount: Int) {
+        titleLabel.text = "\(workspace.name.uppercased()) (\(boardCount))"
+    }
+}
+
 class BoardsViewController: UIViewController {
     
     private let tableView: UITableView = {
@@ -167,6 +204,7 @@ class BoardsViewController: UIViewController {
     private func setupTableView() {
         tableView.delegate = self
         tableView.dataSource = self
+        tableView.register(WorkspaceHeaderView.self, forHeaderFooterViewReuseIdentifier: WorkspaceHeaderView.identifier)
     }
     
     private func setupTabBar() {
@@ -310,18 +348,22 @@ extension BoardsViewController: UITableViewDelegate, UITableViewDataSource {
         return cell
     }
     
-    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        guard let headerView = tableView.dequeueReusableHeaderFooterView(withIdentifier: WorkspaceHeaderView.identifier) as? WorkspaceHeaderView else {
+            return nil
+        }
+        
         let workspace = workspaces[section]
-        let boardCount = isSearching ?
-            (filteredBoards[workspace.id]?.count ?? 0) :
+        let boardCount = isSearching ? 
+            (filteredBoards[workspace.id]?.count ?? 0) : 
             (boards[workspace.id]?.count ?? 0)
-        return "\(workspace.name.uppercased()) (\(boardCount))"
+        
+        headerView.configure(with: workspace, boardCount: boardCount)
+        return headerView
     }
     
-    func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
-        if let header = view as? UITableViewHeaderFooterView {
-            header.textLabel?.textColor = .white
-        }
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 54
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {

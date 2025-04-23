@@ -573,7 +573,7 @@ class APIService {
         performRequest(request, completion: completion)
     }
     
-    func createTask(boardId: Int, title: String, description: String, priority: String, dueDate: String?, assigneeId: Int?, completion: @escaping (Result<Task, APIError>) -> Void) {
+    func createTask(boardId: Int, title: String, description: String, priority: String, dueDate: String?, assigneeId: String?, statusId: Int?, completion: @escaping (Result<Task, APIError>) -> Void) {
         do {
             var taskData: [String: Any] = [
                 "title": title,
@@ -582,9 +582,10 @@ class APIService {
             ]
             if let dueDate = dueDate { taskData["dueDate"] = dueDate }
             if let assigneeId = assigneeId { taskData["assigneeId"] = assigneeId }
+            if let statusId = statusId { taskData["statusId"] = statusId }
             
             let body = try JSONSerialization.data(withJSONObject: taskData)
-            guard let request = makeRequest("/task/board/\(boardId)", method: "POST", body: body) else {
+            guard let request = makeRequest("/Task/board/\(boardId)", method: "POST", body: body) else {
                 completion(.failure(APIError.invalidURL))
                 return
             }

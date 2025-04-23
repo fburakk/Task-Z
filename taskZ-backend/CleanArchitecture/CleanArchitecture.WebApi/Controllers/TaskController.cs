@@ -24,6 +24,40 @@ namespace CleanArchitecture.WebApi.Controllers
             _context = context;
         }
 
+        [HttpGet("assigned")]
+        public async Task<ActionResult<List<TaskDto>>> GetAssignedTasks()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            var tasks = await _context.BoardTasks
+                .Include(t => t.Board)
+                .ThenInclude(b => b.Workspace)
+                .Where(t => t.AssigneeId == userId &&
+                    (t.Board.Workspace.UserId == userId || // User owns the workspace
+                     t.Board.Users.Any(u => u.UserId == userId))) // User is a board member
+                .OrderBy(t => t.DueDate)
+                .ThenBy(t => t.Priority)
+                .Select(t => new TaskDto
+                {
+                    Id = t.Id,
+                    BoardId = t.BoardId,
+                    StatusId = t.StatusId,
+                    Title = t.Title,
+                    Description = t.Description,
+                    Priority = t.Priority,
+                    DueDate = t.DueDate,
+                    AssigneeId = t.AssigneeId,
+                    Position = t.Position,
+                    CreatedBy = t.CreatedBy,
+                    Created = t.Created,
+                    LastModifiedBy = t.LastModifiedBy,
+                    LastModified = t.LastModified
+                })
+                .ToListAsync();
+
+            return tasks;
+        }
+
         [HttpGet("board/{boardId}")]
         public async Task<ActionResult<List<TaskDto>>> GetBoardTasks(int boardId)
         {
@@ -109,7 +143,7 @@ namespace CleanArchitecture.WebApi.Controllers
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             
-            // Verify board access and get first status
+            // Verify board access and get statuses
             var board = await _context.Boards
                 .Include(b => b.Workspace)
                 .Include(b => b.Statuses)
@@ -120,15 +154,31 @@ namespace CleanArchitecture.WebApi.Controllers
                 return NotFound("Board not found or access denied.");
             }
 
-            var firstStatus = board.Statuses.OrderBy(s => s.Position).FirstOrDefault();
-            if (firstStatus == null)
+            int targetStatusId;
+            if (request.StatusId.HasValue)
             {
-                return BadRequest("Board must have at least one status.");
+                // Verify the requested status belongs to this board
+                var requestedStatus = board.Statuses.FirstOrDefault(s => s.Id == request.StatusId.Value);
+                if (requestedStatus == null)
+                {
+                    return BadRequest("Specified status does not belong to this board.");
+                }
+                targetStatusId = requestedStatus.Id;
+            }
+            else
+            {
+                // Default to first status
+                var firstStatus = board.Statuses.OrderBy(s => s.Position).FirstOrDefault();
+                if (firstStatus == null)
+                {
+                    return BadRequest("Board must have at least one status.");
+                }
+                targetStatusId = firstStatus.Id;
             }
 
-            // Get max position in the status
+            // Get max position in the target status
             var maxPosition = await _context.BoardTasks
-                .Where(t => t.StatusId == firstStatus.Id)
+                .Where(t => t.StatusId == targetStatusId)
                 .Select(t => t.Position)
                 .DefaultIfEmpty()
                 .MaxAsync();
@@ -136,7 +186,7 @@ namespace CleanArchitecture.WebApi.Controllers
             var task = new BoardTask
             {
                 BoardId = boardId,
-                StatusId = firstStatus.Id,
+                StatusId = targetStatusId,
                 Title = request.Title,
                 Description = request.Description,
                 Priority = request.Priority,

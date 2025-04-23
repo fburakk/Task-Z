@@ -60,19 +60,15 @@ namespace CleanArchitecture.WebApi.Controllers
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             
-            // Verify workspace access
-            var hasAccess = await _context.Workspaces
-                .AsNoTracking()
-                .AnyAsync(w => w.Id == workspaceId && w.UserId == userId);
-                
-            if (!hasAccess)
-            {
-                return NotFound("Workspace not found or access denied.");
-            }
-
+            // Get workspace owner's boards and boards where user is a member
             var boards = await _context.Boards
                 .AsNoTracking()
-                .Where(b => b.WorkspaceId == workspaceId && !b.IsArchived)
+                .Include(b => b.Workspace)
+                .Include(b => b.Users)
+                .Where(b => b.WorkspaceId == workspaceId && 
+                    !b.IsArchived &&
+                    (b.Workspace.UserId == userId || // Workspace owner
+                     b.Users.Any(u => u.UserId == userId))) // Board member
                 .ToListAsync();
 
             return boards;
@@ -84,9 +80,12 @@ namespace CleanArchitecture.WebApi.Controllers
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             
             var board = await _context.Boards
-                .AsNoTracking()  // Explicitly state no tracking for read-only operation
+                .AsNoTracking()
                 .Include(b => b.Workspace)
-                .FirstOrDefaultAsync(b => b.Id == id && b.Workspace.UserId == userId);
+                .Include(b => b.Users)
+                .FirstOrDefaultAsync(b => b.Id == id && 
+                    (b.Workspace.UserId == userId || // Workspace owner
+                     b.Users.Any(u => u.UserId == userId))); // Board member
 
             if (board == null)
             {
@@ -103,18 +102,21 @@ namespace CleanArchitecture.WebApi.Controllers
             
             var board = await _context.Boards
                 .Include(b => b.Workspace)
-                .AsTracking()  // Enable tracking for this query
-                .FirstOrDefaultAsync(b => b.Id == id && b.Workspace.UserId == userId);
+                .Include(b => b.Users)
+                .AsTracking()
+                .FirstOrDefaultAsync(b => b.Id == id && 
+                    (b.Workspace.UserId == userId || // Workspace owner
+                     b.Users.Any(u => u.UserId == userId && u.Role == "editor"))); // Board editor
 
             if (board == null)
             {
-                return NotFound();
+                return NotFound("Board not found or insufficient permissions.");
             }
 
             board.Name = request.Name;
             board.Background = request.Background;
             
-            _context.Boards.Update(board);  // Explicitly mark the entity as modified
+            _context.Boards.Update(board);
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -168,7 +170,10 @@ namespace CleanArchitecture.WebApi.Controllers
             // Verify board access
             var hasAccess = await _context.Boards
                 .Include(b => b.Workspace)
-                .AnyAsync(b => b.Id == id && b.Workspace.UserId == userId);
+                .Include(b => b.Users)
+                .AnyAsync(b => b.Id == id && 
+                    (b.Workspace.UserId == userId || // Workspace owner
+                     b.Users.Any(u => u.UserId == userId))); // Board member
                 
             if (!hasAccess)
             {

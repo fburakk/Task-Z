@@ -432,10 +432,12 @@ Response:
 
 ### Task Management
 
-#### Get Board Tasks
+#### Get Assigned Tasks
 ```http
-GET /api/Task/board/{boardId}
+GET /api/Task/assigned
 ```
+Returns all tasks assigned to the current user across all boards they have access to, ordered by due date and priority.
+
 Response:
 ```json
 [
@@ -445,7 +447,7 @@ Response:
         "statusId": number,
         "title": "string",
         "description": "string",
-        "priority": "string",
+        "priority": "string", // "low", "medium", "high"
         "dueDate": "datetime",
         "assigneeId": "string",
         "position": number,
@@ -457,50 +459,128 @@ Response:
 ]
 ```
 
+#### Get Board Tasks
+```http
+GET /api/Task/board/{boardId}
+```
+Returns all tasks in a board, ordered by status and position.
+
+Response:
+```json
+[
+    {
+        "id": number,
+        "boardId": number,
+        "statusId": number,
+        "title": "string",
+        "description": "string",
+        "priority": "string", // "low", "medium", "high"
+        "dueDate": "string", // ISO 8601 date format
+        "assigneeId": "string",
+        "position": number,
+        "createdBy": "string",
+        "created": "string",
+        "lastModifiedBy": "string",
+        "lastModified": "string"
+    }
+]
+```
+
 #### Get Status Tasks
 ```http
 GET /api/Task/status/{statusId}
 ```
-Response: Same as get board tasks response
+Returns all tasks in a specific status column, ordered by position.
+
+Response: Same as Get Board Tasks
 
 #### Create Task
 ```http
 POST /api/Task/board/{boardId}
 ```
+Creates a new task in the specified board. If statusId is provided, the task will be created in that status. Otherwise, it will be placed in the first status column.
+
 Request body:
 ```json
 {
     "title": "string",
     "description": "string",
-    "priority": "string",
-    "dueDate": "datetime",
-    "assigneeId": "string"
+    "priority": "string", // "low", "medium", "high"
+    "dueDate": "string", // ISO 8601 date format
+    "assigneeId": "string", // optional
+    "statusId": number    // optional - if not provided, task will be added to first status
 }
 ```
-Response: Single task object (same as in get board tasks)
+
+Response:
+```json
+{
+    "id": number,
+    "boardId": number,
+    "statusId": number,
+    "title": "string",
+    "description": "string",
+    "priority": "string",
+    "dueDate": "string",
+    "assigneeId": "string",
+    "position": number,
+    "createdBy": "string",
+    "created": "string",
+    "lastModifiedBy": "string",
+    "lastModified": "string"
+}
+```
+
+Example requests:
+
+1. Create task in first status (To Do):
+```json
+{
+    "title": "First Task",
+    "description": "This will go to To Do status",
+    "priority": "medium",
+    "dueDate": "2024-04-30T10:00:00Z"
+}
+```
+
+2. Create task in specific status:
+```json
+{
+    "title": "Second Task",
+    "description": "This will go to specified status",
+    "priority": "high",
+    "dueDate": "2024-04-30T10:00:00Z",
+    "statusId": 2
+}
+```
 
 #### Update Task
 ```http
 PUT /api/Task/{id}
 ```
+Updates an existing task. Can be used to update task details, change status, or reorder within a status column.
+
 Request body:
 ```json
 {
     "title": "string",
     "description": "string",
-    "priority": "string",
-    "dueDate": "datetime",
-    "assigneeId": "string",
+    "priority": "string", // "low", "medium", "high"
+    "dueDate": "string", // ISO 8601 date format
+    "assigneeId": "string", // optional
     "statusId": number,
     "position": number
 }
 ```
-Response: Updated task object
+
+Response: Updated task object (same structure as in Get Board Tasks)
 
 #### Delete Task
 ```http
 DELETE /api/Task/{id}
 ```
+Deletes the specified task.
+
 Response: 204 No Content
 
 ## Documentation
@@ -573,6 +653,33 @@ All task endpoints require authentication. Include the JWT token in the Authoriz
 Authorization: Bearer {your_token}
 ```
 
+### Get Assigned Tasks
+```http
+GET /api/Task/assigned
+```
+Returns all tasks assigned to the current user across all boards they have access to, ordered by due date and priority.
+
+Response:
+```json
+[
+    {
+        "id": number,
+        "boardId": number,
+        "statusId": number,
+        "title": "string",
+        "description": "string",
+        "priority": "string", // "low", "medium", "high"
+        "dueDate": "datetime",
+        "assigneeId": "string",
+        "position": number,
+        "createdBy": "string",
+        "created": "datetime",
+        "lastModifiedBy": "string",
+        "lastModified": "datetime"
+    }
+]
+```
+
 ### Get Board Tasks
 ```http
 GET /api/Task/board/{boardId}
@@ -612,7 +719,7 @@ Response: Same as Get Board Tasks
 ```http
 POST /api/Task/board/{boardId}
 ```
-Creates a new task in the specified board. The task will be placed in the first status column.
+Creates a new task in the specified board. If statusId is provided, the task will be created in that status. Otherwise, it will be placed in the first status column.
 
 Request body:
 ```json
@@ -621,11 +728,52 @@ Request body:
     "description": "string",
     "priority": "string", // "low", "medium", "high"
     "dueDate": "string", // ISO 8601 date format
-    "assigneeId": "string" // optional
+    "assigneeId": "string", // optional
+    "statusId": number    // optional - if not provided, task will be added to first status
 }
 ```
 
-Response: Single task object (same structure as in Get Board Tasks)
+Response:
+```json
+{
+    "id": number,
+    "boardId": number,
+    "statusId": number,
+    "title": "string",
+    "description": "string",
+    "priority": "string",
+    "dueDate": "string",
+    "assigneeId": "string",
+    "position": number,
+    "createdBy": "string",
+    "created": "string",
+    "lastModifiedBy": "string",
+    "lastModified": "string"
+}
+```
+
+Example requests:
+
+1. Create task in first status (To Do):
+```json
+{
+    "title": "First Task",
+    "description": "This will go to To Do status",
+    "priority": "medium",
+    "dueDate": "2024-04-30T10:00:00Z"
+}
+```
+
+2. Create task in specific status:
+```json
+{
+    "title": "Second Task",
+    "description": "This will go to specified status",
+    "priority": "high",
+    "dueDate": "2024-04-30T10:00:00Z",
+    "statusId": 2
+}
+```
 
 ### Update Task
 ```http
@@ -685,12 +833,20 @@ Response:
 ## Task Features
 
 ### Position Management
-- When creating a task, it's automatically placed at the end of the first status column
+- When creating a task:
+  - If statusId is provided, task is placed at the end of the specified status column
+  - If statusId is not provided, task is placed at the end of the first status column
 - When updating a task's status, it's placed at the end of the new status column
 - When updating a task's position within the same status:
   - Other tasks' positions are automatically adjusted
   - Tasks between the old and new positions are shifted accordingly
   - Position values are kept sequential without gaps
+
+### Status Management
+- Tasks can be created in any status column by specifying the statusId
+- If no statusId is provided during creation, task defaults to the first status
+- Status must exist in the board and user must have access to it
+- Moving tasks between statuses is done via the update endpoint
 
 ### Authorization
 - All endpoints verify that the user has access to the board
@@ -698,7 +854,7 @@ Response:
 - Users can only access tasks in boards they have access to
 
 ### Validation
-- Status ID must belong to the same board when moving tasks
+- Status ID must belong to the same board when creating or moving tasks
 - Position values are automatically bounded to valid ranges
 - Required fields are enforced (title, priority)
-- Priority must be one of: "low", "medium", "high" 
+- Priority must be one of: "low", "medium", "high"
