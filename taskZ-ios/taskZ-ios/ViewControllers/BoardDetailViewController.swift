@@ -332,7 +332,7 @@ class BoardDetailViewController: UIViewController {
                 self?.showError(NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey: "Name and background color are required"]))
                 return
             }
-            
+        
             self.loadingIndicator.startAnimating()
             APIService.shared.updateBoard(
                 id: self.board.id,
@@ -346,7 +346,6 @@ class BoardDetailViewController: UIViewController {
                     
                     switch result {
                     case .success:
-                        // Update local board data since API returns 204
                         self.board.name = name
                         self.title = name
                         self.board.background = background
