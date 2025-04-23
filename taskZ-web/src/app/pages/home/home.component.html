@@ -1,25 +1,38 @@
 <div class="home-container" style="padding: 40px; max-width: 1200px; margin: 0 auto; width: 100%;">
   
-    <div *ngFor="let workspace of workspaces" style="margin-bottom: 40px;">
-      <!-- Workspace adı -->
-      <h2 style="font-size: 22px; font-weight: 600; color: #1a1a1a; margin: 40px 0 24px 0; font-family: 'Inter', sans-serif;">
-        {{ workspace.name }}
-      </h2>
-  
-      <!-- Kartlar -->
-      <div class="card-grid">
-        <div class="project-card" style="background: #E1F5FE;">
-          <h3 class="card-title">Empty</h3>
+  <div *ngFor="let workspace of workspaces" style="margin-bottom: 40px;">
+    <!-- Workspace adı -->
+    <h2 style="font-size: 22px; font-weight: 600; color: #1a1a1a; margin: 40px 0 24px 0; font-family: 'Inter', sans-serif;">
+      {{ workspace.name }}
+    </h2>
+
+    <!-- Kartlar -->
+    <div class="card-grid">
+      <ng-container *ngIf="boardsByWorkspace[workspace.id] && boardsByWorkspace[workspace.id].length > 0; else noBoards">
+        <a
+          class="project-card"
+          *ngFor="let board of boardsByWorkspace[workspace.id]"
+          [style.background]="'#E1F5FE'"
+          [routerLink]="['/project', board.id]"
+        >
+          <h3 class="card-title">{{ board.name }}</h3>
+        </a>
+      </ng-container>
+
+      <ng-template #noBoards>
+        <div class="project-card" style="background: #f0f0f0;">
+          <h3 class="card-title" style="color: #666;">No boards available</h3>
         </div>
-        <div class="project-card" style="background: #F0F4C3;">
-          <h3 class="card-title">Empty</h3>
-        </div>
-        <div class="project-card" style="background: #FFECB3;">
-          <h3 class="card-title" style="color: #4a90e2; font-weight: 500;">+ Yeni proje</h3>
-        </div>
+      </ng-template>
+
+      <div class="project-card" style="background: #FFECB3;">
+        <h3 class="card-title" style="color: #4a90e2; font-weight: 500;">+ Yeni proje</h3>
       </div>
     </div>
-  </div>
+    
+  </div> <!-- workspace div kapanışı -->
+</div> <!-- home-container div kapanışı -->
+
   
   <style>
     .card-grid {
