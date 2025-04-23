@@ -13,7 +13,7 @@ class MainTabBarController: UITabBarController {
         let boardsNav = UINavigationController(rootViewController: boardsVC)
         boardsNav.tabBarItem = UITabBarItem(title: "Panolar", image: UIImage(systemName: "mail.stack"), tag: 0)
         
-        let cardsVC = UIViewController() // Placeholder for cards screen
+        let cardsVC = MyCardsViewController() // Placeholder for cards screen
         cardsVC.view.backgroundColor = .black
         cardsVC.title = "Kartlarım"
         let cardsNav = UINavigationController(rootViewController: cardsVC)

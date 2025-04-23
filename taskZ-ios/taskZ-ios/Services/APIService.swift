@@ -573,6 +573,31 @@ class APIService {
         performRequest(request, completion: completion)
     }
     
+    func getAssignedTasks(completion: @escaping (Result<[Task], APIError>) -> Void) {
+        print("\ngetAssignedTasks called")
+        
+        guard let request = makeRequest("/task/assigned", method: "GET") else {
+            print("❌ Failed to create request URL")
+            completion(.failure(APIError.invalidURL))
+            return
+        }
+        
+        print("\nSending request to: \(request.url?.absoluteString ?? "nil")")
+        print("Headers: \(request.allHTTPHeaderFields ?? [:])")
+        
+        performRequest(request) { (result: Result<[Task], APIError>) in
+            switch result {
+            case .success(let tasks):
+                print("\n✓ Successfully retrieved \(tasks.count) assigned tasks")
+                completion(.success(tasks))
+            case .failure(let error):
+                print("\n❌ Failed to get assigned tasks:")
+                print("- Error: \(error)")
+                completion(.failure(error))
+            }
+        }
+    }
+    
     func createTask(boardId: Int, title: String, description: String, priority: String, dueDate: String?, assigneeId: String?, statusId: Int?, completion: @escaping (Result<Task, APIError>) -> Void) {
         do {
             var taskData: [String: Any] = [
