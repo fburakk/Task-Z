@@ -95,6 +95,7 @@ namespace CleanArchitecture.WebApi.Controllers
             }
 
             var tasks = await _context.BoardTasks
+                .AsNoTracking()  // Explicitly get fresh data
                 .Where(t => t.BoardId == boardId)
                 .OrderBy(t => t.StatusId)
                 .ThenBy(t => t.Position)
@@ -222,6 +223,7 @@ namespace CleanArchitecture.WebApi.Controllers
             var task = await _context.BoardTasks
                 .Include(t => t.Board)
                 .ThenInclude(b => b.Workspace)
+                .AsTracking()  // Enable tracking for this query
                 .FirstOrDefaultAsync(t => t.Id == id && t.Board.Workspace.UserId == userId);
 
             if (task == null)
@@ -243,11 +245,11 @@ namespace CleanArchitecture.WebApi.Controllers
             }
 
             // If status is changing, update positions
-            if (request.StatusId != task.StatusId)
+            if (request.StatusId.HasValue && request.StatusId.Value != task.StatusId)
             {
                 // Verify status belongs to the same board
                 var statusExists = await _context.BoardStatuses
-                    .AnyAsync(bs => bs.Id == request.StatusId && bs.BoardId == task.BoardId);
+                    .AnyAsync(bs => bs.Id == request.StatusId.Value && bs.BoardId == task.BoardId);
                     
                 if (!statusExists)
                 {
@@ -256,15 +258,15 @@ namespace CleanArchitecture.WebApi.Controllers
 
                 // Get max position in the new status
                 var maxPosition = await _context.BoardTasks
-                    .Where(t => t.StatusId == request.StatusId)
+                    .Where(t => t.StatusId == request.StatusId.Value)
                     .Select(t => t.Position)
                     .DefaultIfEmpty()
                     .MaxAsync();
 
-                task.StatusId = request.StatusId;
+                task.StatusId = request.StatusId.Value;
                 task.Position = maxPosition + 1;
             }
-            else if (request.Position != task.Position)
+            else if (request.Position.HasValue && request.Position.Value != task.Position)
             {
                 // Update positions of other tasks in the same status
                 var tasksToUpdate = await _context.BoardTasks
@@ -272,7 +274,7 @@ namespace CleanArchitecture.WebApi.Controllers
                     .OrderBy(t => t.Position)
                     .ToListAsync();
 
-                var newPosition = Math.Max(0, Math.Min(request.Position, tasksToUpdate.Count));
+                var newPosition = Math.Max(0, Math.Min(request.Position.Value, tasksToUpdate.Count));
                 var oldPosition = task.Position;
 
                 if (newPosition < oldPosition)
@@ -293,10 +295,15 @@ namespace CleanArchitecture.WebApi.Controllers
                 task.Position = newPosition;
             }
 
-            task.Title = request.Title;
-            task.Description = request.Description;
-            task.Priority = request.Priority;
-            task.DueDate = request.DueDate;
+            // Only update fields that are provided in the request
+            if (request.Title != null)
+                task.Title = request.Title;
+            if (request.Description != null)
+                task.Description = request.Description;
+            if (request.Priority != null)
+                task.Priority = request.Priority;
+            if (request.DueDate.HasValue)
+                task.DueDate = request.DueDate;
 
             await _context.SaveChangesAsync();
 

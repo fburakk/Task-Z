@@ -17,7 +17,6 @@ namespace CleanArchitecture.Infrastructure.Contexts
 
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IDateTimeService dateTime, IAuthenticatedUserService authenticatedUser) : base(options)
         {
-            ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
             _dateTime = dateTime;
             _authenticatedUser = authenticatedUser;
         }

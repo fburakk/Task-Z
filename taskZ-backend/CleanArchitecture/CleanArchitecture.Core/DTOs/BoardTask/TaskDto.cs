@@ -34,12 +34,12 @@ namespace CleanArchitecture.Core.DTOs.BoardTask
 
     public class UpdateTaskRequest
     {
-        public string Title { get; set; }
-        public string Description { get; set; }
-        public string Priority { get; set; }
+        public string? Title { get; set; }
+        public string? Description { get; set; }
+        public string? Priority { get; set; }
         public DateTime? DueDate { get; set; }
-        public string Username { get; set; }
-        public int StatusId { get; set; }
-        public int Position { get; set; }
+        public string? Username { get; set; }
+        public int? StatusId { get; set; }
+        public int? Position { get; set; }
     }
 }

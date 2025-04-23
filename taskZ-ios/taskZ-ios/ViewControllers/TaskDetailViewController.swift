@@ -7,10 +7,15 @@
 
 import UIKit
 
+protocol TaskDetailViewControllerDelegate: AnyObject {
+    func taskDetailViewController(_ viewController: TaskDetailViewController, didUpdateTask task: Task)
+}
+
 class TaskDetailViewController: UIViewController {
     private var task: Task
     private let board: Board
     private var statuses: [BoardStatus] = []
+    weak var delegate: TaskDetailViewControllerDelegate?
     
     enum Section: Int, CaseIterable {
         case header
@@ -415,6 +420,8 @@ class TaskDetailViewController: UIViewController {
                 case .success(let updatedTask):
                     self?.task = updatedTask
                     self?.collectionView.reloadData()
+                    // Notify delegate about the task update
+                    self?.delegate?.taskDetailViewController(self!, didUpdateTask: updatedTask)
                 case .failure(let error):
                     let alert = UIAlertController(
                         title: "Error",

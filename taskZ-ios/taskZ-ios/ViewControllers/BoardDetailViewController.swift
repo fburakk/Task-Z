@@ -580,6 +580,7 @@ extension BoardDetailViewController: UICollectionViewDataSource, UICollectionVie
         cell.onTaskSelected = { [weak self] task in
             guard let self = self else { return }
             let taskDetailVC = TaskDetailViewController(task: task, board: self.board)
+            taskDetailVC.delegate = self
             self.navigationController?.pushViewController(taskDetailVC, animated: true)
         }
         
@@ -628,6 +629,26 @@ extension BoardDetailViewController: UIPickerViewDelegate, UIPickerViewDataSourc
             textField.text = priorities[row]
             textField.resignFirstResponder()
         }
+    }
+}
+
+// MARK: - TaskDetailViewControllerDelegate
+extension BoardDetailViewController: TaskDetailViewControllerDelegate {
+    func taskDetailViewController(_ viewController: TaskDetailViewController, didUpdateTask task: Task) {
+        // Remove the task from its old status
+        for (statusId, statusTasks) in tasks {
+            if let index = statusTasks.firstIndex(where: { $0.id == task.id }) {
+                tasks[statusId]?.remove(at: index)
+            }
+        }
+        
+        // Add the task to its new status
+        var tasksForStatus = tasks[task.statusId] ?? []
+        tasksForStatus.append(task)
+        tasks[task.statusId] = tasksForStatus
+        
+        // Reload the collection view
+        collectionView.reloadData()
     }
 }
 
