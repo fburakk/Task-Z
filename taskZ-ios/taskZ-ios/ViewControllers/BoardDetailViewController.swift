@@ -457,19 +457,27 @@ class BoardDetailViewController: UIViewController {
     }
     
     @objc private func addTaskButtonTapped() {
-        let alert = UIAlertController(title: "Yeni Görev", message: nil, preferredStyle: .alert)
+        guard let firstStatus = statuses.first else {
+            showError(NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey: "No status columns available"]))
+            return
+        }
+        showAddTaskDialog(for: firstStatus)
+    }
+    
+    private func showAddTaskDialog(for status: BoardStatus) {
+        let alert = UIAlertController(title: "New Task in \(status.title)", message: nil, preferredStyle: .alert)
         
         alert.addTextField { textField in
-            textField.placeholder = "Görev Başlığı"
+            textField.placeholder = "Task Title"
         }
         
         alert.addTextField { textField in
-            textField.placeholder = "Açıklama"
+            textField.placeholder = "Description"
         }
         
-        let priorities = ["Düşük", "Orta", "Yüksek"]
+        let priorities = ["Low", "Medium", "High"]
         alert.addTextField { textField in
-            textField.placeholder = "Öncelik"
+            textField.placeholder = "Priority"
             
             let pickerView = UIPickerView()
             pickerView.delegate = self
@@ -478,31 +486,58 @@ class BoardDetailViewController: UIViewController {
             textField.text = priorities[1] // Default to medium priority
         }
         
-        let createAction = UIAlertAction(title: "Oluştur", style: .default) { [weak self] _ in
+        alert.addTextField { textField in
+            textField.placeholder = "Due Date (Optional)"
+            
+            let datePicker = UIDatePicker()
+            datePicker.datePickerMode = .dateAndTime
+            datePicker.preferredDatePickerStyle = .wheels
+            datePicker.minimumDate = Date()
+            textField.inputView = datePicker
+            
+            let toolbar = UIToolbar()
+            toolbar.sizeToFit()
+            let doneButton = UIBarButtonItem(title: "Done", style: .done, target: self, action: #selector(self.datePickerDone))
+            toolbar.setItems([doneButton], animated: false)
+            textField.inputAccessoryView = toolbar
+        }
+        
+        let createAction = UIAlertAction(title: "Create", style: .default) { [weak self, weak alert] _ in
             guard let self = self,
-                  let title = alert.textFields?[0].text,
-                  let description = alert.textFields?[1].text,
+                  let title = alert?.textFields?[0].text,
+                  let description = alert?.textFields?[1].text,
                   !title.isEmpty else { return }
             
-            let priorityText = alert.textFields?[2].text ?? priorities[1]
-            let priority: TaskPriority
-            switch priorityText {
-            case "Düşük":
-                priority = .low
-            case "Yüksek":
-                priority = .high
-            default:
-                priority = .medium
+            let priorityText = alert?.textFields?[2].text?.lowercased() ?? "medium"
+            let priority: TaskPriority = TaskPriority(rawValue: priorityText) ?? .medium
+            
+            let dateFormatter = ISO8601DateFormatter()
+            dateFormatter.formatOptions = [.withInternetDateTime]
+            
+            var dueDate: String?
+            if let dateField = alert?.textFields?[3],
+               let datePicker = dateField.inputView as? UIDatePicker {
+                dueDate = dateFormatter.string(from: datePicker.date)
             }
+            
+            let taskRequest = Task.CreateRequest(
+                title: title,
+                description: description,
+                priority: priority,
+                dueDate: dateFormatter.date(from: dueDate ?? ""),
+                assigneeId: nil,
+                statusId: status.id
+            )
             
             self.loadingIndicator.startAnimating()
             APIService.shared.createTask(
                 boardId: self.board.id,
-                title: title,
-                description: description,
-                priority: priority.rawValue,
-                dueDate: nil,
-                assigneeId: nil
+                title: taskRequest.title,
+                description: taskRequest.description,
+                priority: taskRequest.priority.rawValue,
+                dueDate: dueDate,
+                assigneeId: taskRequest.assigneeId,
+                statusId: taskRequest.statusId
             ) { [weak self] result in
                 guard let self = self else { return }
                 
@@ -511,13 +546,10 @@ class BoardDetailViewController: UIViewController {
                     
                     switch result {
                     case .success(let task):
-                        // Add the new task to the first status
-                        if let firstStatus = self.statuses.first {
-                            var statusTasks = self.tasks[firstStatus.id] ?? []
-                            statusTasks.append(task)
-                            self.tasks[firstStatus.id] = statusTasks
-                            self.collectionView.reloadData()
-                        }
+                        var statusTasks = self.tasks[status.id] ?? []
+                        statusTasks.append(task)
+                        self.tasks[status.id] = statusTasks
+                        self.collectionView.reloadData()
                     case .failure(let error):
                         self.showError(error)
                     }
@@ -525,12 +557,16 @@ class BoardDetailViewController: UIViewController {
             }
         }
         
-        let cancelAction = UIAlertAction(title: "İptal", style: .cancel)
+        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
         
         alert.addAction(createAction)
         alert.addAction(cancelAction)
         
         present(alert, animated: true)
+    }
+    
+    @objc private func datePickerDone(_ sender: UIBarButtonItem) {
+        view.endEditing(true)
     }
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
@@ -565,6 +601,9 @@ extension BoardDetailViewController: UICollectionViewDataSource, UICollectionVie
         let status = statuses[indexPath.item]
         let statusTasks = tasks[status.id] ?? []
         cell.configure(with: status, tasks: statusTasks)
+        cell.onAddTask = { [weak self] status in
+            self?.showAddTaskDialog(for: status)
+        }
         
         return cell
     }
@@ -598,15 +637,15 @@ extension BoardDetailViewController: UIPickerViewDelegate, UIPickerViewDataSourc
     
     func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
         switch row {
-        case 0: return "Düşük"
-        case 1: return "Orta"
-        case 2: return "Yüksek"
+        case 0: return "Low"
+        case 1: return "Medium"
+        case 2: return "High"
         default: return nil
         }
     }
     
     func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
-        let priorities = ["Düşük", "Orta", "Yüksek"]
+        let priorities = ["Low", "Medium", "High"]
         if let textField = pickerView.superview?.superview as? UITextField {
             textField.text = priorities[row]
             textField.resignFirstResponder()

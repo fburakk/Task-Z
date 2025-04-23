@@ -33,6 +33,83 @@ struct Task: Codable {
     let lastModifiedBy: String?
     let lastModified: Date?
     
+    // Request body for creating a task
+    struct CreateRequest: Codable {
+        let title: String
+        let description: String
+        let priority: TaskPriority
+        let dueDate: Date?
+        let assigneeId: String?
+        let statusId: Int?
+        
+        enum CodingKeys: String, CodingKey {
+            case title
+            case description
+            case priority
+            case dueDate
+            case assigneeId
+            case statusId
+        }
+        
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(title, forKey: .title)
+            try container.encode(description, forKey: .description)
+            try container.encode(priority, forKey: .priority)
+            
+            // Use ISO8601DateFormatter for encoding dates
+            if let dueDate = dueDate {
+                let formatter = ISO8601DateFormatter()
+                formatter.formatOptions = [.withInternetDateTime]
+                let dateString = formatter.string(from: dueDate)
+                try container.encode(dateString, forKey: .dueDate)
+            }
+            
+            try container.encodeIfPresent(assigneeId, forKey: .assigneeId)
+            try container.encodeIfPresent(statusId, forKey: .statusId)
+        }
+    }
+    
+    // Request body for updating a task
+    struct UpdateRequest: Codable {
+        var title: String?
+        var description: String?
+        var priority: TaskPriority?
+        var dueDate: Date?
+        var assigneeId: String?
+        var statusId: Int?
+        var position: Int?
+        
+        enum CodingKeys: String, CodingKey {
+            case title
+            case description
+            case priority
+            case dueDate
+            case assigneeId
+            case statusId
+            case position
+        }
+        
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encodeIfPresent(title, forKey: .title)
+            try container.encodeIfPresent(description, forKey: .description)
+            try container.encodeIfPresent(priority, forKey: .priority)
+            
+            // Use ISO8601DateFormatter for encoding dates
+            if let dueDate = dueDate {
+                let formatter = ISO8601DateFormatter()
+                formatter.formatOptions = [.withInternetDateTime]
+                let dateString = formatter.string(from: dueDate)
+                try container.encode(dateString, forKey: .dueDate)
+            }
+            
+            try container.encodeIfPresent(assigneeId, forKey: .assigneeId)
+            try container.encodeIfPresent(statusId, forKey: .statusId)
+            try container.encodeIfPresent(position, forKey: .position)
+        }
+    }
+    
     enum CodingKeys: String, CodingKey {
         case id
         case boardId
@@ -58,12 +135,33 @@ struct Task: Codable {
         title = try container.decode(String.self, forKey: .title)
         description = try container.decode(String.self, forKey: .description)
         priority = try container.decode(TaskPriority.self, forKey: .priority)
-        dueDate = try container.decodeIfPresent(Date.self, forKey: .dueDate)
+        
+        // Use ISO8601DateFormatter for decoding dates
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        
+        if let dueDateString = try container.decodeIfPresent(String.self, forKey: .dueDate) {
+            dueDate = formatter.date(from: dueDateString)
+        } else {
+            dueDate = nil
+        }
+        
         assigneeId = try container.decodeIfPresent(String.self, forKey: .assigneeId)
         position = try container.decode(Int.self, forKey: .position)
         createdBy = try container.decode(String.self, forKey: .createdBy)
-        created = try container.decode(Date.self, forKey: .created)
+        
+        if let createdString = try container.decodeIfPresent(String.self, forKey: .created) {
+            created = formatter.date(from: createdString) ?? Date()
+        } else {
+            created = Date()
+        }
+        
         lastModifiedBy = try container.decodeIfPresent(String.self, forKey: .lastModifiedBy)
-        lastModified = try container.decodeIfPresent(Date.self, forKey: .lastModified)
+        
+        if let lastModifiedString = try container.decodeIfPresent(String.self, forKey: .lastModified) {
+            lastModified = formatter.date(from: lastModifiedString)
+        } else {
+            lastModified = nil
+        }
     }
 } 

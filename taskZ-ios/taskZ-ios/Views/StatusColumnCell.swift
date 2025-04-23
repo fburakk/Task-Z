@@ -84,6 +84,8 @@ class StatusColumnCell: UICollectionViewCell {
     static let identifier = "StatusColumnCell"
     
     private var tasks: [Task] = []
+    private var status: BoardStatus?
+    var onAddTask: ((BoardStatus) -> Void)?
     
     private let headerView: UIView = {
         let view = UIView()
@@ -107,6 +109,16 @@ class StatusColumnCell: UICollectionViewCell {
         return label
     }()
     
+    private let addButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        let config = UIImage.SymbolConfiguration(pointSize: 16, weight: .medium)
+        let image = UIImage(systemName: "plus", withConfiguration: config)
+        button.setImage(image, for: .normal)
+        button.tintColor = .systemBlue
+        return button
+    }()
+    
     private let collectionView: UICollectionView = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .vertical
@@ -126,6 +138,7 @@ class StatusColumnCell: UICollectionViewCell {
         super.init(frame: frame)
         setupUI()
         setupCollectionView()
+        setupActions()
     }
     
     required init?(coder: NSCoder) {
@@ -136,6 +149,7 @@ class StatusColumnCell: UICollectionViewCell {
         contentView.addSubview(headerView)
         headerView.addSubview(titleLabel)
         headerView.addSubview(taskCountLabel)
+        headerView.addSubview(addButton)
         contentView.addSubview(collectionView)
         
         NSLayoutConstraint.activate([
@@ -149,7 +163,13 @@ class StatusColumnCell: UICollectionViewCell {
             
             taskCountLabel.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
             taskCountLabel.leadingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: 8),
-            taskCountLabel.trailingAnchor.constraint(lessThanOrEqualTo: headerView.trailingAnchor),
+            
+            addButton.centerYAnchor.constraint(equalTo: headerView.centerYAnchor),
+            addButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor),
+            addButton.widthAnchor.constraint(equalToConstant: 32),
+            addButton.heightAnchor.constraint(equalToConstant: 32),
+            
+            taskCountLabel.trailingAnchor.constraint(lessThanOrEqualTo: addButton.leadingAnchor, constant: -8),
             
             collectionView.topAnchor.constraint(equalTo: headerView.bottomAnchor),
             collectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
@@ -164,7 +184,18 @@ class StatusColumnCell: UICollectionViewCell {
         collectionView.register(TaskCell.self, forCellWithReuseIdentifier: TaskCell.identifier)
     }
     
+    private func setupActions() {
+        addButton.addTarget(self, action: #selector(addButtonTapped), for: .touchUpInside)
+    }
+    
+    @objc private func addButtonTapped() {
+        if let status = status {
+            onAddTask?(status)
+        }
+    }
+    
     func configure(with status: BoardStatus, tasks: [Task]) {
+        self.status = status
         titleLabel.text = status.title.uppercased()
         taskCountLabel.text = "\(tasks.count)"
         self.tasks = tasks.sorted(by: { $0.position < $1.position })
