@@ -40,7 +40,7 @@ export class AuthService {
     return this.http.delete(`${this.baseUrl}/Account/delete-account`, this.getAuthHeaders());
   }
 
-  private getAuthHeaders(): { headers: HttpHeaders } {
+   getAuthHeaders(): { headers: HttpHeaders } {
     if (!this.isBrowser) {
       return {
         headers: new HttpHeaders({
