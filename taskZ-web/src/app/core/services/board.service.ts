@@ -9,10 +9,19 @@ export interface Board {
   name: string;
   background: string;
   isArchived: boolean;
+  createdBy?: string;
+  createdByUsername?: string;
+  created?: string;
+  lastModifiedBy?: string;
+  lastModifiedByUsername?: string;
+  lastModified?: string;
+  users?: BoardUser[];
+  statuses?: BoardStatus[];
 }
 
 export interface BoardStatus {
   id: number;
+  boardId?: number;
   title: string;
   position: number;
 }
