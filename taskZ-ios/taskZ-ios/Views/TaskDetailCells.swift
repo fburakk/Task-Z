@@ -408,4 +408,4 @@ class StatusCell: UICollectionViewCell {
     func configure(with status: BoardStatus) {
         statusLabel.text = status.title
     }
-} 
+}
