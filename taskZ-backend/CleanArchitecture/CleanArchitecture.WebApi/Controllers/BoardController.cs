@@ -210,8 +210,9 @@ namespace CleanArchitecture.WebApi.Controllers
             }
 
             var users = await _context.BoardUsers
+                .Include(u => u.Board)
                 .Where(u => u.BoardId == id)
-                .Join(_context.Users,
+                .Join(_userManager.Users,
                     bu => bu.UserId,
                     user => user.Id,
                     (bu, user) => new BoardUserResponse
