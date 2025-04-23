@@ -242,7 +242,9 @@ Response:
     "id": number,
     "name": "string",
     "userId": "string",
+    "username": "string",
     "createdBy": "string",
+    "createdByUsername": "string",
     "created": "datetime"
 }
 ```
@@ -258,7 +260,9 @@ Response:
         "id": number,
         "name": "string",
         "userId": "string",
+        "username": "string",
         "createdBy": "string",
+        "createdByUsername": "string",
         "created": "datetime"
     }
 ]
@@ -309,7 +313,15 @@ Response:
     "workspaceId": number,
     "name": "string",
     "background": "string",
-    "isArchived": false
+    "isArchived": false,
+    "createdBy": "string",
+    "createdByUsername": "string",
+    "created": "datetime",
+    "lastModifiedBy": "string",
+    "lastModifiedByUsername": "string",
+    "lastModified": "datetime",
+    "users": [],
+    "statuses": []
 }
 ```
 
@@ -325,7 +337,15 @@ Response:
         "workspaceId": number,
         "name": "string",
         "background": "string",
-        "isArchived": boolean
+        "isArchived": boolean,
+        "createdBy": "string",
+        "createdByUsername": "string",
+        "created": "datetime",
+        "lastModifiedBy": "string",
+        "lastModifiedByUsername": "string",
+        "lastModified": "datetime",
+        "users": [],
+        "statuses": []
     }
 ]
 ```
@@ -450,10 +470,13 @@ Response:
         "priority": "string", // "low", "medium", "high"
         "dueDate": "datetime",
         "assigneeId": "string",
+        "assigneeUsername": "string",
         "position": number,
         "createdBy": "string",
+        "createdByUsername": "string",
         "created": "datetime",
         "lastModifiedBy": "string",
+        "lastModifiedByUsername": "string",
         "lastModified": "datetime"
     }
 ]
@@ -477,10 +500,13 @@ Response:
         "priority": "string", // "low", "medium", "high"
         "dueDate": "string", // ISO 8601 date format
         "assigneeId": "string",
+        "assigneeUsername": "string",
         "position": number,
         "createdBy": "string",
+        "createdByUsername": "string",
         "created": "string",
         "lastModifiedBy": "string",
+        "lastModifiedByUsername": "string",
         "lastModified": "string"
     }
 ]
@@ -507,7 +533,7 @@ Request body:
     "description": "string",
     "priority": "string", // "low", "medium", "high"
     "dueDate": "string", // ISO 8601 date format
-    "assigneeId": "string", // optional
+    "username": "string", // optional - username to assign the task to
     "statusId": number    // optional - if not provided, task will be added to first status
 }
 ```
@@ -523,10 +549,13 @@ Response:
     "priority": "string",
     "dueDate": "string",
     "assigneeId": "string",
+    "assigneeUsername": "string",
     "position": number,
     "createdBy": "string",
+    "createdByUsername": "string",
     "created": "string",
     "lastModifiedBy": "string",
+    "lastModifiedByUsername": "string",
     "lastModified": "string"
 }
 ```
@@ -567,7 +596,7 @@ Request body:
     "description": "string",
     "priority": "string", // "low", "medium", "high"
     "dueDate": "string", // ISO 8601 date format
-    "assigneeId": "string", // optional
+    "username": "string", // optional - username to assign the task to
     "statusId": number,
     "position": number
 }
@@ -671,10 +700,13 @@ Response:
         "priority": "string", // "low", "medium", "high"
         "dueDate": "datetime",
         "assigneeId": "string",
+        "assigneeUsername": "string",
         "position": number,
         "createdBy": "string",
+        "createdByUsername": "string",
         "created": "datetime",
         "lastModifiedBy": "string",
+        "lastModifiedByUsername": "string",
         "lastModified": "datetime"
     }
 ]
@@ -698,10 +730,13 @@ Response:
         "priority": "string", // "low", "medium", "high"
         "dueDate": "string", // ISO 8601 date format
         "assigneeId": "string",
+        "assigneeUsername": "string",
         "position": number,
         "createdBy": "string",
+        "createdByUsername": "string",
         "created": "string",
         "lastModifiedBy": "string",
+        "lastModifiedByUsername": "string",
         "lastModified": "string"
     }
 ]
@@ -728,7 +763,7 @@ Request body:
     "description": "string",
     "priority": "string", // "low", "medium", "high"
     "dueDate": "string", // ISO 8601 date format
-    "assigneeId": "string", // optional
+    "username": "string", // optional - username to assign the task to
     "statusId": number    // optional - if not provided, task will be added to first status
 }
 ```
@@ -744,10 +779,13 @@ Response:
     "priority": "string",
     "dueDate": "string",
     "assigneeId": "string",
+    "assigneeUsername": "string",
     "position": number,
     "createdBy": "string",
+    "createdByUsername": "string",
     "created": "string",
     "lastModifiedBy": "string",
+    "lastModifiedByUsername": "string",
     "lastModified": "string"
 }
 ```
@@ -788,7 +826,7 @@ Request body:
     "description": "string",
     "priority": "string", // "low", "medium", "high"
     "dueDate": "string", // ISO 8601 date format
-    "assigneeId": "string", // optional
+    "username": "string", // optional - username to assign the task to
     "statusId": number,
     "position": number
 }

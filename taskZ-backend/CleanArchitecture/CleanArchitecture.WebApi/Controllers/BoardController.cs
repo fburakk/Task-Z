@@ -27,8 +27,56 @@ namespace CleanArchitecture.WebApi.Controllers
             _userManager = userManager;
         }
 
+        private async Task<BoardResponse> MapToBoardResponse(Board board)
+        {
+            var createdByUser = await _userManager.FindByIdAsync(board.CreatedBy);
+            var lastModifiedByUser = board.LastModifiedBy != null ? await _userManager.FindByIdAsync(board.LastModifiedBy) : null;
+
+            var users = await _context.BoardUsers
+                .Where(u => u.BoardId == board.Id)
+                .Join(_userManager.Users,
+                    bu => bu.UserId,
+                    user => user.Id,
+                    (bu, user) => new BoardUserResponse
+                    {
+                        Id = bu.Id,
+                        UserId = bu.UserId,
+                        Username = user.UserName,
+                        Role = bu.Role
+                    })
+                .ToListAsync();
+
+            var statuses = await _context.BoardStatuses
+                .Where(s => s.BoardId == board.Id)
+                .OrderBy(s => s.Position)
+                .Select(s => new BoardStatusResponse
+                {
+                    Id = s.Id,
+                    Title = s.Title,
+                    Position = s.Position
+                })
+                .ToListAsync();
+
+            return new BoardResponse
+            {
+                Id = board.Id,
+                WorkspaceId = board.WorkspaceId,
+                Name = board.Name,
+                Background = board.Background,
+                IsArchived = board.IsArchived,
+                CreatedBy = board.CreatedBy,
+                CreatedByUsername = createdByUser?.UserName,
+                Created = board.Created,
+                LastModifiedBy = board.LastModifiedBy,
+                LastModifiedByUsername = lastModifiedByUser?.UserName,
+                LastModified = board.LastModified,
+                Users = users,
+                Statuses = statuses
+            };
+        }
+
         [HttpPost]
-        public async Task<ActionResult<Board>> CreateBoard(CreateBoardRequest request)
+        public async Task<ActionResult<BoardResponse>> CreateBoard(CreateBoardRequest request)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             
@@ -52,11 +100,11 @@ namespace CleanArchitecture.WebApi.Controllers
             _context.Boards.Add(board);
             await _context.SaveChangesAsync();
 
-            return board;
+            return await MapToBoardResponse(board);
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Board>>> GetBoards([FromQuery] int workspaceId)
+        public async Task<ActionResult<List<BoardResponse>>> GetBoards([FromQuery] int workspaceId)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             
@@ -71,11 +119,17 @@ namespace CleanArchitecture.WebApi.Controllers
                      b.Users.Any(u => u.UserId == userId))) // Board member
                 .ToListAsync();
 
-            return boards;
+            var responses = new List<BoardResponse>();
+            foreach (var board in boards)
+            {
+                responses.Add(await MapToBoardResponse(board));
+            }
+
+            return responses;
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Board>> GetBoard(int id)
+        public async Task<ActionResult<BoardResponse>> GetBoard(int id)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             
@@ -92,7 +146,7 @@ namespace CleanArchitecture.WebApi.Controllers
                 return NotFound();
             }
 
-            return board;
+            return await MapToBoardResponse(board);
         }
 
         [HttpPut("{id}")]

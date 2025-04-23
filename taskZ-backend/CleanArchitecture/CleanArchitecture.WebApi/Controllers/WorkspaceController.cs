@@ -5,7 +5,9 @@ using System.Linq;
 using CleanArchitecture.Core.DTOs.Workspace;
 using CleanArchitecture.Core.Entities;
 using CleanArchitecture.Infrastructure.Contexts;
+using CleanArchitecture.Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -18,10 +20,29 @@ namespace CleanArchitecture.WebApi.Controllers
     public class WorkspaceController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public WorkspaceController(ApplicationDbContext context)
+        public WorkspaceController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
+        }
+
+        private async Task<WorkspaceResponse> MapToWorkspaceResponse(Workspace workspace)
+        {
+            var user = await _userManager.FindByIdAsync(workspace.UserId);
+            var createdByUser = await _userManager.FindByIdAsync(workspace.CreatedBy);
+
+            return new WorkspaceResponse
+            {
+                Id = workspace.Id,
+                Name = workspace.Name,
+                UserId = workspace.UserId,
+                Username = user?.UserName,
+                CreatedBy = workspace.CreatedBy,
+                CreatedByUsername = createdByUser?.UserName,
+                Created = workspace.Created
+            };
         }
 
         [HttpPost]
@@ -38,14 +59,7 @@ namespace CleanArchitecture.WebApi.Controllers
             _context.Workspaces.Add(workspace);
             await _context.SaveChangesAsync();
 
-            return new WorkspaceResponse
-            {
-                Id = workspace.Id,
-                Name = workspace.Name,
-                UserId = workspace.UserId,
-                CreatedBy = workspace.CreatedBy,
-                Created = workspace.Created
-            };
+            return await MapToWorkspaceResponse(workspace);
         }
 
         [HttpGet]
@@ -55,17 +69,15 @@ namespace CleanArchitecture.WebApi.Controllers
             
             var workspaces = await _context.Workspaces
                 .Where(w => w.UserId == userId)
-                .Select(w => new WorkspaceResponse
-                {
-                    Id = w.Id,
-                    Name = w.Name,
-                    UserId = w.UserId,
-                    CreatedBy = w.CreatedBy,
-                    Created = w.Created
-                })
                 .ToListAsync();
 
-            return workspaces;
+            var responses = new List<WorkspaceResponse>();
+            foreach (var workspace in workspaces)
+            {
+                responses.Add(await MapToWorkspaceResponse(workspace));
+            }
+
+            return responses;
         }
 
         [HttpGet("{id}")]
@@ -74,23 +86,14 @@ namespace CleanArchitecture.WebApi.Controllers
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             
             var workspace = await _context.Workspaces
-                .Where(w => w.Id == id && w.UserId == userId)
-                .Select(w => new WorkspaceResponse
-                {
-                    Id = w.Id,
-                    Name = w.Name,
-                    UserId = w.UserId,
-                    CreatedBy = w.CreatedBy,
-                    Created = w.Created
-                })
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(w => w.Id == id && w.UserId == userId);
 
             if (workspace == null)
             {
                 return NotFound();
             }
 
-            return workspace;
+            return await MapToWorkspaceResponse(workspace);
         }
 
         [HttpPut("{id}")]

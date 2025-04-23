@@ -5,7 +5,9 @@ using System.Linq;
 using CleanArchitecture.Core.DTOs.BoardTask;
 using CleanArchitecture.Core.Entities;
 using CleanArchitecture.Infrastructure.Contexts;
+using CleanArchitecture.Infrastructure.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -18,10 +20,39 @@ namespace CleanArchitecture.WebApi.Controllers
     public class TaskController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public TaskController(ApplicationDbContext context)
+        public TaskController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
+        }
+
+        private async Task<TaskDto> MapToTaskDto(BoardTask task, string assigneeUsername = null)
+        {
+            var createdByUser = await _userManager.FindByIdAsync(task.CreatedBy);
+            var lastModifiedByUser = task.LastModifiedBy != null ? await _userManager.FindByIdAsync(task.LastModifiedBy) : null;
+            var assigneeUser = task.AssigneeId != null ? await _userManager.FindByIdAsync(task.AssigneeId) : null;
+
+            return new TaskDto
+            {
+                Id = task.Id,
+                BoardId = task.BoardId,
+                StatusId = task.StatusId,
+                Title = task.Title,
+                Description = task.Description,
+                Priority = task.Priority,
+                DueDate = task.DueDate,
+                AssigneeId = task.AssigneeId,
+                AssigneeUsername = assigneeUsername ?? assigneeUser?.UserName,
+                Position = task.Position,
+                CreatedBy = task.CreatedBy,
+                CreatedByUsername = createdByUser?.UserName,
+                Created = task.Created,
+                LastModifiedBy = task.LastModifiedBy,
+                LastModifiedByUsername = lastModifiedByUser?.UserName,
+                LastModified = task.LastModified
+            };
         }
 
         [HttpGet("assigned")]
@@ -37,25 +68,15 @@ namespace CleanArchitecture.WebApi.Controllers
                      t.Board.Users.Any(u => u.UserId == userId))) // User is a board member
                 .OrderBy(t => t.DueDate)
                 .ThenBy(t => t.Priority)
-                .Select(t => new TaskDto
-                {
-                    Id = t.Id,
-                    BoardId = t.BoardId,
-                    StatusId = t.StatusId,
-                    Title = t.Title,
-                    Description = t.Description,
-                    Priority = t.Priority,
-                    DueDate = t.DueDate,
-                    AssigneeId = t.AssigneeId,
-                    Position = t.Position,
-                    CreatedBy = t.CreatedBy,
-                    Created = t.Created,
-                    LastModifiedBy = t.LastModifiedBy,
-                    LastModified = t.LastModified
-                })
                 .ToListAsync();
 
-            return tasks;
+            var taskDtos = new List<TaskDto>();
+            foreach (var task in tasks)
+            {
+                taskDtos.Add(await MapToTaskDto(task));
+            }
+
+            return taskDtos;
         }
 
         [HttpGet("board/{boardId}")]
@@ -77,25 +98,15 @@ namespace CleanArchitecture.WebApi.Controllers
                 .Where(t => t.BoardId == boardId)
                 .OrderBy(t => t.StatusId)
                 .ThenBy(t => t.Position)
-                .Select(t => new TaskDto
-                {
-                    Id = t.Id,
-                    BoardId = t.BoardId,
-                    StatusId = t.StatusId,
-                    Title = t.Title,
-                    Description = t.Description,
-                    Priority = t.Priority,
-                    DueDate = t.DueDate,
-                    AssigneeId = t.AssigneeId,
-                    Position = t.Position,
-                    CreatedBy = t.CreatedBy,
-                    Created = t.Created,
-                    LastModifiedBy = t.LastModifiedBy,
-                    LastModified = t.LastModified
-                })
                 .ToListAsync();
 
-            return tasks;
+            var taskDtos = new List<TaskDto>();
+            foreach (var task in tasks)
+            {
+                taskDtos.Add(await MapToTaskDto(task));
+            }
+
+            return taskDtos;
         }
 
         [HttpGet("status/{statusId}")]
@@ -117,25 +128,15 @@ namespace CleanArchitecture.WebApi.Controllers
             var tasks = await _context.BoardTasks
                 .Where(t => t.StatusId == statusId)
                 .OrderBy(t => t.Position)
-                .Select(t => new TaskDto
-                {
-                    Id = t.Id,
-                    BoardId = t.BoardId,
-                    StatusId = t.StatusId,
-                    Title = t.Title,
-                    Description = t.Description,
-                    Priority = t.Priority,
-                    DueDate = t.DueDate,
-                    AssigneeId = t.AssigneeId,
-                    Position = t.Position,
-                    CreatedBy = t.CreatedBy,
-                    Created = t.Created,
-                    LastModifiedBy = t.LastModifiedBy,
-                    LastModified = t.LastModified
-                })
                 .ToListAsync();
 
-            return tasks;
+            var taskDtos = new List<TaskDto>();
+            foreach (var task in tasks)
+            {
+                taskDtos.Add(await MapToTaskDto(task));
+            }
+
+            return taskDtos;
         }
 
         [HttpPost("board/{boardId}")]
@@ -152,6 +153,18 @@ namespace CleanArchitecture.WebApi.Controllers
             if (board == null)
             {
                 return NotFound("Board not found or access denied.");
+            }
+
+            // Find user by username if provided
+            string assigneeId = null;
+            if (!string.IsNullOrEmpty(request.Username))
+            {
+                var assignee = await _userManager.FindByNameAsync(request.Username);
+                if (assignee == null)
+                {
+                    return NotFound($"User '{request.Username}' not found.");
+                }
+                assigneeId = assignee.Id;
             }
 
             int targetStatusId;
@@ -191,29 +204,14 @@ namespace CleanArchitecture.WebApi.Controllers
                 Description = request.Description,
                 Priority = request.Priority,
                 DueDate = request.DueDate,
-                AssigneeId = request.AssigneeId,
+                AssigneeId = assigneeId,
                 Position = maxPosition + 1
             };
 
             _context.BoardTasks.Add(task);
             await _context.SaveChangesAsync();
 
-            return new TaskDto
-            {
-                Id = task.Id,
-                BoardId = task.BoardId,
-                StatusId = task.StatusId,
-                Title = task.Title,
-                Description = task.Description,
-                Priority = task.Priority,
-                DueDate = task.DueDate,
-                AssigneeId = task.AssigneeId,
-                Position = task.Position,
-                CreatedBy = task.CreatedBy,
-                Created = task.Created,
-                LastModifiedBy = task.LastModifiedBy,
-                LastModified = task.LastModified
-            };
+            return await MapToTaskDto(task, request.Username);
         }
 
         [HttpPut("{id}")]
@@ -229,6 +227,19 @@ namespace CleanArchitecture.WebApi.Controllers
             if (task == null)
             {
                 return NotFound();
+            }
+
+            string assigneeUsername = null;
+            // Update assignee if username provided
+            if (!string.IsNullOrEmpty(request.Username))
+            {
+                var assignee = await _userManager.FindByNameAsync(request.Username);
+                if (assignee == null)
+                {
+                    return NotFound($"User '{request.Username}' not found.");
+                }
+                task.AssigneeId = assignee.Id;
+                assigneeUsername = request.Username;
             }
 
             // If status is changing, update positions
@@ -286,26 +297,10 @@ namespace CleanArchitecture.WebApi.Controllers
             task.Description = request.Description;
             task.Priority = request.Priority;
             task.DueDate = request.DueDate;
-            task.AssigneeId = request.AssigneeId;
 
             await _context.SaveChangesAsync();
 
-            return new TaskDto
-            {
-                Id = task.Id,
-                BoardId = task.BoardId,
-                StatusId = task.StatusId,
-                Title = task.Title,
-                Description = task.Description,
-                Priority = task.Priority,
-                DueDate = task.DueDate,
-                AssigneeId = task.AssigneeId,
-                Position = task.Position,
-                CreatedBy = task.CreatedBy,
-                Created = task.Created,
-                LastModifiedBy = task.LastModifiedBy,
-                LastModified = task.LastModified
-            };
+            return await MapToTaskDto(task, assigneeUsername);
         }
 
         [HttpDelete("{id}")]
