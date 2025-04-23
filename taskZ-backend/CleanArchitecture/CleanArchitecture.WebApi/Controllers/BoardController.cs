@@ -211,13 +211,16 @@ namespace CleanArchitecture.WebApi.Controllers
 
             var users = await _context.BoardUsers
                 .Where(u => u.BoardId == id)
-                .Select(u => new BoardUserResponse
-                {
-                    Id = u.Id,
-                    UserId = u.UserId,
-                    Username = u.UserId, // TODO: Join with AspNetUsers to get actual username
-                    Role = u.Role
-                })
+                .Join(_context.Users,
+                    bu => bu.UserId,
+                    user => user.Id,
+                    (bu, user) => new BoardUserResponse
+                    {
+                        Id = bu.Id,
+                        UserId = bu.UserId,
+                        Username = user.UserName,
+                        Role = bu.Role
+                    })
                 .ToListAsync();
 
             return users;
