@@ -598,7 +598,7 @@ class APIService {
         }
     }
     
-    func createTask(boardId: Int, title: String, description: String, priority: String, dueDate: String?, assigneeId: String?, statusId: Int?, completion: @escaping (Result<Task, APIError>) -> Void) {
+    func createTask(boardId: Int, title: String, description: String, priority: String, dueDate: String?, username: String?, statusId: Int?, completion: @escaping (Result<Task, APIError>) -> Void) {
         do {
             var taskData: [String: Any] = [
                 "title": title,
@@ -606,7 +606,7 @@ class APIService {
                 "priority": priority
             ]
             if let dueDate = dueDate { taskData["dueDate"] = dueDate }
-            if let assigneeId = assigneeId { taskData["assigneeId"] = assigneeId }
+            if let username = username { taskData["username"] = username }
             if let statusId = statusId { taskData["statusId"] = statusId }
             
             let body = try JSONSerialization.data(withJSONObject: taskData)
@@ -620,14 +620,14 @@ class APIService {
         }
     }
     
-    func updateTask(id: Int, title: String?, description: String?, priority: String?, dueDate: String?, assigneeId: Int?, statusId: Int?, position: Int?, completion: @escaping (Result<Task, APIError>) -> Void) {
+    func updateTask(id: Int, title: String?, description: String?, priority: String?, dueDate: String?, username: String?, statusId: Int?, position: Int?, completion: @escaping (Result<Task, APIError>) -> Void) {
         do {
             var updateData: [String: Any] = [:]
             if let title = title { updateData["title"] = title }
             if let description = description { updateData["description"] = description }
             if let priority = priority { updateData["priority"] = priority }
             if let dueDate = dueDate { updateData["dueDate"] = dueDate }
-            if let assigneeId = assigneeId { updateData["assigneeId"] = assigneeId }
+            if let username = username { updateData["username"] = username }
             if let statusId = statusId { updateData["statusId"] = statusId }
             if let position = position { updateData["position"] = position }
             
@@ -756,8 +756,6 @@ class APIService {
             }
         }
     }
-    
-    private var statuses: [BoardStatus] = []
 }
 
 // Helper struct for empty responses

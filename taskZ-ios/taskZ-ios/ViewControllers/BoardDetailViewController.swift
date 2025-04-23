@@ -509,7 +509,7 @@ class BoardDetailViewController: UIViewController {
                 description: taskRequest.description,
                 priority: taskRequest.priority.rawValue,
                 dueDate: dueDate,
-                assigneeId: taskRequest.assigneeId,
+                username: taskRequest.assigneeId,
                 statusId: taskRequest.statusId
             ) { [weak self] result in
                 guard let self = self else { return }
@@ -576,6 +576,11 @@ extension BoardDetailViewController: UICollectionViewDataSource, UICollectionVie
         cell.configure(with: status, tasks: statusTasks)
         cell.onAddTask = { [weak self] status in
             self?.showAddTaskDialog(for: status)
+        }
+        cell.onTaskSelected = { [weak self] task in
+            guard let self = self else { return }
+            let taskDetailVC = TaskDetailViewController(task: task, board: self.board)
+            self.navigationController?.pushViewController(taskDetailVC, animated: true)
         }
         
         return cell

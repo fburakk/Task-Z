@@ -375,6 +375,7 @@ extension BoardsViewController: UITableViewDelegate, UITableViewDataSource {
         if let board = boardsArray?[indexPath.row] {
             let boardDetailVC = BoardDetailViewController(board: board)
             boardDetailVC.delegate = self
+            boardDetailVC.hidesBottomBarWhenPushed = true
             navigationController?.pushViewController(boardDetailVC, animated: true)
         }
     }
