@@ -86,6 +86,7 @@ class StatusColumnCell: UICollectionViewCell {
     private var tasks: [Task] = []
     private var status: BoardStatus?
     var onAddTask: ((BoardStatus) -> Void)?
+    var onTaskSelected: ((Task) -> Void)?
     
     private let headerView: UIView = {
         let view = UIView()
@@ -221,5 +222,10 @@ extension StatusColumnCell: UICollectionViewDataSource, UICollectionViewDelegate
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
         let width = collectionView.bounds.width
         return CGSize(width: width, height: 72)
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let task = tasks[indexPath.item]
+        onTaskSelected?(task)
     }
 } 

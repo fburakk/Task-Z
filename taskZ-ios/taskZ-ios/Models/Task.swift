@@ -27,10 +27,13 @@ struct Task: Codable {
     var priority: TaskPriority
     var dueDate: Date?
     var assigneeId: String?
+    var assigneeUsername: String?
     var position: Int
     let createdBy: String
+    let createdByUsername: String
     let created: Date
     let lastModifiedBy: String?
+    let lastModifiedByUsername: String?
     let lastModified: Date?
     
     // Request body for creating a task
@@ -119,10 +122,13 @@ struct Task: Codable {
         case priority
         case dueDate
         case assigneeId
+        case assigneeUsername
         case position
         case createdBy
+        case createdByUsername
         case created
         case lastModifiedBy
+        case lastModifiedByUsername
         case lastModified
     }
     
@@ -147,8 +153,10 @@ struct Task: Codable {
         }
         
         assigneeId = try container.decodeIfPresent(String.self, forKey: .assigneeId)
+        assigneeUsername = try container.decodeIfPresent(String.self, forKey: .assigneeUsername)
         position = try container.decode(Int.self, forKey: .position)
         createdBy = try container.decode(String.self, forKey: .createdBy)
+        createdByUsername = try container.decode(String.self, forKey: .createdByUsername)
         
         if let createdString = try container.decodeIfPresent(String.self, forKey: .created) {
             created = formatter.date(from: createdString) ?? Date()
@@ -157,6 +165,7 @@ struct Task: Codable {
         }
         
         lastModifiedBy = try container.decodeIfPresent(String.self, forKey: .lastModifiedBy)
+        lastModifiedByUsername = try container.decodeIfPresent(String.self, forKey: .lastModifiedByUsername)
         
         if let lastModifiedString = try container.decodeIfPresent(String.self, forKey: .lastModified) {
             lastModified = formatter.date(from: lastModifiedString)

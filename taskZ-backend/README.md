@@ -363,8 +363,7 @@ PUT /api/Board/{id}
 Request body:
 ```json
 {
-    "name": "string",
-    "background": "string"
+    "name": "string"
 }
 ```
 Response: 204 No Content
@@ -587,18 +586,42 @@ Example requests:
 ```http
 PUT /api/Task/{id}
 ```
-Updates an existing task. Can be used to update task details, change status, or reorder within a status column.
+Updates an existing task. Supports partial updates - only the fields that need to be changed should be included in the request. Can be used to update task details, change status, or reorder within a status column.
 
 Request body:
 ```json
 {
-    "title": "string",
-    "description": "string",
-    "priority": "string", // "low", "medium", "high"
-    "dueDate": "string", // ISO 8601 date format
-    "username": "string", // optional - username to assign the task to
-    "statusId": number,
-    "position": number
+    "title": "string",         // optional
+    "description": "string",   // optional
+    "priority": "string",      // optional - "low", "medium", "high"
+    "dueDate": "string",       // optional - ISO 8601 date format
+    "username": "string",      // optional - username to assign the task to
+    "statusId": number,        // optional - move task to different status
+    "position": number         // optional - reorder within status
+}
+```
+
+Example requests:
+
+1. Update only the status:
+```json
+{
+    "statusId": 2
+}
+```
+
+2. Update title and priority:
+```json
+{
+    "title": "Updated Title",
+    "priority": "high"
+}
+```
+
+3. Change assignee:
+```json
+{
+    "username": "newassignee"
 }
 ```
 
@@ -817,18 +840,42 @@ Example requests:
 ```http
 PUT /api/Task/{id}
 ```
-Updates an existing task. Can be used to update task details, change status, or reorder within a status column.
+Updates an existing task. Supports partial updates - only the fields that need to be changed should be included in the request. Can be used to update task details, change status, or reorder within a status column.
 
 Request body:
 ```json
 {
-    "title": "string",
-    "description": "string",
-    "priority": "string", // "low", "medium", "high"
-    "dueDate": "string", // ISO 8601 date format
-    "username": "string", // optional - username to assign the task to
-    "statusId": number,
-    "position": number
+    "title": "string",         // optional
+    "description": "string",   // optional
+    "priority": "string",      // optional - "low", "medium", "high"
+    "dueDate": "string",       // optional - ISO 8601 date format
+    "username": "string",      // optional - username to assign the task to
+    "statusId": number,        // optional - move task to different status
+    "position": number         // optional - reorder within status
+}
+```
+
+Example requests:
+
+1. Update only the status:
+```json
+{
+    "statusId": 2
+}
+```
+
+2. Update title and priority:
+```json
+{
+    "title": "Updated Title",
+    "priority": "high"
+}
+```
+
+3. Change assignee:
+```json
+{
+    "username": "newassignee"
 }
 ```
 
