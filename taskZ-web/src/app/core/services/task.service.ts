@@ -4,30 +4,39 @@ import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
 
 export interface Task {
-  id: number;
+    id: number;
   boardId: number;
   statusId: number;
   title: string;
   description: string;
-  priority: string;
-  dueDate: string;
+  priority: 'low' | 'medium' | 'high'; // Enum yerine literal union
+  dueDate: string; // ISO 8601
   assigneeId: string;
+  assigneeUsername: string;
   position: number;
   createdBy: string;
+  createdByUsername: string;
   created: string;
   lastModifiedBy: string;
+  lastModifiedByUsername: string;
   lastModified: string;
 }
 
 export interface CreateTaskDto {
   title: string;
   description: string;
-  priority: string;
+  priority: 'low' | 'medium' | 'high';
   dueDate: string;
-  assigneeId: string;
+  username?: string; // isteğe bağlı
+  statusId?: number; // isteğe bağlı
 }
 
 export interface UpdateTaskDto extends CreateTaskDto {
+  title: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high';
+  dueDate: string;
+  username?: string; // isteğe bağlı
   statusId: number;
   position: number;
 }

@@ -1,18 +1,21 @@
 <div class="container" id="main-container">
     <div class="row">
-        <div *ngFor="let boardUser of boardUsers" class="col-md-6 col-xl-3">
+        <div *ngFor="let task of tasks" class="col-md-6 col-xl-3">
             <div class="card m-b-30">
                 <div class="card-body row">
                     <div class="col-6">
                         <a href=""><img src="https://i.redd.it/8up58kxgtr3c1.jpg" alt="" class="img-fluid rounded-circle w-60"></a>
                     </div>
                     <div class="col-6 card-title align-self-center mb-0">
-                        <p class="m-0">User: {{ boardUser.username }} </p>
+                        <!-- Increased font size and bold for task title -->
+                        <p class="m-0 task-title">{{ task.title }}</p>
+                        <!-- Description with smaller font size -->
+                        <p class="m-0 text-muted task-description">{{ task.description }}</p>
                     </div>
                 </div>
                 <ul class="list-group list-group-flush">
-                    <li class="list-group-item">user ID : <a href="#">{{boardUser.userId}}</a></li>
-                    <li class="list-group-item"><i class="fa fa-phone float-right"></i>Phone : 000 123-456</li>
+                    <li class="list-group-item">Username: <a href="#">{{task.assigneeUsername}}</a></li>
+                    
                 </ul>
                 <div class="card-body">
                     <div class="float-right btn-group btn-group-sm">
@@ -20,10 +23,9 @@
                         <a class="btn btn-secondary tooltips" data-placement="top" data-toggle="tooltip" data-original-title="Delete"><i class="fa fa-times"></i></a>
                     </div>
                     <ul class="social-links list-inline mb-0">
-                        
                     </ul>
                 </div>
             </div>
-        
+        </div>
     </div>
 </div>
