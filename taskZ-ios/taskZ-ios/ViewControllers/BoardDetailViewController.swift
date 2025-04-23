@@ -36,24 +36,6 @@ class BoardDetailViewController: UIViewController {
         return collectionView
     }()
     
-    private let addTaskButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.backgroundColor = .systemBlue
-        button.tintColor = .white
-        button.layer.cornerRadius = 28
-        button.layer.shadowColor = UIColor.black.cgColor
-        button.layer.shadowOffset = CGSize(width: 0, height: 2)
-        button.layer.shadowRadius = 4
-        button.layer.shadowOpacity = 0.25
-        
-        let config = UIImage.SymbolConfiguration(pointSize: 24, weight: .medium)
-        let image = UIImage(systemName: "plus", withConfiguration: config)
-        button.setImage(image, for: .normal)
-        
-        return button
-    }()
-    
     private let loadingIndicator: UIActivityIndicatorView = {
         let indicator = UIActivityIndicatorView(style: .medium)
         indicator.hidesWhenStopped = true
@@ -92,7 +74,6 @@ class BoardDetailViewController: UIViewController {
         view.backgroundColor = UIColor.black
         
         view.addSubview(collectionView)
-        view.addSubview(addTaskButton)
         view.addSubview(loadingIndicator)
         view.addSubview(pageControl)
         
@@ -104,11 +85,6 @@ class BoardDetailViewController: UIViewController {
             collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             collectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
             
-            addTaskButton.widthAnchor.constraint(equalToConstant: 56),
-            addTaskButton.heightAnchor.constraint(equalToConstant: 56),
-            addTaskButton.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -24),
-            addTaskButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -24),
-            
             loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             
@@ -116,8 +92,6 @@ class BoardDetailViewController: UIViewController {
             pageControl.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16),
             pageControl.heightAnchor.constraint(equalToConstant: 20)
         ])
-        
-        addTaskButton.addTarget(self, action: #selector(addTaskButtonTapped), for: .touchUpInside)
     }
     
     private func setupCollectionView() {
