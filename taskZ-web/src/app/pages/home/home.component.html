@@ -25,12 +25,44 @@
         </div>
       </ng-template>
 
-      <div class="project-card" style="background: #FFECB3;">
+      <div class="project-card" style="background: #FFECB3;" (click)="openModal(workspace.id)">
         <h3 class="card-title" style="color: #4a90e2; font-weight: 500;">+ Yeni proje</h3>
       </div>
     </div>
+
+
+    
     
   </div> <!-- workspace div kapanışı -->
+
+
+
+    <!-- Add Board Modal -->
+
+    <div *ngIf="showModal" class="modal">
+      <div class="modal-background" (click)="closeModal()"></div>
+      <div class="modal-content">
+        <div class="modal-box">
+          <button class="close-button" (click)="closeModal()">×</button>
+          <h3 class="modal-title">Yeni Proje Oluştur</h3>
+          
+          <input
+            class="modal-input"
+            [(ngModel)]="newBoardName"
+            type="text"
+            placeholder="Proje ismini girin"
+          />
+    
+          <div class="modal-buttons">
+            <button class="modal-button create" (click)="createBoard()">Oluştur</button>
+            <button class="modal-button cancel" (click)="closeModal()">İptal</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+
+    
 </div> <!-- home-container div kapanışı -->
 
   
