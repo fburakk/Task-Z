@@ -26,7 +26,7 @@ export interface CreateTaskDto {
   title: string;
   description: string;
   priority: 'low' | 'medium' | 'high';
-  dueDate: string;
+  dueDate?: string;
   username?: string; // isteğe bağlı
   statusId?: number; // isteğe bağlı
 }
