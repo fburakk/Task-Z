@@ -76,7 +76,7 @@ class TaskCell: UICollectionViewCell {
     func configure(with task: Task) {
         titleLabel.text = task.title
         descriptionLabel.text = task.description
-        priorityIndicator.backgroundColor = task.priority.color
+        priorityIndicator.backgroundColor = task.priority?.color
     }
 }
 

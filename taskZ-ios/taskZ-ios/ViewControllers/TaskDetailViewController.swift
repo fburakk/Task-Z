@@ -436,7 +436,15 @@ class TaskDetailViewController: UIViewController {
     }
 
     private func updateTaskStatus(to status: BoardStatus) {
-        updateTask(statusId: status.id)
+        updateTask(
+            title: task.title,
+            description: task.description,
+            priority: task.priority?.rawValue,
+            dueDate: task.dueDate.map { ISO8601DateFormatter().string(from: $0) },
+            username: task.assigneeUsername,
+            statusId: status.id,
+            position: task.position
+        )
     }
 }
 
