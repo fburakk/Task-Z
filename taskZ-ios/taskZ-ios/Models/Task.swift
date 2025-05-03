@@ -22,9 +22,9 @@ struct Task: Codable {
     let id: Int
     let boardId: Int
     let statusId: Int
-    var title: String
-    var description: String
-    var priority: TaskPriority
+    var title: String?
+    var description: String?
+    var priority: TaskPriority?
     var dueDate: Date?
     var assigneeId: String?
     var assigneeUsername: String?
@@ -38,8 +38,8 @@ struct Task: Codable {
     
     // Request body for creating a task
     struct CreateRequest: Codable {
-        let title: String
-        let description: String
+        let title: String?
+        let description: String?
         let priority: TaskPriority
         let dueDate: Date?
         let assigneeId: String?
@@ -138,9 +138,9 @@ struct Task: Codable {
         id = try container.decode(Int.self, forKey: .id)
         boardId = try container.decode(Int.self, forKey: .boardId)
         statusId = try container.decode(Int.self, forKey: .statusId)
-        title = try container.decode(String.self, forKey: .title)
-        description = try container.decode(String.self, forKey: .description)
-        priority = try container.decode(TaskPriority.self, forKey: .priority)
+        title = try container.decodeIfPresent(String.self, forKey: .title)
+        description = try container.decodeIfPresent(String.self, forKey: .description)
+        priority = try container.decodeIfPresent(TaskPriority.self, forKey: .priority)
         
         // Use ISO8601DateFormatter for decoding dates
         let formatter = ISO8601DateFormatter()

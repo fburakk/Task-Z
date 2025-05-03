@@ -505,8 +505,8 @@ class BoardDetailViewController: UIViewController {
             self.loadingIndicator.startAnimating()
             APIService.shared.createTask(
                 boardId: self.board.id,
-                title: taskRequest.title,
-                description: taskRequest.description,
+                title: taskRequest.title ?? "",
+                description: taskRequest.description ?? "",
                 priority: taskRequest.priority.rawValue,
                 dueDate: dueDate,
                 username: taskRequest.assigneeId,
