@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using System.Linq;
 using CleanArchitecture.Core.Entities;
+using CleanArchitecture.Core.DTOs.Board;
 using CleanArchitecture.Infrastructure.Contexts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -22,7 +23,7 @@ namespace CleanArchitecture.WebApi.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<BoardStatus>> CreateStatus([FromBody] CreateStatusRequest request)
+        public async Task<ActionResult<BoardStatusResponse>> CreateStatus([FromBody] CreateStatusRequest request)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             
@@ -53,7 +54,12 @@ namespace CleanArchitecture.WebApi.Controllers
             _context.BoardStatuses.Add(status);
             await _context.SaveChangesAsync();
 
-            return status;
+            return new BoardStatusResponse
+            {
+                Id = status.Id,
+                Title = status.Title,
+                Position = status.Position
+            };
         }
     }
 
