@@ -14,6 +14,7 @@ using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using System;
 using System.Text;
+using System.Text.Json;
 
 namespace CleanArchitecture.Infrastructure
 {
@@ -66,22 +67,22 @@ namespace CleanArchitecture.Infrastructure
                         {
                             c.NoResult();
                             c.Response.StatusCode = 500;
-                            c.Response.ContentType = "text/plain";
-                            return c.Response.WriteAsync(c.Exception.ToString());
+                            c.Response.ContentType = "application/json";
+                            return c.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(new { success = false, message = c.Exception.ToString() }));
                         },
                         OnChallenge = context =>
                         {
                             context.HandleResponse();
                             context.Response.StatusCode = 401;
                             context.Response.ContentType = "application/json";
-                            var result = "You are not Authorized";
+                            var result = System.Text.Json.JsonSerializer.Serialize(new { success = false, message = "You are not authorized" });
                             return context.Response.WriteAsync(result);
                         },
                         OnForbidden = context =>
                         {
                             context.Response.StatusCode = 403;
                             context.Response.ContentType = "application/json";
-                            var result = "You are not authorized to access this resource";
+                            var result = System.Text.Json.JsonSerializer.Serialize(new { success = false, message = "You are not authorized to access this resource" });
                             return context.Response.WriteAsync(result);
                         },
                     };
