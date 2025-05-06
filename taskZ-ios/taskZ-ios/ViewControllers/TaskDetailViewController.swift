@@ -17,6 +17,14 @@ class TaskDetailViewController: UIViewController {
     private var statuses: [BoardStatus] = []
     weak var delegate: TaskDetailViewControllerDelegate?
     
+    // Add properties to track changes
+    private var updatedTitle: String?
+    private var updatedDescription: String?
+    private var updatedDueDate: Date?
+    private var updatedUsername: String?
+    private var updatedStatusId: Int?
+    private var hasChanges: Bool = false
+    
     enum Section: Int, CaseIterable {
         case header
         case project
@@ -93,23 +101,15 @@ class TaskDetailViewController: UIViewController {
         closeButton.tintColor = .white
         navigationItem.leftBarButtonItem = closeButton
         
-        let moreButton = UIBarButtonItem(
-            image: UIImage(systemName: "ellipsis"),
-            style: .plain,
+        let saveButton = UIBarButtonItem(
+            title: "Save",
+            style: .done,
             target: self,
-            action: #selector(moreButtonTapped)
+            action: #selector(saveButtonTapped)
         )
-        moreButton.tintColor = .white
+        saveButton.tintColor = .white
         
-        let updateButton = UIBarButtonItem(
-            image: UIImage(systemName: "square.and.pencil"),
-            style: .plain,
-            target: self,
-            action: #selector(updateButtonTapped)
-        )
-        updateButton.tintColor = .white
-        
-        navigationItem.rightBarButtonItems = [moreButton, updateButton]
+        navigationItem.rightBarButtonItem = saveButton
     }
     
     private func registerCells() {
@@ -246,182 +246,21 @@ class TaskDetailViewController: UIViewController {
         navigationController?.popViewController(animated: true)
     }
     
-    @objc private func moreButtonTapped() {
-        // Show more options menu
-    }
-    
-    @objc private func updateButtonTapped() {
-        // Show update options menu
-        let alert = UIAlertController(title: "Update Task", message: nil, preferredStyle: .actionSheet)
+    @objc private func saveButtonTapped() {
+        guard hasChanges else { return }
         
-        let updateTitleAction = UIAlertAction(title: "Update Title", style: .default) { [weak self] _ in
-            self?.showUpdateTitleAlert()
-        }
-        
-        let updateDescriptionAction = UIAlertAction(title: "Update Description", style: .default) { [weak self] _ in
-            self?.showUpdateDescriptionAlert()
-        }
-        
-        let updatePriorityAction = UIAlertAction(title: "Update Priority", style: .default) { [weak self] _ in
-            self?.showUpdatePriorityAlert()
-        }
-        
-        let updateDueDateAction = UIAlertAction(title: "Update Due Date", style: .default) { [weak self] _ in
-            self?.showUpdateDueDateAlert()
-        }
-        
-        let updateAssigneeAction = UIAlertAction(title: "Update Assignee", style: .default) { [weak self] _ in
-            self?.showUpdateAssigneeAlert()
-        }
-        
-        let cancelAction = UIAlertAction(title: "Cancel", style: .cancel)
-        
-        alert.addAction(updateTitleAction)
-        alert.addAction(updateDescriptionAction)
-        alert.addAction(updatePriorityAction)
-        alert.addAction(updateDueDateAction)
-        alert.addAction(updateAssigneeAction)
-        alert.addAction(cancelAction)
-        
-        if let popoverController = alert.popoverPresentationController {
-            popoverController.barButtonItem = navigationItem.rightBarButtonItems?.last
-        }
-        
-        present(alert, animated: true)
-    }
-    
-    private func showUpdateTitleAlert() {
-        let alert = UIAlertController(title: "Update Title", message: nil, preferredStyle: .alert)
-        alert.addTextField { textField in
-            textField.text = self.task.title
-            textField.placeholder = "Task Title"
-        }
-        
-        let updateAction = UIAlertAction(title: "Update", style: .default) { [weak self] _ in
-            guard let self = self,
-                  let newTitle = alert.textFields?.first?.text,
-                  !newTitle.isEmpty else { return }
-            
-            self.updateTask(title: newTitle)
-        }
-        
-        alert.addAction(updateAction)
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        present(alert, animated: true)
-    }
-    
-    private func showUpdateDescriptionAlert() {
-        let alert = UIAlertController(title: "Update Description", message: nil, preferredStyle: .alert)
-        alert.addTextField { textField in
-            textField.text = self.task.description
-            textField.placeholder = "Task Description"
-        }
-        
-        let updateAction = UIAlertAction(title: "Update", style: .default) { [weak self] _ in
-            guard let self = self,
-                  let newDescription = alert.textFields?.first?.text,
-                  !newDescription.isEmpty else { return }
-            
-            self.updateTask(description: newDescription)
-        }
-        
-        alert.addAction(updateAction)
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        present(alert, animated: true)
-    }
-    
-    private func showUpdatePriorityAlert() {
-        let alert = UIAlertController(title: "Update Priority", message: nil, preferredStyle: .actionSheet)
-        
-        let priorities = ["low", "medium", "high"]
-        for priority in priorities {
-            let action = UIAlertAction(title: priority.capitalized, style: .default) { [weak self] _ in
-                self?.updateTask(priority: priority)
-            }
-            alert.addAction(action)
-        }
-        
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        
-        if let popoverController = alert.popoverPresentationController {
-            popoverController.barButtonItem = navigationItem.rightBarButtonItems?.last
-        }
-        
-        present(alert, animated: true)
-    }
-    
-    private func showUpdateDueDateAlert() {
-        let datePicker = UIDatePicker()
-        datePicker.datePickerMode = .dateAndTime
-        datePicker.preferredDatePickerStyle = .wheels
-        if let dueDate = task.dueDate {
-            datePicker.date = dueDate
-        }
-        
-        let alert = UIAlertController(title: "Update Due Date", message: nil, preferredStyle: .actionSheet)
-        alert.view.addSubview(datePicker)
-        
-        let updateAction = UIAlertAction(title: "Update", style: .default) { [weak self] _ in
-            let formatter = ISO8601DateFormatter()
-            let dueDateString = formatter.string(from: datePicker.date)
-            self?.updateTask(dueDate: dueDateString)
-        }
-        
-        alert.addAction(updateAction)
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        
-        if let popoverController = alert.popoverPresentationController {
-            popoverController.barButtonItem = navigationItem.rightBarButtonItems?.last
-        }
-        
-        present(alert, animated: true)
-    }
-    
-    private func showUpdateAssigneeAlert() {
-        let alert = UIAlertController(title: "Update Assignee", message: nil, preferredStyle: .alert)
-        alert.addTextField { textField in
-            textField.text = self.task.assigneeUsername
-            textField.placeholder = "Username"
-        }
-        
-        let updateAction = UIAlertAction(title: "Update", style: .default) { [weak self] _ in
-            guard let self = self,
-                  let username = alert.textFields?.first?.text,
-                  !username.isEmpty else { return }
-            
-            self.updateTask(username: username)
-        }
-        
-        alert.addAction(updateAction)
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        present(alert, animated: true)
-    }
-    
-    private func updateTask(title: String? = nil,
-                          description: String? = nil,
-                          priority: String? = nil,
-                          dueDate: String? = nil,
-                          username: String? = nil,
-                          statusId: Int? = nil,
-                          position: Int? = nil) {
-        
-        APIService.shared.updateTask(
-            id: task.id,
-            title: title,
-            description: description,
-            priority: priority,
-            dueDate: dueDate,
-            username: username,
-            statusId: statusId,
-            position: position
+        updateTask(
+            title: updatedTitle,
+            description: updatedDescription,
+            dueDate: updatedDueDate.map { ISO8601DateFormatter().string(from: $0) },
+            username: updatedUsername,
+            statusId: updatedStatusId
         ) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let updatedTask):
-                    self?.task = updatedTask
-                    self?.collectionView.reloadData()
-                    // Notify delegate about the task update
                     self?.delegate?.taskDetailViewController(self!, didUpdateTask: updatedTask)
+                    self?.navigationController?.popViewController(animated: true)
                 case .failure(let error):
                     let alert = UIAlertController(
                         title: "Error",
@@ -434,6 +273,35 @@ class TaskDetailViewController: UIViewController {
             }
         }
     }
+    
+    private func updateTask(title: String? = nil,
+                          description: String? = nil,
+                          priority: String? = nil,
+                          dueDate: String? = nil,
+                          username: String? = nil,
+                          statusId: Int? = nil,
+                          position: Int? = nil,
+                          completion: @escaping (Result<Task, Error>) -> Void) {
+        
+        APIService.shared.updateTask(
+            id: task.id,
+            title: title,
+            description: description,
+            priority: priority,
+            dueDate: dueDate,
+            username: username,
+            statusId: statusId,
+            position: position
+        ) { [weak self] result in
+            switch result {
+            case .success(let updatedTask):
+                self?.task = updatedTask
+                completion(.success(updatedTask))
+            case .failure(let error):
+                completion(.failure(error))
+            }
+        }
+    }
 
     private func updateTaskStatus(to status: BoardStatus) {
         updateTask(
@@ -443,8 +311,14 @@ class TaskDetailViewController: UIViewController {
             dueDate: task.dueDate.map { ISO8601DateFormatter().string(from: $0) },
             username: task.assigneeUsername,
             statusId: status.id,
-            position: task.position
-        )
+            position: task.position) { result in
+                switch result {
+                case .success(let success):
+                    self.navigationController?.popViewController(animated: true)
+                case .failure(let failure):
+                    print(failure.localizedDescription)
+                }
+            }
     }
 }
 
@@ -474,6 +348,7 @@ extension TaskDetailViewController: UICollectionViewDataSource {
         case .header:
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: TaskHeaderCell.identifier, for: indexPath) as! TaskHeaderCell
             cell.configure(with: task)
+            cell.delegate = self
             return cell
             
         case .project:
@@ -483,15 +358,24 @@ extension TaskDetailViewController: UICollectionViewDataSource {
             
         case .description:
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: DescriptionCell.identifier, for: indexPath) as! DescriptionCell
+            cell.configure(description: task.description)
+            cell.delegate = self
             return cell
             
         case .dates:
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: DateCell.identifier, for: indexPath) as! DateCell
-            cell.configure(title: indexPath.item == 0 ? "Başlangıç tarihi" : "Bitiş tarihi")
+            if indexPath.item == 0 {
+                cell.configure(title: "Başlangıç tarihi", date: task.dueDate)
+            } else {
+                cell.configure(title: "Bitiş tarihi", date: task.dueDate)
+            }
+            cell.delegate = self
             return cell
             
         case .members:
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: MemberCell.identifier, for: indexPath) as! MemberCell
+            cell.configure(username: task.assigneeUsername)
+            cell.delegate = self
             return cell
             
         case .status:
@@ -541,5 +425,32 @@ extension TaskDetailViewController: UICollectionViewDelegate {
         }
         
         present(alert, animated: true)
+    }
+}
+
+// MARK: - Cell Delegates
+extension TaskDetailViewController: TaskHeaderCellDelegate, DescriptionCellDelegate, DateCellDelegate, MemberCellDelegate {
+    func taskHeaderCell(_ cell: TaskHeaderCell, didUpdateTitle title: String) {
+        updatedTitle = title
+        hasChanges = true
+    }
+    
+    func descriptionCell(_ cell: DescriptionCell, didUpdateDescription description: String) {
+        updatedDescription = description
+        hasChanges = true
+    }
+    
+    func dateCell(_ cell: DateCell, didUpdateDate date: Date?) {
+        if let indexPath = collectionView.indexPath(for: cell) {
+            if indexPath.item == 1 { // Due date cell
+                updatedDueDate = date
+                hasChanges = true
+            }
+        }
+    }
+    
+    func memberCell(_ cell: MemberCell, didUpdateUsername username: String) {
+        updatedUsername = username
+        hasChanges = true
     }
 }
