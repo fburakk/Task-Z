@@ -21,12 +21,15 @@ export class NavbarComponent implements OnInit {
   private router = inject(Router);
   private profileService = inject(ProfileService);
   private authService = inject(AuthService);
+  
 
   constructor() {
     this.router.events.subscribe((event: any) => {
       if (event instanceof NavigationEnd) {
         const hiddenRoutes = ['/login', '/register'];
         this.showNavbar = !hiddenRoutes.includes(event.urlAfterRedirects);
+
+        this.showButton = event.urlAfterRedirects.includes('/projects');
         
         // Check login status and load profile when route changes
         if (!hiddenRoutes.includes(event.urlAfterRedirects)) {
@@ -36,7 +39,13 @@ export class NavbarComponent implements OnInit {
     });
   }
 
+  showButton:boolean = false;
+
+
+
   ngOnInit() {
+
+
     this.checkLoginAndLoadProfile();
   }
 
