@@ -9,12 +9,19 @@ import UIKit
 
 protocol TaskDetailViewControllerDelegate: AnyObject {
     func taskDetailViewController(_ viewController: TaskDetailViewController, didUpdateTask task: Task)
+    func memberSelectionViewController(_ viewController: MemberSelectionViewController, didSelectUsername username: String?)
+}
+
+// MARK: - MemberSelectionViewControllerDelegate
+protocol MemberSelectionViewControllerDelegate: AnyObject {
+    func memberSelectionViewController(_ viewController: MemberSelectionViewController, didSelectUsername username: String?)
 }
 
 class TaskDetailViewController: UIViewController {
     private var task: Task
     private let board: Board
     private var statuses: [BoardStatus] = []
+    private var boardUsers: [BoardUser] = []
     weak var delegate: TaskDetailViewControllerDelegate?
     
     // Add properties to track changes
@@ -60,6 +67,7 @@ class TaskDetailViewController: UIViewController {
         setupNavigationBar()
         registerCells()
         loadStatuses()
+        loadBoardUsers()
     }
     
     private func loadStatuses() {
@@ -74,6 +82,22 @@ class TaskDetailViewController: UIViewController {
                 }
             case .failure(let error):
                 print("Failed to load statuses: \(error)")
+            }
+        }
+    }
+    
+    private func loadBoardUsers() {
+        APIService.shared.getBoardUsers(boardId: board.id) { [weak self] result in
+            guard let self = self else { return }
+            
+            switch result {
+            case .success(let users):
+                self.boardUsers = users
+                DispatchQueue.main.async {
+                    self.collectionView.reloadData()
+                }
+            case .failure(let error):
+                print("Failed to load board users: \(error)")
             }
         }
     }
@@ -374,7 +398,7 @@ extension TaskDetailViewController: UICollectionViewDataSource {
             
         case .members:
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: MemberCell.identifier, for: indexPath) as! MemberCell
-            cell.configure(username: task.assigneeUsername)
+            cell.configure(username: updatedUsername ?? task.assigneeUsername)
             cell.delegate = self
             return cell
             
@@ -452,5 +476,246 @@ extension TaskDetailViewController: TaskHeaderCellDelegate, DescriptionCellDeleg
     func memberCell(_ cell: MemberCell, didUpdateUsername username: String) {
         updatedUsername = username
         hasChanges = true
+    }
+    
+    func memberCellDidTap(_ cell: MemberCell) {
+        showMemberSelectionMenu()
+    }
+    
+    private func showMemberSelectionMenu() {
+        let memberSelectionVC = MemberSelectionViewController(
+            users: boardUsers,
+            selectedUsername: updatedUsername ?? task.assigneeUsername
+        ) { [weak self] selectedUsername in
+            guard let self = self else { return }
+            // API'ye güncelleme isteği gönder
+            self.updateTask(
+                title: self.updatedTitle ?? self.task.title,
+                description: self.updatedDescription ?? self.task.description,
+                dueDate: self.updatedDueDate.map { ISO8601DateFormatter().string(from: $0) } ?? self.task.dueDate.map { ISO8601DateFormatter().string(from: $0) },
+                username: selectedUsername,
+                statusId: self.updatedStatusId ?? self.task.statusId
+            ) { result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success(let updatedTask):
+                        self.updatedUsername = selectedUsername
+                        self.hasChanges = true
+                        self.task = updatedTask
+                        self.collectionView.reloadData()
+                    case .failure(let error):
+                        let alert = UIAlertController(title: "Error", message: "Failed to update member: \(error.localizedDescription)", preferredStyle: .alert)
+                        alert.addAction(UIAlertAction(title: "OK", style: .default))
+                        self.present(alert, animated: true)
+                    }
+                }
+            }
+        }
+        memberSelectionVC.delegate = self
+        present(memberSelectionVC, animated: true)
+    }
+}
+
+// MARK: - MemberSelectionViewController
+class MemberSelectionViewController: UIViewController {
+    weak var delegate: MemberSelectionViewControllerDelegate?
+    private let containerView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.backgroundColor = UIColor(white: 0.15, alpha: 1.0)
+        view.layer.cornerRadius = 12
+        return view
+    }()
+    
+    private let titleLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.text = "Select Member"
+        label.textColor = .white
+        label.font = .systemFont(ofSize: 17, weight: .semibold)
+        label.textAlignment = .center
+        return label
+    }()
+    
+    private let tableView: UITableView = {
+        let tableView = UITableView()
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        tableView.backgroundColor = .clear
+        tableView.separatorStyle = .none
+        return tableView
+    }()
+    
+    private let buttonStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        stackView.axis = .horizontal
+        stackView.distribution = .fillEqually
+        stackView.spacing = 12
+        return stackView
+    }()
+    
+    private let cancelButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Cancel", for: .normal)
+        button.setTitleColor(.white, for: .normal)
+        button.backgroundColor = UIColor(white: 0.3, alpha: 1.0)
+        button.layer.cornerRadius = 8
+        return button
+    }()
+    
+    private let saveButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Save", for: .normal)
+        button.setTitleColor(.white, for: .normal)
+        button.backgroundColor = .systemBlue
+        button.layer.cornerRadius = 8
+        return button
+    }()
+    
+    private var users: [BoardUser]
+    private var selectedUsername: String?
+    private var onSave: ((String?) -> Void)?
+    
+    init(users: [BoardUser], selectedUsername: String?, onSave: @escaping (String?) -> Void) {
+        self.users = users
+        self.selectedUsername = selectedUsername
+        self.onSave = onSave
+        super.init(nibName: nil, bundle: nil)
+        modalPresentationStyle = .overFullScreen
+        modalTransitionStyle = .crossDissolve
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupUI()
+    }
+    
+    private func setupUI() {
+        view.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        view.addSubview(containerView)
+        containerView.addSubview(titleLabel)
+        containerView.addSubview(tableView)
+        containerView.addSubview(buttonStackView)
+        buttonStackView.addArrangedSubview(cancelButton)
+        buttonStackView.addArrangedSubview(saveButton)
+
+        // Register cell and set delegate/dataSource
+        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "UserCell")
+        tableView.delegate = self
+        tableView.dataSource = self
+
+        NSLayoutConstraint.activate([
+            containerView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            containerView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            containerView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.9),
+            containerView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.6),
+            titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 16),
+            titleLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            titleLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            tableView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 16),
+            tableView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+            tableView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+            tableView.bottomAnchor.constraint(equalTo: buttonStackView.topAnchor, constant: -16),
+            buttonStackView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            buttonStackView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            buttonStackView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -16),
+            buttonStackView.heightAnchor.constraint(equalToConstant: 44)
+        ])
+
+        cancelButton.addTarget(self, action: #selector(cancelButtonTapped), for: .touchUpInside)
+        saveButton.addTarget(self, action: #selector(saveButtonTapped), for: .touchUpInside)
+    }
+    
+    @objc private func cancelButtonTapped() {
+        dismiss(animated: true)
+    }
+    
+    @objc private func saveButtonTapped() {
+        onSave?(selectedUsername)
+        dismiss(animated: true)
+    }
+}
+
+extension MemberSelectionViewController: UITableViewDataSource, UITableViewDelegate {
+    func numberOfSections(in tableView: UITableView) -> Int {
+        return 1
+    }
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return users.count
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "UserCell", for: indexPath)
+        cell.backgroundColor = .clear
+        cell.textLabel?.textColor = .white
+        let user = users[indexPath.row]
+        cell.textLabel?.text = user.username
+
+        // Plus/minus button
+        let button = UIButton(type: .system)
+        let isSelected = selectedUsername == user.username
+        let config = UIImage.SymbolConfiguration(pointSize: 24, weight: .bold)
+        let image = UIImage(systemName: isSelected ? "minus.circle.fill" : "plus.circle.fill", withConfiguration: config)
+        button.setImage(image, for: .normal)
+        button.tintColor = isSelected ? .systemRed : .systemBlue
+        button.tag = indexPath.row
+        button.addTarget(self, action: #selector(memberButtonTapped(_:)), for: .touchUpInside)
+        button.frame = CGRect(x: 0, y: 0, width: 32, height: 32)
+        cell.accessoryView = button
+
+        return cell
+    }
+
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 48
+    }
+    
+    @objc private func memberButtonTapped(_ sender: UIButton) {
+        let index = sender.tag
+        let user = users[index]
+        if selectedUsername == user.username {
+            selectedUsername = nil
+        } else {
+            selectedUsername = user.username
+        }
+        tableView.reloadData()
+        delegate?.memberSelectionViewController(self, didSelectUsername: selectedUsername)
+    }
+    
+    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 32
+    }
+    
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let headerView = UIView()
+        headerView.backgroundColor = .clear
+        
+        let label = UILabel()
+        label.text = "Select Member"
+        label.textColor = .white
+        label.font = .systemFont(ofSize: 15, weight: .medium)
+        
+        headerView.addSubview(label)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 16),
+            label.centerYAnchor.constraint(equalTo: headerView.centerYAnchor)
+        ])
+        
+        return headerView
+    }
+}
+
+extension TaskDetailViewController: MemberSelectionViewControllerDelegate {
+    func memberSelectionViewController(_ viewController: MemberSelectionViewController, didSelectUsername username: String?) {
+        self.updatedUsername = username
+        self.hasChanges = true
+        self.collectionView.reloadData()
     }
 }

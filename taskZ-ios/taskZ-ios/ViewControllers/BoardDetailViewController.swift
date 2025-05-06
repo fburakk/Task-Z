@@ -697,3 +697,9 @@ class AddStatusCell: UICollectionViewCell {
         action?()
     }
 }
+
+extension BoardDetailViewController: MemberSelectionViewControllerDelegate {
+    func memberSelectionViewController(_ viewController: MemberSelectionViewController, didSelectUsername username: String?) {
+        // No-op for BoardDetailViewController
+    }
+}
