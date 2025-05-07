@@ -4,10 +4,12 @@ import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { ProfileService, UserProfile } from '../core/services/profile.service';
 import { HttpClient, HttpClientModule, HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../core/services/auth.service';
+import { WorkspaceService } from '../core/services/workspace.service';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-navbar',
-  imports: [RouterModule, CommonModule, HttpClientModule],
+  imports: [RouterModule, CommonModule, HttpClientModule,FormsModule],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.scss',
   standalone: true
@@ -21,6 +23,8 @@ export class NavbarComponent implements OnInit {
   private router = inject(Router);
   private profileService = inject(ProfileService);
   private authService = inject(AuthService);
+  private workSpaceService = inject(WorkspaceService);
+
   
 
   constructor() {
@@ -39,7 +43,40 @@ export class NavbarComponent implements OnInit {
     });
   }
 
+  showWorkSpaceModal: boolean = false;
+  newWorkSpaceName: string = '';
+
+
   showButton:boolean = false;
+
+
+
+  openWorkSpaceModal(){
+    this.showWorkSpaceModal = true;
+    this.newWorkSpaceName = '';
+  }
+
+  closeWorkSpaceModal(){
+    this.showWorkSpaceModal = false;
+  }
+
+  createWorkSpace(){
+    if (!this.newWorkSpaceName.trim()) return;
+
+    this.workSpaceService.createWorkspace(this.newWorkSpaceName).subscribe({
+      next: (newWorkSpace) => {
+
+        console.log('Yeni workspace oluşturuldu:', newWorkSpace);
+        
+        this.closeWorkSpaceModal();
+        
+        this.newWorkSpaceName = '';},
+      error: (error) => {
+        console.error('Workspace oluşturulurken hata oluştu:', error);
+      }
+    });
+
+  }
 
 
 
