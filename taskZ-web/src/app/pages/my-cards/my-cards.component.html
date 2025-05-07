@@ -1,0 +1,47 @@
+<div class="container mt-4">
+    <h2 class="mb-4">My Tasks</h2>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="text-center">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error" class="alert alert-danger" role="alert">
+        {{ error }}
+    </div>
+
+    <!-- No Tasks State -->
+    <div *ngIf="!loading && !error && tasks.length === 0" class="alert alert-info" role="alert">
+        You don't have any assigned tasks yet.
+    </div>
+
+    <!-- Tasks Grid -->
+    <div *ngIf="!loading && !error && tasks.length > 0" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        <div *ngFor="let task of tasks" class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title mb-0">{{ task.title }}</h5>
+                        <span [class]="'badge ' + getPriorityClass(task.priority)">
+                            {{ task.priority }}
+                        </span>
+                    </div>
+                    <p class="card-text">{{ task.description }}</p>
+                    <div class="task-details">
+                        <div class="detail-item">
+                            <i class="fas fa-calendar"></i>
+                            <span>Due: {{ formatDate(task.dueDate) }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-user"></i>
+                            <span>Created by: {{ task.createdByUsername }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

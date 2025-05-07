@@ -73,4 +73,8 @@ export class TaskService {
   deleteTask(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`, this.authService.getAuthHeaders());
   }
+
+  getAssignedTasks(): Observable<Task[]> {
+      return this.http.get<Task[]>(`${this.baseUrl}/assigned`, this.authService.getAuthHeaders());
+  }
 }
