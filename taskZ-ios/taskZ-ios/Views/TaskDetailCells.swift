@@ -314,6 +314,7 @@ class DateCell: UICollectionViewCell {
 // MARK: - MemberCell
 protocol MemberCellDelegate: AnyObject {
     func memberCell(_ cell: MemberCell, didUpdateUsername username: String)
+    func memberCellDidTap(_ cell: MemberCell)
 }
 
 class MemberCell: UICollectionViewCell {
@@ -347,14 +348,19 @@ class MemberCell: UICollectionViewCell {
         return label
     }()
     
-    private let usernameTextField: UITextField = {
-        let textField = UITextField()
-        textField.translatesAutoresizingMaskIntoConstraints = false
-        textField.textColor = .white
-        textField.font = .systemFont(ofSize: 16)
-        textField.textAlignment = .right
-        textField.placeholder = "Add member"
-        return textField
+    private let usernameLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.textColor = .white
+        label.font = .systemFont(ofSize: 16)
+        label.textAlignment = .right
+        label.text = "Add member"
+        return label
+    }()
+    
+    private let tapGesture: UITapGestureRecognizer = {
+        let gesture = UITapGestureRecognizer()
+        return gesture
     }()
     
     override init(frame: CGRect) {
@@ -370,39 +376,38 @@ class MemberCell: UICollectionViewCell {
         contentView.addSubview(containerView)
         containerView.addSubview(iconImageView)
         containerView.addSubview(titleLabel)
-        containerView.addSubview(usernameTextField)
+        containerView.addSubview(usernameLabel)
         
         NSLayoutConstraint.activate([
             containerView.topAnchor.constraint(equalTo: contentView.topAnchor),
             containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-            containerView.heightAnchor.constraint(equalToConstant: 44),
             
             iconImageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             iconImageView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            iconImageView.widthAnchor.constraint(equalToConstant: 24),
-            iconImageView.heightAnchor.constraint(equalToConstant: 24),
+            iconImageView.widthAnchor.constraint(equalToConstant: 20),
+            iconImageView.heightAnchor.constraint(equalToConstant: 20),
             
             titleLabel.leadingAnchor.constraint(equalTo: iconImageView.trailingAnchor, constant: 12),
             titleLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
             
-            usernameTextField.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-            usernameTextField.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            usernameTextField.leadingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: 12)
+            usernameLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            usernameLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
+            usernameLabel.leadingAnchor.constraint(greaterThanOrEqualTo: titleLabel.trailingAnchor, constant: 16)
         ])
         
-        usernameTextField.addTarget(self, action: #selector(usernameDidChange), for: .editingChanged)
+        containerView.addGestureRecognizer(tapGesture)
+        tapGesture.addTarget(self, action: #selector(containerTapped))
     }
     
-    @objc private func usernameDidChange() {
-        if let text = usernameTextField.text {
-            delegate?.memberCell(self, didUpdateUsername: text)
-        }
+    @objc private func containerTapped() {
+        delegate?.memberCellDidTap(self)
     }
     
     func configure(username: String?) {
-        usernameTextField.text = username
+        usernameLabel.text = username ?? "Add member"
+        usernameLabel.textColor = username == nil ? .systemBlue : .white
     }
 }
 
