@@ -25,8 +25,8 @@
         </button>
     
         <!-- Oluştur Butonu -->
-        <button *ngIf="showButton" class="btn create-btn">
-          Oluştur
+        <button *ngIf="showButton" class="btn create-btn" (click)="openWorkSpaceModal()">
+          Workspace Ekle
         </button>
       </div>
     </div>
@@ -87,3 +87,25 @@
     </div>
   </div>
 </nav>
+
+<div *ngIf="showWorkSpaceModal" class="modal">
+  <div class="modal-background" (click)="closeWorkSpaceModal()"></div>
+  <div class="modal-content">
+    <div class="modal-box">
+      <button class="close-button" (click)="closeWorkSpaceModal()">×</button>
+      <h3 class="modal-title">Yeni Workspace Oluştur</h3>
+      
+      <input
+        class="modal-input"
+        [(ngModel)]="newWorkSpaceName"
+        type="text"
+        placeholder="Workspace ismini girin"
+      />
+
+      <div class="modal-buttons">
+        <button class="modal-button create" (click)="createWorkSpace()">Oluştur</button>
+        <button class="modal-button cancel" (click)="closeWorkSpaceModal()">İptal</button>
+      </div>
+    </div>
+  </div>
+</div>
