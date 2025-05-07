@@ -5,6 +5,7 @@ import { LoginComponent } from './pages/login/login.component';
 import { authGuard } from './auth.guard';
 import { ProjectsComponent } from './pages/projects/projects.component';
 import { ProjectDetailComponent } from './pages/project-detail/project-detail.component';
+import { MyCardsComponent } from './pages/my-cards/my-cards.component';
 
 export const routes: Routes = [
     {
@@ -34,5 +35,11 @@ export const routes: Routes = [
         path:'project/:id',
         component:ProjectDetailComponent,
         canActivate: [authGuard]
+    },
+    {
+        path:'myCards',
+        component: MyCardsComponent,
+        canActivate: [authGuard]
     }
+
 ];
