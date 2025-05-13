@@ -24,8 +24,8 @@
                         <div class="priority-selector" (click)="$event.stopPropagation()">
                             <span class="priority-badge" [ngClass]="getPriorityClass(task.priority)"
                                   (click)="$event.stopPropagation()">
-                                {{ task.priority }}
-                            </span>
+                            {{ task.priority }}
+                        </span>
                             <div class="priority-dropdown">
                                 <button class="priority-option" [ngClass]="getPriorityClass('high')"
                                         (click)="updateTaskPriority(task.id, 'high')">High</button>
