@@ -256,7 +256,10 @@ namespace CleanArchitecture.WebApi.Controllers
             // Verify board access
             var hasAccess = await _context.Boards
                 .Include(b => b.Workspace)
-                .AnyAsync(b => b.Id == id && b.Workspace.UserId == userId);
+                .Include(b => b.Users)
+                .AnyAsync(b => b.Id == id && 
+                    (b.Workspace.UserId == userId || // Workspace owner
+                     b.Users.Any(u => u.UserId == userId))); // Board member
                 
             if (!hasAccess)
             {

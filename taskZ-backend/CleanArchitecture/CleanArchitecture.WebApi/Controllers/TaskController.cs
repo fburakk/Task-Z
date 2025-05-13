@@ -87,7 +87,10 @@ namespace CleanArchitecture.WebApi.Controllers
             // Verify board access
             var hasAccess = await _context.Boards
                 .Include(b => b.Workspace)
-                .AnyAsync(b => b.Id == boardId && b.Workspace.UserId == userId);
+                .Include(b => b.Users)
+                .AnyAsync(b => b.Id == boardId && 
+                    (b.Workspace.UserId == userId || // Workspace owner
+                     b.Users.Any(u => u.UserId == userId))); // Board member
                 
             if (!hasAccess)
             {
@@ -119,7 +122,11 @@ namespace CleanArchitecture.WebApi.Controllers
             var hasAccess = await _context.BoardStatuses
                 .Include(bs => bs.Board)
                 .ThenInclude(b => b.Workspace)
-                .AnyAsync(bs => bs.Id == statusId && bs.Board.Workspace.UserId == userId);
+                .Include(bs => bs.Board)
+                .ThenInclude(b => b.Users)
+                .AnyAsync(bs => bs.Id == statusId && 
+                    (bs.Board.Workspace.UserId == userId || // Workspace owner
+                     bs.Board.Users.Any(u => u.UserId == userId))); // Board member
                 
             if (!hasAccess)
             {
@@ -149,7 +156,10 @@ namespace CleanArchitecture.WebApi.Controllers
             var board = await _context.Boards
                 .Include(b => b.Workspace)
                 .Include(b => b.Statuses)
-                .FirstOrDefaultAsync(b => b.Id == boardId && b.Workspace.UserId == userId);
+                .Include(b => b.Users)
+                .FirstOrDefaultAsync(b => b.Id == boardId && 
+                    (b.Workspace.UserId == userId || // Workspace owner
+                     b.Users.Any(u => u.UserId == userId))); // Board member
                 
             if (board == null)
             {
@@ -223,12 +233,16 @@ namespace CleanArchitecture.WebApi.Controllers
             var task = await _context.BoardTasks
                 .Include(t => t.Board)
                 .ThenInclude(b => b.Workspace)
+                .Include(t => t.Board)
+                .ThenInclude(b => b.Users)
                 .AsTracking()  // Enable tracking for this query
-                .FirstOrDefaultAsync(t => t.Id == id && t.Board.Workspace.UserId == userId);
+                .FirstOrDefaultAsync(t => t.Id == id && 
+                    (t.Board.Workspace.UserId == userId || // User owns the workspace
+                     t.Board.Users.Any(u => u.UserId == userId))); // User is a board member
 
             if (task == null)
             {
-                return NotFound();
+                return NotFound("Task not found or access denied.");
             }
 
             string assigneeUsername = null;
@@ -318,11 +332,15 @@ namespace CleanArchitecture.WebApi.Controllers
             var task = await _context.BoardTasks
                 .Include(t => t.Board)
                 .ThenInclude(b => b.Workspace)
-                .FirstOrDefaultAsync(t => t.Id == id && t.Board.Workspace.UserId == userId);
+                .Include(t => t.Board)
+                .ThenInclude(b => b.Users)
+                .FirstOrDefaultAsync(t => t.Id == id && 
+                    (t.Board.Workspace.UserId == userId || // User owns the workspace
+                     t.Board.Users.Any(u => u.UserId == userId))); // User is a board member
 
             if (task == null)
             {
-                return NotFound();
+                return NotFound("Task not found or access denied.");
             }
 
             _context.BoardTasks.Remove(task);

@@ -273,40 +273,9 @@ class BoardDetailViewController: UIViewController {
     }
     
     private func showAddUserDialog() {
-        let alert = UIAlertController(title: "Add User", message: nil, preferredStyle: .alert)
-        
-        alert.addTextField { textField in
-            textField.placeholder = "Username"
-        }
-        
-        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        alert.addAction(UIAlertAction(title: "Add", style: .default) { [weak self, weak alert] _ in
-            guard let self = self,
-                  let username = alert?.textFields?[0].text,
-                  !username.isEmpty else { return }
-            
-            self.loadingIndicator.startAnimating()
-            APIService.shared.addUserToBoard(
-                boardId: self.board.id,
-                username: username  // role will default to "viewer"
-            ) { [weak self] result in
-                guard let self = self else { return }
-                
-                DispatchQueue.main.async {
-                    self.loadingIndicator.stopAnimating()
-                    
-                    switch result {
-                    case .success(let newUser):
-                        self.users.append(newUser)
-                        // Update UI if needed
-                    case .failure(let error):
-                        self.showError(error)
-                    }
-                }
-            }
-        })
-        
-        present(alert, animated: true)
+        let addUserVC = AddUserViewController(boardId: board.id)
+        addUserVC.delegate = self
+        present(addUserVC, animated: true)
     }
     
     private func showEditBoardDialog() {
@@ -543,22 +512,21 @@ extension BoardDetailViewController: UIPickerViewDelegate, UIPickerViewDataSourc
     }
     
     func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
-        return 3 // Low, Medium, High
+        return 2 // viewer, editor
     }
     
     func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
         switch row {
-        case 0: return "Low"
-        case 1: return "Medium"
-        case 2: return "High"
+        case 0: return "viewer"
+        case 1: return "editor"
         default: return nil
         }
     }
     
     func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
-        let priorities = ["Low", "Medium", "High"]
+        let roles = ["viewer", "editor"]
         if let textField = pickerView.superview?.superview as? UITextField {
-            textField.text = priorities[row]
+            textField.text = roles[row]
             textField.resignFirstResponder()
         }
     }
@@ -633,5 +601,17 @@ class AddStatusCell: UICollectionViewCell {
 extension BoardDetailViewController: MemberSelectionViewControllerDelegate {
     func memberSelectionViewController(_ viewController: MemberSelectionViewController, didSelectUsername username: String?) {
         // No-op for BoardDetailViewController
+    }
+}
+
+// MARK: - AddUserViewControllerDelegate
+extension BoardDetailViewController: AddUserViewControllerDelegate {
+    func addUserViewController(_ viewController: AddUserViewController, didAddUser user: BoardUser) {
+        users.append(user)
+        // Update UI if needed
+    }
+    
+    func addUserViewControllerDidCancel(_ viewController: AddUserViewController) {
+        // Handle cancel if needed
     }
 }

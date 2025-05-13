@@ -66,9 +66,21 @@ namespace CleanArchitecture.WebApi.Controllers
         public async Task<ActionResult<List<WorkspaceResponse>>> GetWorkspaces()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            
+
+            // First get all board IDs where the user is a member
+            var boardIds = await _context.BoardUsers
+                .Where(bu => bu.UserId == userId)
+                .Select(bu => bu.BoardId)
+                .ToListAsync();
+
+            // Then get all workspaces where user is either owner or has boards
             var workspaces = await _context.Workspaces
-                .Where(w => w.UserId == userId)
+                .Include(w => w.Boards.Where(b => !b.IsArchived))
+                    .ThenInclude(b => b.Users)
+                .Where(w => w.UserId == userId || // User owns the workspace
+                           w.Boards.Any(b => boardIds.Contains(b.Id))) // User is a member of any board
+                .AsSplitQuery()
+                .Distinct()
                 .ToListAsync();
 
             var responses = new List<WorkspaceResponse>();
