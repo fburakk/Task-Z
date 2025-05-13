@@ -12,12 +12,29 @@
                 <h3>{{ status.title }}</h3>
                 <span class="task-count">{{ (tasksByStatus[status.id] || []).length }}</span>
             </div>
-            <div class="task-list">
-                <div class="task-card" *ngFor="let task of (tasksByStatus[status.id] || [])">
+            <div class="task-list" 
+                 (dragover)="onDragOver($event, status.id)"
+                 (drop)="onDrop($event, status.id)">
+                <div class="task-card" 
+                     *ngFor="let task of (tasksByStatus[status.id] || [])"
+                     draggable="true"
+                     (dragstart)="onDragStart(task)"
+                     (click)="startEditingTask(task)">
                     <div class="task-header">
-                        <span class="priority-badge" [ngClass]="getPriorityClass(task.priority)">
-                            {{ task.priority }}
-                        </span>
+                        <div class="priority-selector" (click)="$event.stopPropagation()">
+                            <span class="priority-badge" [ngClass]="getPriorityClass(task.priority)"
+                                  (click)="$event.stopPropagation()">
+                                {{ task.priority }}
+                            </span>
+                            <div class="priority-dropdown">
+                                <button class="priority-option" [ngClass]="getPriorityClass('high')"
+                                        (click)="updateTaskPriority(task.id, 'high')">High</button>
+                                <button class="priority-option" [ngClass]="getPriorityClass('medium')"
+                                        (click)="updateTaskPriority(task.id, 'medium')">Medium</button>
+                                <button class="priority-option" [ngClass]="getPriorityClass('low')"
+                                        (click)="updateTaskPriority(task.id, 'low')">Low</button>
+                            </div>
+                        </div>
                         <span class="task-id">#{{ task.id }}</span>
                     </div>
                     <h4 class="task-title">{{ task.title }}</h4>
@@ -124,6 +141,85 @@
             <div class="modal-buttons">
                 <button class="modal-button create" (click)="createTask()">Oluştur</button>
                 <button class="modal-button cancel" (click)="closeTaskModal()">İptal</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Task Detail Modal -->
+<div *ngIf="isTaskDetailModalOpen && editingTask" class="modal">
+    <div class="modal-background" (click)="closeTaskDetailModal()"></div>
+    <div class="modal-content">
+        <div class="modal-box task-detail-modal">
+            <button class="close-button" (click)="closeTaskDetailModal()">×</button>
+            
+            <div class="task-detail-header">
+                <input class="task-title-input" [(ngModel)]="editingTask.title" type="text" placeholder="Task title">
+                <span class="task-id">#{{ editingTask.id }}</span>
+            </div>
+
+            <div class="task-detail-section">
+                <h3>Description</h3>
+                <textarea class="task-description-input" [(ngModel)]="editingTask.description" 
+                    placeholder="Add a description..."></textarea>
+            </div>
+
+            <div class="task-detail-section">
+                <h3>Details</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">Priority:</span>
+                        <select class="priority-select" [(ngModel)]="editingTask.priority">
+                            <option value="high">High Priority</option>
+                            <option value="medium">Medium Priority</option>
+                            <option value="low">Low Priority</option>
+                        </select>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Due Date:</span>
+                        <input type="date" class="date-input" [(ngModel)]="editingTask.dueDate">
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Assigned To:</span>
+                        <select class="assignee-select" [(ngModel)]="editingTask.assigneeUsername">
+                            <option value="">Unassigned</option>
+                            <option *ngFor="let user of boardUsers" [value]="user.username">
+                                {{ user.username }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Current Status:</span>
+                        <span class="detail-value status-badge">{{ getStatusTitle(editingTask.statusId) }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="task-detail-section">
+                <h3>Activity</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">Created By:</span>
+                        <span class="detail-value">{{ editingTask.createdByUsername }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Created:</span>
+                        <span class="detail-value">{{ formatDate(editingTask.created) }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Last Modified By:</span>
+                        <span class="detail-value">{{ editingTask.lastModifiedByUsername }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Last Modified:</span>
+                        <span class="detail-value">{{ formatDate(editingTask.lastModified) }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="task-detail-actions">
+                <button class="btn btn-primary" (click)="updateTask()">Save Changes</button>
+                <button class="btn btn-danger" (click)="deleteTask(editingTask.id, editingTask.statusId)">Delete Task</button>
             </div>
         </div>
     </div>
