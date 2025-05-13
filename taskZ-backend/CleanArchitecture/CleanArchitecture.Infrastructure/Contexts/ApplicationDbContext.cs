@@ -33,7 +33,7 @@ namespace CleanArchitecture.Infrastructure.Contexts
 
             modelBuilder.Entity<Board>()
                 .HasOne(b => b.Workspace)
-                .WithMany()
+                .WithMany(w => w.Boards)
                 .HasForeignKey(b => b.WorkspaceId)
                 .OnDelete(DeleteBehavior.Cascade);
 

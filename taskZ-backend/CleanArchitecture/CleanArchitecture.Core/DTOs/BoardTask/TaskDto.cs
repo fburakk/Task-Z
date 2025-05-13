@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace CleanArchitecture.Core.DTOs.BoardTask
 {
@@ -24,22 +25,39 @@ namespace CleanArchitecture.Core.DTOs.BoardTask
 
     public class CreateTaskRequest
     {
+        [Required]
+        [StringLength(200, MinimumLength = 1)]
         public string Title { get; set; }
+
         public string Description { get; set; }
+
+        [Required]
+        [RegularExpression("^(low|medium|high)$", ErrorMessage = "Priority must be one of: low, medium, high")]
         public string Priority { get; set; }
+
         public DateTime? DueDate { get; set; }
+
         public string Username { get; set; }
+
         public int? StatusId { get; set; }
     }
 
     public class UpdateTaskRequest
     {
+        [StringLength(200, MinimumLength = 1)]
         public string? Title { get; set; }
+
         public string? Description { get; set; }
+
+        [RegularExpression("^(low|medium|high)$", ErrorMessage = "Priority must be one of: low, medium, high")]
         public string? Priority { get; set; }
+
         public DateTime? DueDate { get; set; }
+
         public string? Username { get; set; }
+
         public int? StatusId { get; set; }
+
         public int? Position { get; set; }
     }
 }

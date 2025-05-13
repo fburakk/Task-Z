@@ -30,11 +30,14 @@ namespace CleanArchitecture.WebApi.Controllers
             // Verify board access
             var board = await _context.Boards
                 .Include(b => b.Workspace)
-                .FirstOrDefaultAsync(b => b.Id == request.BoardId && b.Workspace.UserId == userId);
+                .Include(b => b.Users)
+                .FirstOrDefaultAsync(b => b.Id == request.BoardId && 
+                    (b.Workspace.UserId == userId || // Workspace owner
+                     b.Users.Any(u => u.UserId == userId && u.Role == "editor"))); // Board editor
                 
             if (board == null)
             {
-                return NotFound("Board not found or access denied.");
+                return NotFound("Board not found or insufficient permissions.");
             }
 
             // Get max position
