@@ -328,21 +328,9 @@ class TaskDetailViewController: UIViewController {
     }
 
     private func updateTaskStatus(to status: BoardStatus) {
-        updateTask(
-            title: task.title,
-            description: task.description,
-            priority: task.priority?.rawValue,
-            dueDate: task.dueDate.map { ISO8601DateFormatter().string(from: $0) },
-            username: task.assigneeUsername,
-            statusId: status.id,
-            position: task.position) { result in
-                switch result {
-                case .success(let success):
-                    self.navigationController?.popViewController(animated: true)
-                case .failure(let failure):
-                    print(failure.localizedDescription)
-                }
-            }
+        updatedStatusId = status.id
+        hasChanges = true
+        collectionView.reloadData()
     }
 }
 
@@ -404,7 +392,10 @@ extension TaskDetailViewController: UICollectionViewDataSource {
             
         case .status:
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: StatusCell.identifier, for: indexPath) as! StatusCell
-            if let currentStatus = statuses.first(where: { $0.id == task.statusId }) {
+            if let statusId = updatedStatusId,
+               let currentStatus = statuses.first(where: { $0.id == statusId }) {
+                cell.configure(with: currentStatus)
+            } else if let currentStatus = statuses.first(where: { $0.id == task.statusId }) {
                 cell.configure(with: currentStatus)
             }
             return cell

@@ -15,10 +15,13 @@ class NewTaskViewController: UIViewController {
     private let priorities = ["Low", "Medium", "High"]
     private var selectedPriority = "Medium"
     private var selectedDate: Date?
+    private var tempSelectedPriority: String?
+    private var tempSelectedDate: Date?
 
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        setupPickers()
     }
 
     private func setupUI() {
@@ -36,10 +39,11 @@ class NewTaskViewController: UIViewController {
         titleField.placeholder = "Task Title"
         titleField.textColor = .white
         titleField.backgroundColor = UIColor(white: 0.18, alpha: 1)
-        titleField.layer.cornerRadius = 8
+        titleField.layer.cornerRadius = 12
         titleField.layer.masksToBounds = true
         titleField.translatesAutoresizingMaskIntoConstraints = false
-        titleField.setLeftPaddingPoints(8)
+        titleField.setLeftPaddingPoints(12)
+        titleField.font = .systemFont(ofSize: 16)
 
         // Description
         let descIcon = UIImageView(image: UIImage(systemName: "text.alignleft"))
@@ -48,10 +52,11 @@ class NewTaskViewController: UIViewController {
         descriptionField.placeholder = "Description"
         descriptionField.textColor = .white
         descriptionField.backgroundColor = UIColor(white: 0.18, alpha: 1)
-        descriptionField.layer.cornerRadius = 8
+        descriptionField.layer.cornerRadius = 12
         descriptionField.layer.masksToBounds = true
         descriptionField.translatesAutoresizingMaskIntoConstraints = false
-        descriptionField.setLeftPaddingPoints(8)
+        descriptionField.setLeftPaddingPoints(12)
+        descriptionField.font = .systemFont(ofSize: 16)
 
         // Priority
         let priorityIcon = UIImageView(image: UIImage(systemName: "flag"))
@@ -60,10 +65,11 @@ class NewTaskViewController: UIViewController {
         priorityField.placeholder = "Priority"
         priorityField.textColor = .white
         priorityField.backgroundColor = UIColor(white: 0.18, alpha: 1)
-        priorityField.layer.cornerRadius = 8
+        priorityField.layer.cornerRadius = 12
         priorityField.layer.masksToBounds = true
         priorityField.translatesAutoresizingMaskIntoConstraints = false
-        priorityField.setLeftPaddingPoints(8)
+        priorityField.setLeftPaddingPoints(12)
+        priorityField.font = .systemFont(ofSize: 16)
         priorityField.inputView = priorityPicker
         priorityField.tintColor = .clear
         priorityField.text = selectedPriority
@@ -77,10 +83,11 @@ class NewTaskViewController: UIViewController {
         dateField.placeholder = "Due Date"
         dateField.textColor = .white
         dateField.backgroundColor = UIColor(white: 0.18, alpha: 1)
-        dateField.layer.cornerRadius = 8
+        dateField.layer.cornerRadius = 12
         dateField.layer.masksToBounds = true
         dateField.translatesAutoresizingMaskIntoConstraints = false
-        dateField.setLeftPaddingPoints(8)
+        dateField.setLeftPaddingPoints(12)
+        dateField.font = .systemFont(ofSize: 16)
         dateField.inputView = datePicker
         dateField.tintColor = .clear
         datePicker.datePickerMode = .dateAndTime
@@ -143,10 +150,61 @@ class NewTaskViewController: UIViewController {
         let stack = UIStackView(arrangedSubviews: [icon, field])
         stack.axis = .horizontal
         stack.spacing = 12
-        icon.widthAnchor.constraint(equalToConstant: 24).isActive = true
-        icon.heightAnchor.constraint(equalToConstant: 24).isActive = true
-        field.heightAnchor.constraint(equalToConstant: 40).isActive = true
+        stack.alignment = .center
+        icon.widthAnchor.constraint(equalToConstant: 28).isActive = true
+        icon.heightAnchor.constraint(equalToConstant: 28).isActive = true
+        field.heightAnchor.constraint(equalToConstant: 50).isActive = true
         return stack
+    }
+
+    private func setupPickers() {
+        // Priority Picker Setup
+        let priorityToolbar = UIToolbar()
+        priorityToolbar.sizeToFit()
+        let priorityDoneButton = UIBarButtonItem(title: "Done", style: .done, target: self, action: #selector(priorityDoneTapped))
+        let priorityCancelButton = UIBarButtonItem(title: "Cancel", style: .plain, target: self, action: #selector(priorityCancelTapped))
+        let flexSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+        priorityToolbar.items = [priorityCancelButton, flexSpace, priorityDoneButton]
+        priorityToolbar.barTintColor = UIColor(white: 0.13, alpha: 1)
+        priorityToolbar.tintColor = .systemBlue
+        priorityField.inputAccessoryView = priorityToolbar
+
+        // Date Picker Setup
+        let dateToolbar = UIToolbar()
+        dateToolbar.sizeToFit()
+        let dateDoneButton = UIBarButtonItem(title: "Done", style: .done, target: self, action: #selector(dateDoneTapped))
+        let dateCancelButton = UIBarButtonItem(title: "Cancel", style: .plain, target: self, action: #selector(dateCancelTapped))
+        dateToolbar.items = [dateCancelButton, flexSpace, dateDoneButton]
+        dateToolbar.barTintColor = UIColor(white: 0.13, alpha: 1)
+        dateToolbar.tintColor = .systemBlue
+        dateField.inputAccessoryView = dateToolbar
+    }
+
+    @objc private func priorityDoneTapped() {
+        selectedPriority = tempSelectedPriority ?? selectedPriority
+        priorityField.text = selectedPriority
+        priorityField.resignFirstResponder()
+    }
+
+    @objc private func priorityCancelTapped() {
+        priorityPicker.selectRow(priorities.firstIndex(of: selectedPriority) ?? 1, inComponent: 0, animated: false)
+        priorityField.resignFirstResponder()
+    }
+
+    @objc private func dateDoneTapped() {
+        selectedDate = tempSelectedDate
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        if let date = selectedDate {
+            dateField.text = formatter.string(from: date)
+        }
+        dateField.resignFirstResponder()
+    }
+
+    @objc private func dateCancelTapped() {
+        tempSelectedDate = selectedDate
+        dateField.resignFirstResponder()
     }
 
     @objc private func dateChanged(_ sender: UIDatePicker) {
@@ -154,7 +212,7 @@ class NewTaskViewController: UIViewController {
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
         dateField.text = formatter.string(from: sender.date)
-        selectedDate = sender.date
+        tempSelectedDate = sender.date
     }
 
     @objc private func cancelTapped() {
@@ -176,8 +234,8 @@ extension NewTaskViewController: UIPickerViewDataSource, UIPickerViewDelegate {
     func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int { priorities.count }
     func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? { priorities[row] }
     func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
-        selectedPriority = priorities[row]
-        priorityField.text = selectedPriority
+        tempSelectedPriority = priorities[row]
+        priorityField.text = tempSelectedPriority
     }
 }
 
