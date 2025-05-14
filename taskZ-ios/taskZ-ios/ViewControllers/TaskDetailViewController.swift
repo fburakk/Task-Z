@@ -10,6 +10,7 @@ import UIKit
 protocol TaskDetailViewControllerDelegate: AnyObject {
     func taskDetailViewController(_ viewController: TaskDetailViewController, didUpdateTask task: Task)
     func memberSelectionViewController(_ viewController: MemberSelectionViewController, didSelectUsername username: String?)
+    func didDeleteTask()
 }
 
 // MARK: - MemberSelectionViewControllerDelegate
@@ -31,6 +32,7 @@ class TaskDetailViewController: UIViewController {
     private var updatedUsername: String?
     private var updatedStatusId: Int?
     private var hasChanges: Bool = false
+    var onDelete: (() -> Void)?
     
     enum Section: Int, CaseIterable {
         case header
@@ -51,6 +53,17 @@ class TaskDetailViewController: UIViewController {
         return collectionView
     }()
     
+    private let deleteButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Delete", for: .normal)
+        button.setTitleColor(.white, for: .normal)
+        button.backgroundColor = .systemRed
+        button.layer.cornerRadius = 12
+        button.titleLabel?.font = .systemFont(ofSize: 18, weight: .bold)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
     init(task: Task, board: Board) {
         self.task = task
         self.board = board
@@ -68,6 +81,7 @@ class TaskDetailViewController: UIViewController {
         registerCells()
         loadStatuses()
         loadBoardUsers()
+        setupDeleteButton()
     }
     
     private func loadStatuses() {
@@ -105,12 +119,17 @@ class TaskDetailViewController: UIViewController {
     private func setupUI() {
         view.backgroundColor = .black
         view.addSubview(collectionView)
+        view.addSubview(deleteButton)
         
         NSLayoutConstraint.activate([
             collectionView.topAnchor.constraint(equalTo: view.topAnchor),
             collectionView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            collectionView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            collectionView.bottomAnchor.constraint(equalTo: deleteButton.topAnchor),
+            deleteButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            deleteButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            deleteButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            deleteButton.heightAnchor.constraint(equalToConstant: 50)
         ])
     }
     
@@ -331,6 +350,39 @@ class TaskDetailViewController: UIViewController {
         updatedStatusId = status.id
         hasChanges = true
         collectionView.reloadData()
+    }
+    
+    private func setupDeleteButton() {
+        view.addSubview(deleteButton)
+        NSLayoutConstraint.activate([
+            deleteButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            deleteButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            deleteButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            deleteButton.heightAnchor.constraint(equalToConstant: 50)
+        ])
+        deleteButton.addTarget(self, action: #selector(deleteButtonTapped), for: .touchUpInside)
+    }
+    
+    @objc private func deleteButtonTapped() {
+        let alert = UIAlertController(title: "Delete Task", message: "Are you sure you want to delete this task? This action cannot be undone.", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Delete", style: .destructive) { [weak self] _ in
+            guard let self = self else { return }
+            APIService.shared.deleteTask(id: self.task.id) { result in
+                DispatchQueue.main.async {
+                    switch result {
+                    case .success:
+                        self.delegate?.didDeleteTask()
+                        self.navigationController?.popViewController(animated: true)
+                    case .failure(let error):
+                        let errorAlert = UIAlertController(title: "Error", message: "Failed to delete task: \(error.localizedDescription)", preferredStyle: .alert)
+                        errorAlert.addAction(UIAlertAction(title: "OK", style: .default))
+                        self.present(errorAlert, animated: true)
+                    }
+                }
+            }
+        })
+        present(alert, animated: true)
     }
 }
 

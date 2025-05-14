@@ -550,6 +550,9 @@ extension BoardDetailViewController: TaskDetailViewControllerDelegate {
         // Reload the collection view
         collectionView.reloadData()
     }
+    func didDeleteTask() {
+        loadData()
+    }
 }
 
 class AddStatusCell: UICollectionViewCell {
