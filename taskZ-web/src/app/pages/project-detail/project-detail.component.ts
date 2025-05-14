@@ -30,7 +30,7 @@ export class ProjectDetailComponent implements OnInit {
   public tasksByStatus: TasksByStatus = {};
   public statuses: BoardStatus[] = [];
 
-  selectedBoardId: number | null = null;
+  selectedBoardId!: number; //////burda değişiklik yaptık sıkıntı çıkarsa bak
 
   isModalOpen = false;
   isStatusModalOpen = false;
@@ -50,6 +50,11 @@ export class ProjectDetailComponent implements OnInit {
   draggedTask: Task | null = null;
   editingTask: Task | null = null;
 
+
+  showAddUserModal: boolean = false;
+  newUsersName: string = '';
+  newUsersRole: 'editor' | 'viewer' = 'viewer';
+
   ngOnInit(): void {
     const boardId = Number(this.route.snapshot.paramMap.get('id'));
     this.selectedBoardId = boardId;
@@ -57,6 +62,24 @@ export class ProjectDetailComponent implements OnInit {
     if (boardId) {
       this.loadBoardData(boardId);
     }
+  }
+
+  addUserModal(){
+    this.showAddUserModal = true;
+    this.newUsersName = '';
+    this.newUsersRole = 'viewer';
+  }
+
+  closeAddUserModal(){
+    this.showAddUserModal = false;
+  }
+
+  addNewUser(){
+    if (!this.newUsersName.trim() || !this.newUsersRole.trim() ) return;
+
+    this.boardService.addUserToBoard(this.selectedBoardId,this.newUsersName,this.newUsersRole).subscribe(newUser => {
+      console.log('Yeni kullanıcı eklendi:', newUser);
+      this.closeAddUserModal();})
   }
 
   loadBoardData(boardId: number) {
