@@ -105,12 +105,12 @@
               placeholder="Kullanıcı adını girin."
             />
 
-              <input
-              class="modal-input"
-              [(ngModel)]="newUsersRole"
-              type="text"
-              placeholder="Kullanıcı rolünü girin."
-            />
+            <!-- Kullanıcı rolü seçimi için dropdown -->
+            <select class="modal-input" [(ngModel)]="newUsersRole">
+              <option value="viewer">Viewer</option>
+              <option value="editor">Editor</option>
+            </select>
+
       
             <div class="modal-buttons">
               <button class="modal-button create" (click)="addNewUser()">Oluştur</button>
