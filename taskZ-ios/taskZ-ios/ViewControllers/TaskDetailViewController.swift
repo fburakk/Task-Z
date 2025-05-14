@@ -396,10 +396,8 @@ extension TaskDetailViewController: UICollectionViewDataSource {
         guard let section = Section(rawValue: section) else { return 0 }
         
         switch section {
-        case .header, .project, .description, .members, .status:
+        case .header, .project, .description, .members, .status, .dates:
             return 1
-        case .dates:
-            return 2 // Start date and end date
         }
     }
     
@@ -428,11 +426,10 @@ extension TaskDetailViewController: UICollectionViewDataSource {
             
         case .dates:
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: DateCell.identifier, for: indexPath) as! DateCell
-            if indexPath.item == 0 {
-                cell.configure(title: "Başlangıç tarihi", date: task.dueDate)
-            } else {
-                cell.configure(title: "Bitiş tarihi", date: task.dueDate)
-            }
+           
+               
+            cell.configure(title: "Bitiş tarihi", date: task.dueDate)
+            
             cell.delegate = self
             return cell
             
@@ -509,10 +506,8 @@ extension TaskDetailViewController: TaskHeaderCellDelegate, DescriptionCellDeleg
     
     func dateCell(_ cell: DateCell, didUpdateDate date: Date?) {
         if let indexPath = collectionView.indexPath(for: cell) {
-            if indexPath.item == 1 { // Due date cell
-                updatedDueDate = date
-                hasChanges = true
-            }
+            updatedDueDate = date
+            hasChanges = true
         }
     }
     
