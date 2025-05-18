@@ -98,6 +98,17 @@ namespace CleanArchitecture.WebApi.Controllers
             };
 
             _context.Boards.Add(board);
+            await _context.SaveChangesAsync(); // Save first to get the board ID
+            
+            // Add the creating user as an editor of the board
+            var boardUser = new BoardUser
+            {
+                BoardId = board.Id, // Now we have the valid board ID
+                UserId = userId,
+                Role = "editor"  // Give the creator editor privileges
+            };
+            
+            _context.BoardUsers.Add(boardUser);
             await _context.SaveChangesAsync();
 
             return await MapToBoardResponse(board);
