@@ -1,19 +1,37 @@
 .home-container {
-  text-align: center;
-  margin-top: 200px; /* Burayı ihtiyacına göre artırabilirsin */
+  min-height: calc(100vh - 48px);
+  background-color: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
 }
 
-.home-title {
+.home-hero {
+  background: #1e293b;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  border: 1px solid #334155;
+  padding: 64px 80px;
+  max-width: 560px;
+  width: 100%;
+  text-align: center;
+}
+
+.home-logo {
   font-size: 64px;
   font-weight: 800;
-  color: #1a1a1a;
+  color: #f1f5f9;
   margin-bottom: 16px;
-  font-family: 'Inter', sans-serif;
+  letter-spacing: -1px;
+  line-height: 1;
 }
 
 .home-subtitle {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 400;
-  color: #555;
-  font-family: 'Inter', sans-serif;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.5;
 }
+
