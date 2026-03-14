@@ -26,6 +26,7 @@ namespace CleanArchitecture.Infrastructure.Contexts
         public DbSet<BoardUser> BoardUsers { get; set; }
         public DbSet<BoardStatus> BoardStatuses { get; set; }
         public DbSet<BoardTask> BoardTasks { get; set; }
+        public DbSet<TaskEvent> TaskEvents { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -49,6 +50,12 @@ namespace CleanArchitecture.Infrastructure.Contexts
                 .HasForeignKey(bs => bs.BoardId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<BoardStatus>()
+                .Property(bs => bs.Type)
+                .HasMaxLength(32)
+                .HasDefaultValue(BoardStatus.Custom)
+                .IsRequired();
+
             modelBuilder.Entity<BoardTask>()
                 .HasOne(t => t.Board)
                 .WithMany()
@@ -60,6 +67,12 @@ namespace CleanArchitecture.Infrastructure.Contexts
                 .WithMany()
                 .HasForeignKey(t => t.StatusId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TaskEvent>()
+                .HasIndex(te => new { te.BoardId, te.WorkspaceId, te.EventType, te.Created });
+
+            modelBuilder.Entity<TaskEvent>()
+                .HasIndex(te => new { te.TaskId, te.Created });
         }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())

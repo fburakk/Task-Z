@@ -21,11 +21,91 @@ namespace CleanArchitecture.WebApi.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private static readonly HashSet<string> CompletedStatusKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "done",
+            "completed",
+            "complete",
+            "closed",
+            "finish",
+            "finished",
+            "tamam",
+            "tamamlandi",
+            "tamamlandı",
+            "bitti",
+            "bitirildi"
+        };
+
+        private static class TaskEventTypes
+        {
+            public const string Created = "Created";
+            public const string Updated = "Updated";
+            public const string StatusChanged = "StatusChanged";
+            public const string AssigneeChanged = "AssigneeChanged";
+            public const string Completed = "Completed";
+            public const string Reopened = "Reopened";
+            public const string Deleted = "Deleted";
+        }
 
         public TaskController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _userManager = userManager;
+        }
+
+        private string GetCurrentUserId()
+        {
+            return User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
+        }
+
+        private static bool IsCompletedStatus(string statusType, string statusTitle = null)
+        {
+            if (!string.IsNullOrWhiteSpace(statusType) &&
+                string.Equals(statusType.Trim(), BoardStatus.Done, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (string.IsNullOrWhiteSpace(statusTitle))
+            {
+                return false;
+            }
+
+            var normalizedTitle = statusTitle.Trim().ToLowerInvariant();
+            return CompletedStatusKeywords.Contains(normalizedTitle) ||
+                CompletedStatusKeywords.Any(keyword => normalizedTitle.Contains(keyword));
+        }
+
+        private TaskEvent BuildTaskEvent(
+            BoardTask task,
+            int workspaceId,
+            string eventType,
+            string actorUserId,
+            int? fromStatusId = null,
+            int? toStatusId = null,
+            string fromAssigneeId = null,
+            string toAssigneeId = null,
+            string metadata = null)
+        {
+            return new TaskEvent
+            {
+                TaskId = task.Id,
+                BoardId = task.BoardId,
+                WorkspaceId = workspaceId,
+                EventType = eventType,
+                ActorUserId = actorUserId,
+                StatusId = task.StatusId,
+                FromStatusId = fromStatusId,
+                ToStatusId = toStatusId,
+                AssigneeId = task.AssigneeId,
+                FromAssigneeId = fromAssigneeId,
+                ToAssigneeId = toAssigneeId,
+                Priority = task.Priority,
+                DueDate = task.DueDate,
+                Title = task.Title,
+                Description = task.Description,
+                Metadata = metadata
+            };
         }
 
         private async Task<TaskDto> MapToTaskDto(BoardTask task, string assigneeUsername = null)
@@ -58,7 +138,7 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpGet("assigned")]
         public async Task<ActionResult<List<TaskDto>>> GetAssignedTasks()
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
+            var userId = GetCurrentUserId();
             
             var tasks = await _context.BoardTasks
                 .Include(t => t.Board)
@@ -82,7 +162,7 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpGet("board/{boardId}")]
         public async Task<ActionResult<List<TaskDto>>> GetBoardTasks(int boardId)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
+            var userId = GetCurrentUserId();
             
             // Verify board access
             var hasAccess = await _context.Boards
@@ -116,7 +196,7 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpGet("status/{statusId}")]
         public async Task<ActionResult<List<TaskDto>>> GetStatusTasks(int statusId)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
+            var userId = GetCurrentUserId();
             
             // Verify status access
             var hasAccess = await _context.BoardStatuses
@@ -150,7 +230,11 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpPost("board/{boardId}")]
         public async Task<ActionResult<TaskDto>> CreateTask(int boardId, CreateTaskRequest request)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
+            var userId = GetCurrentUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return Unauthorized();
+            }
             
             // Verify board access and get statuses
             var board = await _context.Boards
@@ -191,13 +275,17 @@ namespace CleanArchitecture.WebApi.Controllers
             }
             else
             {
-                // Default to first status
-                var firstStatus = board.Statuses.OrderBy(s => s.Position).FirstOrDefault();
-                if (firstStatus == null)
+                // Prefer deterministic Todo anchor; fallback to first status.
+                var defaultStatus = board.Statuses
+                    .OrderByDescending(s => s.Type == BoardStatus.Todo)
+                    .ThenBy(s => s.Position)
+                    .FirstOrDefault();
+
+                if (defaultStatus == null)
                 {
                     return BadRequest("Board must have at least one status.");
                 }
-                targetStatusId = firstStatus.Id;
+                targetStatusId = defaultStatus.Id;
             }
 
             // Get max position in the target status
@@ -222,13 +310,27 @@ namespace CleanArchitecture.WebApi.Controllers
             _context.BoardTasks.Add(task);
             await _context.SaveChangesAsync();
 
+            var status = board.Statuses.FirstOrDefault(s => s.Id == task.StatusId);
+            _context.TaskEvents.Add(BuildTaskEvent(task, board.WorkspaceId, TaskEventTypes.Created, userId));
+
+            if (IsCompletedStatus(status?.Type, status?.Title))
+            {
+                _context.TaskEvents.Add(BuildTaskEvent(task, board.WorkspaceId, TaskEventTypes.Completed, userId));
+            }
+
+            await _context.SaveChangesAsync();
+
             return await MapToTaskDto(task, request.Username);
         }
 
         [HttpPut("{id}")]
         public async Task<ActionResult<TaskDto>> UpdateTask(int id, UpdateTaskRequest request)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
+            var userId = GetCurrentUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return Unauthorized();
+            }
             
             var task = await _context.BoardTasks
                 .Include(t => t.Board)
@@ -245,6 +347,15 @@ namespace CleanArchitecture.WebApi.Controllers
                 return NotFound("Task not found or access denied.");
             }
 
+            var oldStatusId = task.StatusId;
+            var oldAssigneeId = task.AssigneeId;
+            var oldTitle = task.Title;
+            var oldDescription = task.Description;
+            var oldPriority = task.Priority;
+            var oldDueDate = task.DueDate;
+            var statusChanged = false;
+            var assigneeChanged = false;
+
             string assigneeUsername = null;
             // Update assignee if username provided
             if (!string.IsNullOrEmpty(request.Username))
@@ -254,7 +365,11 @@ namespace CleanArchitecture.WebApi.Controllers
                 {
                     return NotFound($"User '{request.Username}' not found.");
                 }
-                task.AssigneeId = assignee.Id;
+                if (task.AssigneeId != assignee.Id)
+                {
+                    task.AssigneeId = assignee.Id;
+                    assigneeChanged = true;
+                }
                 assigneeUsername = request.Username;
             }
 
@@ -277,6 +392,7 @@ namespace CleanArchitecture.WebApi.Controllers
                     .DefaultIfEmpty()
                     .MaxAsync();
 
+                statusChanged = true;
                 task.StatusId = request.StatusId.Value;
                 task.Position = maxPosition + 1;
             }
@@ -321,13 +437,75 @@ namespace CleanArchitecture.WebApi.Controllers
 
             await _context.SaveChangesAsync();
 
+            var changedEvents = new List<TaskEvent>();
+            var isAnyFieldUpdated = oldTitle != task.Title
+                || oldDescription != task.Description
+                || oldPriority != task.Priority
+                || oldDueDate != task.DueDate;
+
+            if (isAnyFieldUpdated)
+            {
+                changedEvents.Add(BuildTaskEvent(task, task.Board.WorkspaceId, TaskEventTypes.Updated, userId));
+            }
+
+            if (assigneeChanged)
+            {
+                changedEvents.Add(BuildTaskEvent(
+                    task,
+                    task.Board.WorkspaceId,
+                    TaskEventTypes.AssigneeChanged,
+                    userId,
+                    fromAssigneeId: oldAssigneeId,
+                    toAssigneeId: task.AssigneeId));
+            }
+
+            if (statusChanged)
+            {
+                changedEvents.Add(BuildTaskEvent(
+                    task,
+                    task.Board.WorkspaceId,
+                    TaskEventTypes.StatusChanged,
+                    userId,
+                    fromStatusId: oldStatusId,
+                    toStatusId: task.StatusId));
+
+                var statusTitles = await _context.BoardStatuses
+                    .Where(s => s.Id == oldStatusId || s.Id == task.StatusId)
+                    .Select(s => new { s.Id, s.Type, s.Title })
+                    .ToListAsync();
+
+                var oldStatus = statusTitles.FirstOrDefault(s => s.Id == oldStatusId);
+                var newStatus = statusTitles.FirstOrDefault(s => s.Id == task.StatusId);
+                var wasCompleted = IsCompletedStatus(oldStatus?.Type, oldStatus?.Title);
+                var isCompleted = IsCompletedStatus(newStatus?.Type, newStatus?.Title);
+
+                if (!wasCompleted && isCompleted)
+                {
+                    changedEvents.Add(BuildTaskEvent(task, task.Board.WorkspaceId, TaskEventTypes.Completed, userId));
+                }
+                else if (wasCompleted && !isCompleted)
+                {
+                    changedEvents.Add(BuildTaskEvent(task, task.Board.WorkspaceId, TaskEventTypes.Reopened, userId));
+                }
+            }
+
+            if (changedEvents.Any())
+            {
+                _context.TaskEvents.AddRange(changedEvents);
+                await _context.SaveChangesAsync();
+            }
+
             return await MapToTaskDto(task, assigneeUsername);
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTask(int id)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
+            var userId = GetCurrentUserId();
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return Unauthorized();
+            }
             
             var task = await _context.BoardTasks
                 .Include(t => t.Board)
@@ -343,6 +521,12 @@ namespace CleanArchitecture.WebApi.Controllers
                 return NotFound("Task not found or access denied.");
             }
 
+            _context.TaskEvents.Add(BuildTaskEvent(
+                task,
+                task.Board.WorkspaceId,
+                TaskEventTypes.Deleted,
+                userId,
+                metadata: "Task hard deleted"));
             _context.BoardTasks.Remove(task);
             await _context.SaveChangesAsync();
 

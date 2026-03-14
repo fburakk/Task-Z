@@ -23,6 +23,7 @@ export interface BoardStatus {
   id: number;
   boardId?: number;
   title: string;
+  type: 'todo' | 'in_progress' | 'custom' | 'done';
   position: number;
 }
 
@@ -63,6 +64,11 @@ export class BoardService {
     return this.http.put<void>(`${this.apiUrl}/${id}`, body, this.authService.getAuthHeaders());
   }
 
+  // Delete Board
+  deleteBoard(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`, this.authService.getAuthHeaders());
+  }
+
   // Archive Board
   archiveBoard(id: number): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/${id}/archive`, {}, this.authService.getAuthHeaders());
@@ -79,14 +85,30 @@ export class BoardService {
   }
 
   // Add User to Board
-  addUserToBoard(id: number, username: string, role: string): Observable<BoardUser> {
+  addUserToBoard(id: number, username: string, role: string = 'editor'): Observable<BoardUser> {
     const body = { username, role };
     return this.http.post<BoardUser>(`${this.apiUrl}/${id}/users`, body, this.authService.getAuthHeaders());
   }
 
   // Create Board Status
-  createBoardStatus(boardId: number, name: string): Observable<BoardStatus> {
-    const body = { boardId, name };
+  createBoardStatus(
+    boardId: number,
+    name: string,
+    type: 'todo' | 'in_progress' | 'custom' | 'done' = 'custom'
+  ): Observable<BoardStatus> {
+    const body = { boardId, name, type };
     return this.http.post<BoardStatus>('http://localhost:5001/api/BoardStatus', body, this.authService.getAuthHeaders());
+  }
+
+  // Rename Board Status
+  updateBoardStatus(statusId: number, name: string): Observable<BoardStatus> {
+    const body = { name };
+    return this.http.put<BoardStatus>(`http://localhost:5001/api/BoardStatus/${statusId}`, body, this.authService.getAuthHeaders());
+  }
+
+  // Reorder Board Statuses
+  reorderBoardStatuses(boardId: number, statusIds: number[]): Observable<void> {
+    const body = { boardId, statusIds };
+    return this.http.put<void>('http://localhost:5001/api/BoardStatus/reorder', body, this.authService.getAuthHeaders());
   }
 }

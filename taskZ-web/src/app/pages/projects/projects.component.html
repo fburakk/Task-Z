@@ -23,14 +23,30 @@
       <!-- Kartlar -->
       <div class="card-grid">
         <ng-container *ngIf="boardsByWorkspace[workspace.id] && boardsByWorkspace[workspace.id].length > 0; else noBoards">
-          <a
-            class="project-card"
+          <div
+            class="project-card board-card"
             *ngFor="let board of boardsByWorkspace[workspace.id]"
             [style.background]="'#E1F5FE'"
-            [routerLink]="['/project', board.id]"
           >
-            <h3 class="card-title">{{ board.name }}</h3>
-          </a>
+            <a class="board-link" [routerLink]="['/project', board.id]">
+              <h3 class="card-title">{{ board.name }}</h3>
+            </a>
+            <button
+              type="button"
+              class="board-delete-btn"
+              (click)="deleteBoard(workspace.id, board.id, $event)"
+              title="Projeyi sil"
+              aria-label="Projeyi sil"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 6h18"></path>
+                <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"></path>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                <path d="M10 11v6"></path>
+                <path d="M14 11v6"></path>
+              </svg>
+            </button>
+          </div>
         </ng-container>
   
         <ng-template #noBoards>

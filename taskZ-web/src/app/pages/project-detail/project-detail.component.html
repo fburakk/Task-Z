@@ -13,10 +13,50 @@
 
     <!-- Kanban Columns -->
     <div class="board-columns">
-        <div class="status-column" *ngFor="let status of statuses">
-            <div class="column-header">
-                <h3>{{ status.title }}</h3>
-                <span class="task-count">{{ (tasksByStatus[status.id] || []).length }}</span>
+        <div
+            class="status-column"
+            *ngFor="let status of statuses"
+            [class.status-drag-over]="statusDragOverId === status.id"
+            (dragover)="onStatusDragOver($event, status.id)"
+            (drop)="onStatusDrop($event, status.id)"
+        >
+            <div
+                class="column-header"
+                [draggable]="editingStatusId !== status.id"
+                (dragstart)="onStatusDragStart(status, $event)"
+                (dragend)="onStatusDragEnd()"
+            >
+                <div class="column-title-group">
+                    <span class="column-drag-handle" title="Listeyi taşımak için sürükle">⋮⋮</span>
+                    <ng-container *ngIf="editingStatusId !== status.id; else editStatusTemplate">
+                        <h3>{{ status.title }}</h3>
+                    </ng-container>
+                    <ng-template #editStatusTemplate>
+                        <input
+                            class="status-title-input"
+                            [(ngModel)]="editingStatusName"
+                            placeholder="Liste adı"
+                            (keydown.enter)="saveRenameStatus(status)"
+                            (keydown.escape)="cancelRenameStatus()"
+                        />
+                    </ng-template>
+                </div>
+                <div class="column-actions">
+                    <button
+                        *ngIf="editingStatusId !== status.id"
+                        type="button"
+                        class="status-rename-btn"
+                        (click)="startRenameStatus(status); $event.stopPropagation()"
+                        title="Liste adını düzenle"
+                    >
+                        ✎
+                    </button>
+                    <div class="status-edit-actions" *ngIf="editingStatusId === status.id">
+                        <button type="button" class="status-save-btn" (click)="saveRenameStatus(status)">Kaydet</button>
+                        <button type="button" class="status-cancel-btn" (click)="cancelRenameStatus()">İptal</button>
+                    </div>
+                    <span class="task-count">{{ (tasksByStatus[status.id] || []).length }}</span>
+                </div>
             </div>
             <div class="task-list" 
                  (dragover)="onDragOver($event, status.id)"
@@ -81,6 +121,17 @@
                 required
             />
 
+            <select
+                class="modal-input"
+                [(ngModel)]="newStatusType"
+                name="statusType"
+            >
+                <option value="custom">Custom</option>
+                <option value="in_progress">In Progress</option>
+                <option value="todo">Todo (tek)</option>
+                <option value="done">Done (tek)</option>
+            </select>
+
             <div class="modal-buttons">
                 <button class="modal-button create" (click)="createStatus()">Oluştur</button>
                 <button class="modal-button cancel" (click)="closeStatusModal()">İptal</button>
@@ -105,13 +156,6 @@
               placeholder="Kullanıcı adını girin."
             />
 
-            <!-- Kullanıcı rolü seçimi için dropdown -->
-            <select class="modal-input" [(ngModel)]="newUsersRole">
-              <option value="viewer">Viewer</option>
-              <option value="editor">Editor</option>
-            </select>
-
-      
             <div class="modal-buttons">
               <button class="modal-button create" (click)="addNewUser()">Oluştur</button>
               <button class="modal-button cancel" (click)="closeAddUserModal()">İptal</button>

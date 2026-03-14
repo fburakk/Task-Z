@@ -1,0 +1,188 @@
+.analytics-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px;
+  color: #1f2937;
+}
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.header-row h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.meta {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: 1.2fr 1.2fr 1fr 1fr auto;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.filters select,
+.filters input,
+.filters button,
+.recommendation-form input,
+.recommendation-form textarea,
+.recommendation-form select {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: #fff;
+}
+
+.filters button,
+.recommendation-form button {
+  background: #2563eb;
+  color: #fff;
+  border: 0;
+  cursor: pointer;
+}
+
+.filters button:hover,
+.recommendation-form button:hover {
+  background: #1d4ed8;
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.metric-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.metric-card .label {
+  display: block;
+  color: #6b7280;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.metric-card strong {
+  font-size: 20px;
+}
+
+.table-card,
+.recommendation-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 18px;
+}
+
+.table-card h2,
+.recommendation-card h2 {
+  margin: 0 0 12px 0;
+  font-size: 20px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #f1f5f9;
+  text-align: left;
+  font-size: 14px;
+}
+
+th {
+  font-weight: 600;
+  color: #475569;
+}
+
+.recommendation-form {
+  margin-bottom: 12px;
+}
+
+.recommendation-form textarea {
+  width: 100%;
+  resize: vertical;
+  margin: 8px 0;
+}
+
+.recommendation-form .row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 100px auto;
+  gap: 8px;
+}
+
+.candidate-list {
+  display: grid;
+  gap: 10px;
+}
+
+.candidate {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px;
+  background: #f8fafc;
+}
+
+.candidate-head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.signals {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  color: #475569;
+  margin-bottom: 6px;
+}
+
+.loading {
+  color: #475569;
+  font-size: 14px;
+}
+
+.error {
+  color: #b91c1c;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+@media (max-width: 1024px) {
+  .overview-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .filters {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .overview-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .recommendation-form .row {
+    grid-template-columns: 1fr;
+  }
+}

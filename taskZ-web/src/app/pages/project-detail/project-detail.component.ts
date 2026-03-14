@@ -41,6 +41,7 @@ export class ProjectDetailComponent implements OnInit {
   isModalOpen = false;
   isStatusModalOpen = false;
   newStatusName = '';
+  newStatusType: 'todo' | 'in_progress' | 'custom' | 'done' = 'custom';
 
   newTaskTitle = '';
   newTaskDescription = '';
@@ -55,11 +56,52 @@ export class ProjectDetailComponent implements OnInit {
   // Task management
   draggedTask: Task | null = null;
   editingTask: Task | null = null;
+  draggedStatusId: number | null = null;
+  statusDragOverId: number | null = null;
+  editingStatusId: number | null = null;
+  editingStatusName = '';
+  private statusDragPreviewEl: HTMLElement | null = null;
 
 
   showAddUserModal: boolean = false;
   newUsersName: string = '';
-  newUsersRole: 'editor' | 'viewer' = 'viewer';
+
+  private getErrorMessage(error: any): string {
+    const payload = error?.error;
+    if (typeof payload === 'string' && payload.trim()) {
+      return payload;
+    }
+
+    if (payload?.message) {
+      return String(payload.message);
+    }
+
+    if (payload?.title) {
+      return String(payload.title);
+    }
+
+    if (payload?.errors && typeof payload.errors === 'object') {
+      const firstKey = Object.keys(payload.errors)[0];
+      const firstValue = firstKey ? payload.errors[firstKey] : null;
+      if (Array.isArray(firstValue) && firstValue.length > 0) {
+        return String(firstValue[0]);
+      }
+    }
+
+    if (error?.message) {
+      return String(error.message);
+    }
+
+    if (payload && typeof payload === 'object') {
+      try {
+        return JSON.stringify(payload);
+      } catch {
+        return 'Bilinmeyen hata';
+      }
+    }
+
+    return 'Bilinmeyen hata';
+  }
 
   ngOnInit(): void {
     if (!this.isBrowser) {
@@ -77,7 +119,6 @@ export class ProjectDetailComponent implements OnInit {
   addUserModal(){
     this.showAddUserModal = true;
     this.newUsersName = '';
-    this.newUsersRole = 'viewer';
   }
 
   closeAddUserModal(){
@@ -85,9 +126,9 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   addNewUser(){
-    if (!this.newUsersName.trim() || !this.newUsersRole.trim() ) return;
+    if (!this.newUsersName.trim()) return;
 
-    this.boardService.addUserToBoard(this.selectedBoardId,this.newUsersName,this.newUsersRole).subscribe(newUser => {
+    this.boardService.addUserToBoard(this.selectedBoardId, this.newUsersName, 'editor').subscribe(newUser => {
       console.log('Yeni kullanıcı eklendi:', newUser);
       this.closeAddUserModal();})
   }
@@ -152,6 +193,7 @@ export class ProjectDetailComponent implements OnInit {
   openStatusModal() {
     this.isStatusModalOpen = true;
     this.newStatusName = '';
+    this.newStatusType = 'custom';
   }
 
   closeStatusModal() {
@@ -161,7 +203,17 @@ export class ProjectDetailComponent implements OnInit {
   createStatus() {
     if (!this.selectedBoardId || !this.newStatusName.trim()) return;
 
-    this.boardService.createBoardStatus(this.selectedBoardId, this.newStatusName.trim()).subscribe({
+    if ((this.newStatusType === 'todo' || this.newStatusType === 'done') &&
+      this.statuses.some((s) => s.type === this.newStatusType)) {
+      alert(`Bu board içinde '${this.newStatusType}' tipi zaten var.`);
+      return;
+    }
+
+    this.boardService.createBoardStatus(
+      this.selectedBoardId,
+      this.newStatusName.trim(),
+      this.newStatusType
+    ).subscribe({
       next: (newStatus) => {
         console.log('New status created:', newStatus);
         this.loadStatuses(); // Reload all statuses
@@ -169,6 +221,142 @@ export class ProjectDetailComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error creating status:', error);
+      }
+    });
+  }
+
+  startRenameStatus(status: BoardStatus) {
+    this.editingStatusId = status.id;
+    this.editingStatusName = status.title;
+  }
+
+  cancelRenameStatus() {
+    this.editingStatusId = null;
+    this.editingStatusName = '';
+  }
+
+  saveRenameStatus(status: BoardStatus) {
+    const nextName = this.editingStatusName?.trim();
+    if (!nextName) {
+      return;
+    }
+
+    if (nextName === status.title) {
+      this.cancelRenameStatus();
+      return;
+    }
+
+    this.boardService.updateBoardStatus(status.id, nextName).subscribe({
+      next: (updatedStatus) => {
+        status.title = updatedStatus.title;
+        this.cancelRenameStatus();
+      },
+      error: (error) => {
+        console.error('Error renaming status:', error);
+        const message = this.getErrorMessage(error);
+        alert(`Liste adı değiştirilemedi: ${message}`);
+      }
+    });
+  }
+
+  onStatusDragStart(status: BoardStatus, event: DragEvent) {
+    this.draggedStatusId = status.id;
+    this.statusDragOverId = null;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('text/plain', String(status.id));
+
+      const headerEl = event.currentTarget as HTMLElement | null;
+      const columnEl = headerEl?.closest('.status-column') as HTMLElement | null;
+      if (columnEl) {
+        const preview = columnEl.cloneNode(true) as HTMLElement;
+        preview.style.position = 'fixed';
+        preview.style.top = '-10000px';
+        preview.style.left = '-10000px';
+        preview.style.width = `${columnEl.offsetWidth}px`;
+        preview.style.pointerEvents = 'none';
+        preview.style.opacity = '0.95';
+        document.body.appendChild(preview);
+        this.statusDragPreviewEl = preview;
+
+        const headerRect = headerEl.getBoundingClientRect();
+        const offsetX = Math.max(0, Math.min(headerRect.width, event.clientX - headerRect.left));
+        const offsetY = Math.max(0, Math.min(headerRect.height, event.clientY - headerRect.top));
+        event.dataTransfer.setDragImage(preview, offsetX || 24, offsetY || 24);
+      }
+    }
+  }
+
+  onStatusDragOver(event: DragEvent, targetStatusId: number) {
+    if (this.draggedStatusId === null) {
+      return;
+    }
+
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+
+    if (this.draggedStatusId !== targetStatusId) {
+      this.statusDragOverId = targetStatusId;
+    }
+  }
+
+  onStatusDragEnd() {
+    this.draggedStatusId = null;
+    this.statusDragOverId = null;
+    if (this.statusDragPreviewEl) {
+      this.statusDragPreviewEl.remove();
+      this.statusDragPreviewEl = null;
+    }
+  }
+
+  onStatusDrop(event: DragEvent, targetStatusId: number) {
+    if (this.draggedStatusId === null) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    const sourceStatusId = this.draggedStatusId;
+    this.statusDragOverId = null;
+
+    if (sourceStatusId === targetStatusId) {
+      this.draggedStatusId = null;
+      return;
+    }
+
+    const fromIndex = this.statuses.findIndex((s) => s.id === sourceStatusId);
+    const toIndex = this.statuses.findIndex((s) => s.id === targetStatusId);
+    if (fromIndex === -1 || toIndex === -1) {
+      this.draggedStatusId = null;
+      return;
+    }
+
+    const previousStatuses = [...this.statuses];
+    const reordered = [...this.statuses];
+    const [movedStatus] = reordered.splice(fromIndex, 1);
+    reordered.splice(toIndex, 0, movedStatus);
+    reordered.forEach((status, index) => {
+      status.position = index;
+    });
+    this.statuses = reordered;
+
+    this.boardService.reorderBoardStatuses(
+      this.selectedBoardId,
+      this.statuses.map((s) => s.id)
+    ).subscribe({
+      next: () => {
+        this.draggedStatusId = null;
+      },
+      error: (error) => {
+        console.error('Error reordering statuses:', error);
+        const message = this.getErrorMessage(error);
+        alert(`Liste sırası kaydedilemedi: ${message}`);
+        this.statuses = previousStatuses;
+        this.draggedStatusId = null;
+        this.loadStatuses();
       }
     });
   }
@@ -275,6 +463,11 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   onDrop(event: DragEvent, newStatusId: number) {
+    if (this.draggedStatusId !== null) {
+      this.onStatusDrop(event, newStatusId);
+      return;
+    }
+
     event.preventDefault();
     if (!this.draggedTask) return;
 

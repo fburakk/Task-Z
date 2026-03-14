@@ -6,6 +6,7 @@ import { authGuard } from './auth.guard';
 import { ProjectsComponent } from './pages/projects/projects.component';
 import { ProjectDetailComponent } from './pages/project-detail/project-detail.component';
 import { MyCardsComponent } from './pages/my-cards/my-cards.component';
+import { AnalyticsComponent } from './pages/analytics/analytics.component';
 
 export const routes: Routes = [
     {
@@ -39,6 +40,11 @@ export const routes: Routes = [
     {
         path:'myCards',
         component: MyCardsComponent,
+        canActivate: [authGuard]
+    },
+    {
+        path:'analytics',
+        component: AnalyticsComponent,
         canActivate: [authGuard]
     }
 

@@ -53,6 +53,7 @@ namespace CleanArchitecture.WebApi.Controllers
                 {
                     Id = s.Id,
                     Title = s.Title,
+                    Type = s.Type,
                     Position = s.Position
                 })
                 .ToListAsync();
@@ -79,14 +80,13 @@ namespace CleanArchitecture.WebApi.Controllers
         public async Task<ActionResult<BoardResponse>> CreateBoard(CreateBoardRequest request)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
-            
-            // Verify workspace exists and user has access
+
             var workspace = await _context.Workspaces
-                .FirstOrDefaultAsync(w => w.Id == request.WorkspaceId && w.UserId == userId);
-                
+                .FirstOrDefaultAsync(w => w.Id == request.WorkspaceId);
+
             if (workspace == null)
             {
-                return NotFound("Workspace not found or access denied.");
+                return NotFound("Workspace not found.");
             }
 
             var board = new Board
@@ -109,6 +109,24 @@ namespace CleanArchitecture.WebApi.Controllers
             };
             
             _context.BoardUsers.Add(boardUser);
+            
+            // Every board starts with deterministic workflow anchors.
+            _context.BoardStatuses.AddRange(
+                new BoardStatus
+                {
+                    BoardId = board.Id,
+                    Title = "Todo",
+                    Type = BoardStatus.Todo,
+                    Position = 0
+                },
+                new BoardStatus
+                {
+                    BoardId = board.Id,
+                    Title = "Done",
+                    Type = BoardStatus.Done,
+                    Position = 1
+                });
+
             await _context.SaveChangesAsync();
 
             return await MapToBoardResponse(board);
@@ -171,7 +189,7 @@ namespace CleanArchitecture.WebApi.Controllers
                 .AsTracking()
                 .FirstOrDefaultAsync(b => b.Id == id && 
                     (b.Workspace.UserId == userId || // Workspace owner
-                     b.Users.Any(u => u.UserId == userId && u.Role == "editor"))); // Board editor
+                     b.Users.Any(u => u.UserId == userId))); // Board member
 
             if (board == null)
             {
@@ -210,11 +228,8 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteBoard(int id)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
-            
             var board = await _context.Boards
-                .Include(b => b.Workspace)
-                .FirstOrDefaultAsync(b => b.Id == id && b.Workspace.UserId == userId);
+                .FirstOrDefaultAsync(b => b.Id == id);
 
             if (board == null)
             {
@@ -252,6 +267,7 @@ namespace CleanArchitecture.WebApi.Controllers
                 {
                     Id = s.Id,
                     Title = s.Title,
+                    Type = s.Type,
                     Position = s.Position
                 })
                 .ToListAsync();
@@ -303,7 +319,10 @@ namespace CleanArchitecture.WebApi.Controllers
             // Verify board access
             var board = await _context.Boards
                 .Include(b => b.Workspace)
-                .FirstOrDefaultAsync(b => b.Id == id && b.Workspace.UserId == userId);
+                .Include(b => b.Users)
+                .FirstOrDefaultAsync(b => b.Id == id &&
+                    (b.Workspace.UserId == userId ||
+                     b.Users.Any(u => u.UserId == userId)));
                 
             if (board == null)
             {

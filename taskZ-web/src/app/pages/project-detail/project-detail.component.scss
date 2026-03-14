@@ -49,18 +49,91 @@
   flex-direction: column;
   max-height: 100%;
 
+  &.status-drag-over {
+    outline: 2px dashed #4a90e2;
+    outline-offset: 2px;
+    background: #f8fbff;
+  }
+
   .column-header {
     padding: 16px;
     border-bottom: 1px solid #e1e4e8;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 10px;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+
+    &:active {
+      cursor: grabbing;
+    }
+
+    .column-title-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .column-drag-handle {
+      color: #6a737d;
+      font-size: 14px;
+      line-height: 1;
+    }
 
     h3 {
       margin: 0;
       font-size: 16px;
       font-weight: 600;
       color: #24292e;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .status-title-input {
+      width: 100%;
+      border: 1px solid #cfd7e3;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .column-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-rename-btn {
+      border: 1px solid #d0d7de;
+      background: #fff;
+      border-radius: 6px;
+      width: 26px;
+      height: 26px;
+      font-size: 13px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .status-edit-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-save-btn,
+    .status-cancel-btn {
+      border: 1px solid #d0d7de;
+      background: #fff;
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 12px;
+      cursor: pointer;
     }
 
     .task-count {
@@ -815,5 +888,3 @@ input.date-input {
     }
   }
 }
-
-

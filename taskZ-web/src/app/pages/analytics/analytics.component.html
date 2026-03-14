@@ -1,0 +1,130 @@
+<div class="analytics-page">
+  <div class="header-row">
+    <h1>Analytics Dashboard</h1>
+    <span class="meta" *ngIf="overview">Son güncelleme: {{ overview.generatedAt | date:'short' }}</span>
+  </div>
+
+  <div class="filters">
+    <select [(ngModel)]="selectedWorkspaceId" (change)="onWorkspaceChange()">
+      <option [ngValue]="null">Tüm Workspaceler</option>
+      <option *ngFor="let workspace of workspaces" [ngValue]="workspace.id">
+        {{ workspace.name }}
+      </option>
+    </select>
+
+    <select [(ngModel)]="selectedBoardId" (change)="onBoardChange()">
+      <option [ngValue]="null">Tüm Boardlar</option>
+      <option *ngFor="let board of boards" [ngValue]="board.id">
+        {{ board.name }}
+      </option>
+    </select>
+
+    <input type="date" [(ngModel)]="fromDate" />
+    <input type="date" [(ngModel)]="toDate" />
+    <button type="button" (click)="applyFilters()">Uygula</button>
+  </div>
+
+  <div class="error" *ngIf="error">{{ error }}</div>
+
+  <div class="overview-grid" *ngIf="overview">
+    <div class="metric-card">
+      <span class="label">Toplam Görev</span>
+      <strong>{{ overview.totalTasks }}</strong>
+    </div>
+    <div class="metric-card">
+      <span class="label">Tamamlanan</span>
+      <strong>{{ overview.completedTasks }}</strong>
+    </div>
+    <div class="metric-card">
+      <span class="label">Aktif</span>
+      <strong>{{ overview.activeTasks }}</strong>
+    </div>
+    <div class="metric-card">
+      <span class="label">Geciken</span>
+      <strong>{{ overview.overdueTasks }}</strong>
+    </div>
+    <div class="metric-card">
+      <span class="label">Tamamlama Oranı</span>
+      <strong>{{ overview.completionRate }}%</strong>
+    </div>
+    <div class="metric-card">
+      <span class="label">Ort. Tamamlama</span>
+      <strong>{{ formatDuration(overview.averageCompletionHours) }}</strong>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <h2>Kullanıcı Performansı</h2>
+    <div *ngIf="loading" class="loading">Yükleniyor...</div>
+    <table *ngIf="!loading">
+      <thead>
+        <tr>
+          <th>Kullanıcı</th>
+          <th>Atanan</th>
+          <th>Tamamlanan</th>
+          <th>Aktif</th>
+          <th>Geciken</th>
+          <th>On-time</th>
+          <th>Ort. Süre</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of userAnalytics">
+          <td>{{ row.username }}</td>
+          <td>{{ row.assignedTasks }}</td>
+          <td>{{ row.completedTasks }}</td>
+          <td>{{ row.activeTasks }}</td>
+          <td>{{ row.overdueTasks }}</td>
+          <td>{{ row.onTimeRate }}%</td>
+          <td>{{ formatDuration(row.averageCompletionHours) }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="recommendation-card">
+    <h2>Assignee Önerisi</h2>
+    <div class="recommendation-form">
+      <input
+        type="text"
+        placeholder="Görev başlığı"
+        [(ngModel)]="recommendationInput.title"
+      />
+      <textarea
+        rows="3"
+        placeholder="Görev açıklaması"
+        [(ngModel)]="recommendationInput.description"
+      ></textarea>
+      <div class="row">
+        <select [(ngModel)]="recommendationInput.priority">
+          <option value="low">low</option>
+          <option value="medium">medium</option>
+          <option value="high">high</option>
+        </select>
+        <input type="date" [(ngModel)]="recommendationInput.dueDate" />
+        <input type="number" min="1" max="10" [(ngModel)]="recommendationInput.topN" />
+        <button type="button" (click)="generateRecommendation()">Öneri Üret</button>
+      </div>
+    </div>
+
+    <div class="error" *ngIf="recommendationError">{{ recommendationError }}</div>
+    <div *ngIf="recommendationLoading" class="loading">Öneri hazırlanıyor...</div>
+
+    <div class="candidate-list" *ngIf="!recommendationLoading">
+      <div class="candidate" *ngFor="let candidate of recommendation">
+        <div class="candidate-head">
+          <strong>{{ candidate.username }}</strong>
+          <span>Skor: {{ candidate.score }}</span>
+        </div>
+        <div class="signals">
+          <span>Aktif: {{ candidate.signals.activeTasks }}</span>
+          <span>Geciken: {{ candidate.signals.overdueActiveTasks }}</span>
+          <span>On-time: {{ candidate.signals.onTimeRate }}%</span>
+        </div>
+        <ul>
+          <li *ngFor="let reason of candidate.reasons">{{ reason }}</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
