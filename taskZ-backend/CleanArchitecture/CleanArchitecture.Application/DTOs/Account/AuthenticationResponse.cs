@@ -10,7 +10,14 @@ namespace CleanArchitecture.Core.DTOs.Account
         public string Email { get; set; }
         public List<string> Roles { get; set; }
         public bool IsVerified { get; set; }
+        [JsonPropertyName("jwToken")]
         public string JWToken { get; set; }
+        [JsonPropertyName("token")]
+        public string Token
+        {
+            get => JWToken;
+            set => JWToken = value;
+        }
         [JsonIgnore]
         public string RefreshToken { get; set; }
     }

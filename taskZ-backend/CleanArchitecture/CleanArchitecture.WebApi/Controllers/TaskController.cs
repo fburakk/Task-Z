@@ -58,7 +58,7 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpGet("assigned")]
         public async Task<ActionResult<List<TaskDto>>> GetAssignedTasks()
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
             
             var tasks = await _context.BoardTasks
                 .Include(t => t.Board)
@@ -82,7 +82,7 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpGet("board/{boardId}")]
         public async Task<ActionResult<List<TaskDto>>> GetBoardTasks(int boardId)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
             
             // Verify board access
             var hasAccess = await _context.Boards
@@ -116,7 +116,7 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpGet("status/{statusId}")]
         public async Task<ActionResult<List<TaskDto>>> GetStatusTasks(int statusId)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
             
             // Verify status access
             var hasAccess = await _context.BoardStatuses
@@ -150,7 +150,7 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpPost("board/{boardId}")]
         public async Task<ActionResult<TaskDto>> CreateTask(int boardId, CreateTaskRequest request)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
             
             // Verify board access and get statuses
             var board = await _context.Boards
@@ -228,7 +228,7 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpPut("{id}")]
         public async Task<ActionResult<TaskDto>> UpdateTask(int id, UpdateTaskRequest request)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
             
             var task = await _context.BoardTasks
                 .Include(t => t.Board)
@@ -327,7 +327,7 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTask(int id)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
             
             var task = await _context.BoardTasks
                 .Include(t => t.Board)

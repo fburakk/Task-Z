@@ -78,7 +78,7 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpPost]
         public async Task<ActionResult<BoardResponse>> CreateBoard(CreateBoardRequest request)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
             
             // Verify workspace exists and user has access
             var workspace = await _context.Workspaces
@@ -117,7 +117,7 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpGet]
         public async Task<ActionResult<List<BoardResponse>>> GetBoards([FromQuery] int workspaceId)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
             
             // Get workspace owner's boards and boards where user is a member
             var boards = await _context.Boards
@@ -142,7 +142,7 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<BoardResponse>> GetBoard(int id)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
             
             var board = await _context.Boards
                 .AsNoTracking()
@@ -163,7 +163,7 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateBoard(int id, UpdateBoardRequest request)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
             
             var board = await _context.Boards
                 .Include(b => b.Workspace)
@@ -190,7 +190,7 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpPut("{id}/archive")]
         public async Task<IActionResult> ArchiveBoard(int id)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
             
             var board = await _context.Boards
                 .Include(b => b.Workspace)
@@ -210,7 +210,7 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteBoard(int id)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
             
             var board = await _context.Boards
                 .Include(b => b.Workspace)
@@ -230,7 +230,7 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpGet("{id}/statuses")]
         public async Task<ActionResult<List<BoardStatusResponse>>> GetBoardStatuses(int id)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
             
             // Verify board access
             var hasAccess = await _context.Boards
@@ -262,7 +262,7 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpGet("{id}/users")]
         public async Task<ActionResult<List<BoardUserResponse>>> GetBoardUsers(int id)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
             
             // Verify board access
             var hasAccess = await _context.Boards
@@ -298,7 +298,7 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpPost("{id}/users")]
         public async Task<ActionResult<BoardUserResponse>> AddBoardUser(int id, AddBoardUserRequest request)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
             
             // Verify board access
             var board = await _context.Boards

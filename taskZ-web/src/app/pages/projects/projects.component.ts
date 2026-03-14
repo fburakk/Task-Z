@@ -4,6 +4,8 @@ import { Board, BoardService } from '../../core/services/board.service';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 
 @Component({
   selector: 'app-projects',
@@ -15,11 +17,15 @@ export class ProjectsComponent implements OnInit {
 
   workspaces: Workspace[] = [];
     boardsByWorkspace: { [key: number]: Board[] } = {};
+    private readonly isBrowser: boolean;
   
     constructor(
       private workspaceService: WorkspaceService,
-      private boardService: BoardService
-    ) {}
+      private boardService: BoardService,
+      @Inject(PLATFORM_ID) platformId: Object
+    ) {
+      this.isBrowser = isPlatformBrowser(platformId);
+    }
   
     showBoardModal: boolean = false;
   newBoardName: string = '';
@@ -48,6 +54,10 @@ export class ProjectsComponent implements OnInit {
   }
   
     ngOnInit(): void {
+      if (!this.isBrowser) {
+        return;
+      }
+
       this.workspaceService.getWorkspaces().subscribe((workspaces) => {
         this.workspaces = workspaces;
   

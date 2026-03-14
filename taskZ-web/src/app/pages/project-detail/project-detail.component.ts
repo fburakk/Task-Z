@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Board, BoardService, BoardUser, BoardStatus } from '../../core/services/board.service';
 import { CreateTaskDto, Task, TaskService, UpdateTaskDto } from '../../core/services/task.service';
+import { Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 
 interface TasksByStatus {
   [statusId: number]: Task[];
@@ -17,12 +19,16 @@ interface TasksByStatus {
   styleUrls: ['./project-detail.component.scss']
 })
 export class ProjectDetailComponent implements OnInit {
+  private readonly isBrowser: boolean;
 
   constructor(
     private boardService: BoardService,
     private route: ActivatedRoute,
-    private taskService: TaskService
-  ) {}
+    private taskService: TaskService,
+    @Inject(PLATFORM_ID) platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
+  }
 
   public board: Board | undefined;
   public boardUsers: BoardUser[] = [];
@@ -56,6 +62,10 @@ export class ProjectDetailComponent implements OnInit {
   newUsersRole: 'editor' | 'viewer' = 'viewer';
 
   ngOnInit(): void {
+    if (!this.isBrowser) {
+      return;
+    }
+
     const boardId = Number(this.route.snapshot.paramMap.get('id'));
     this.selectedBoardId = boardId;
 

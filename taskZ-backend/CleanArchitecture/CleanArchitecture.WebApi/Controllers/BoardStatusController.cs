@@ -25,7 +25,7 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpPost]
         public async Task<ActionResult<BoardStatusResponse>> CreateStatus([FromBody] CreateStatusRequest request)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
             
             // Verify board access
             var board = await _context.Boards

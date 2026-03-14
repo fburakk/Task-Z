@@ -48,7 +48,7 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpPost]
         public async Task<ActionResult<WorkspaceResponse>> CreateWorkspace(CreateWorkspaceRequest request)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
             
             var workspace = new Workspace
             {
@@ -65,7 +65,7 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpGet]
         public async Task<ActionResult<List<WorkspaceResponse>>> GetWorkspaces()
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
 
             // First get all board IDs where the user is a member
             var boardIds = await _context.BoardUsers
@@ -95,7 +95,7 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<WorkspaceResponse>> GetWorkspace(int id)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
             
             var workspace = await _context.Workspaces
                 .FirstOrDefaultAsync(w => w.Id == id && w.UserId == userId);
@@ -111,7 +111,7 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateWorkspace(int id, CreateWorkspaceRequest request)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
             
             var workspace = await _context.Workspaces
                 .FirstOrDefaultAsync(w => w.Id == id && w.UserId == userId);
@@ -130,7 +130,7 @@ namespace CleanArchitecture.WebApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteWorkspace(int id)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
             
             var workspace = await _context.Workspaces
                 .FirstOrDefaultAsync(w => w.Id == id && w.UserId == userId);

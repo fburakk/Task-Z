@@ -50,11 +50,16 @@ export class AuthService {
     }
 
     const token = localStorage.getItem('jwtToken');
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     return {
-      headers: new HttpHeaders({
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      })
+      headers: new HttpHeaders(headers)
     };
   }
 

@@ -8,7 +8,8 @@ namespace CleanArchitecture.WebApi.Services
     {
         public AuthenticatedUserService(IHttpContextAccessor httpContextAccessor)
         {
-            UserId = httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            UserId = httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? httpContextAccessor.HttpContext?.User?.FindFirst("uid")?.Value;
         }
 
         public string UserId { get; }

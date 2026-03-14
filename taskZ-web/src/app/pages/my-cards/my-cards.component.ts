@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TaskService, Task } from '../../core/services/task.service';
+import { Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 
 @Component({
   selector: 'app-my-cards',
@@ -13,10 +15,21 @@ export class MyCardsComponent implements OnInit {
   tasks: Task[] = [];
   loading: boolean = true;
   error: string | null = null;
+  private readonly isBrowser: boolean;
 
-  constructor(private taskService: TaskService) {}
+  constructor(
+    private taskService: TaskService,
+    @Inject(PLATFORM_ID) platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(platformId);
+  }
 
   ngOnInit() {
+    if (!this.isBrowser) {
+      this.loading = false;
+      return;
+    }
+
     this.loadAssignedTasks();
   }
 
