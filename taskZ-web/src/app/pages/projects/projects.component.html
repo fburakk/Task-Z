@@ -1,10 +1,24 @@
 <div class="projects-container" style="padding: 40px; max-width: 1200px; margin: 0 auto; width: 100%;">
   
-    <div *ngFor="let workspace of workspaces" style="margin-bottom: 40px;">
-      <!-- Workspace adı -->
-      <h2 style="font-size: 22px; font-weight: 600; color: #1a1a1a; margin: 40px 0 24px 0; font-family: 'Inter', sans-serif;">
-        {{ workspace.name }}
-      </h2>
+    <div *ngFor="let workspace of workspaces" class="workspace-section">
+      <div class="workspace-header">
+        <h2 class="workspace-title">{{ workspace.name }}</h2>
+        <button
+          type="button"
+          class="workspace-delete-btn"
+          (click)="deleteWorkspace(workspace.id)"
+          title="Workspace sil"
+          aria-label="Workspace sil"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 6h18"></path>
+            <path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"></path>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+            <path d="M10 11v6"></path>
+            <path d="M14 11v6"></path>
+          </svg>
+        </button>
+      </div>
   
       <!-- Kartlar -->
       <div class="card-grid">

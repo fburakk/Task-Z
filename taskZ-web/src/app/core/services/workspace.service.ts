@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subject, tap } from 'rxjs';
 import { AuthService } from './auth.service';
 
 export interface Workspace {
@@ -18,13 +18,17 @@ export interface Workspace {
 })
 export class WorkspaceService {
   private readonly apiUrl = 'http://localhost:5001/api/Workspace';
+  private readonly workspaceCreatedSubject = new Subject<Workspace>();
+  readonly workspaceCreated$ = this.workspaceCreatedSubject.asObservable();
 
   constructor(private http: HttpClient, private authService: AuthService) {}
 
   // Create Workspace
   createWorkspace(name: string): Observable<Workspace> {
     console.log("createworkspace");
-    return this.http.post<Workspace>(this.apiUrl, { name }, this.authService.getAuthHeaders());
+    return this.http
+      .post<Workspace>(this.apiUrl, { name }, this.authService.getAuthHeaders())
+      .pipe(tap((workspace) => this.workspaceCreatedSubject.next(workspace)));
   }
 
   // Get all Workspaces

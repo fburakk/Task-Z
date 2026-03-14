@@ -1,3 +1,63 @@
+.workspace-section {
+  margin-bottom: 40px;
+}
+
+.workspace-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 40px 0 24px 0;
+}
+
+.workspace-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: #1a1a1a;
+  font-family: 'Inter', sans-serif;
+  line-height: 1.2;
+}
+
+.workspace-delete-btn {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #6b7280;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.workspace-delete-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.workspace-delete-btn:hover {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.workspace-delete-btn:active {
+  transform: scale(0.96);
+}
+
+.workspace-delete-btn:focus-visible {
+  outline: 2px solid #fca5a5;
+  outline-offset: 1px;
+}
+
 .modal {
     position: fixed;
     top: 0;
