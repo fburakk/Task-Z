@@ -268,7 +268,8 @@ export class ProjectDetailComponent implements OnInit {
 
       const headerEl = event.currentTarget as HTMLElement | null;
       const columnEl = headerEl?.closest('.status-column') as HTMLElement | null;
-      if (columnEl) {
+
+      if (columnEl && headerEl) {
         const preview = columnEl.cloneNode(true) as HTMLElement;
         preview.style.position = 'fixed';
         preview.style.top = '-10000px';
@@ -282,6 +283,7 @@ export class ProjectDetailComponent implements OnInit {
         const headerRect = headerEl.getBoundingClientRect();
         const offsetX = Math.max(0, Math.min(headerRect.width, event.clientX - headerRect.left));
         const offsetY = Math.max(0, Math.min(headerRect.height, event.clientY - headerRect.top));
+
         event.dataTransfer.setDragImage(preview, offsetX || 24, offsetY || 24);
       }
     }

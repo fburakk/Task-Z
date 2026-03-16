@@ -11,3 +11,16 @@
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Application/obj/Debug/net8.0/refint/CleanArchitecture.Core.dll
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Application/obj/Debug/net8.0/CleanArchitecture.Core.pdb
 /Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Application/obj/Debug/net8.0/ref/CleanArchitecture.Core.dll
+C:\Users\Yiğit\TaskZ_2\Task-Z\taskZ-backend\CleanArchitecture\CleanArchitecture.Application\bin\Debug\net8.0\CleanArchitecture.Core.deps.json
+C:\Users\Yiğit\TaskZ_2\Task-Z\taskZ-backend\CleanArchitecture\CleanArchitecture.Application\bin\Debug\net8.0\CleanArchitecture.Core.dll
+C:\Users\Yiğit\TaskZ_2\Task-Z\taskZ-backend\CleanArchitecture\CleanArchitecture.Application\bin\Debug\net8.0\CleanArchitecture.Core.pdb
+C:\Users\Yiğit\TaskZ_2\Task-Z\taskZ-backend\CleanArchitecture\CleanArchitecture.Application\obj\Debug\net8.0\CleanArchitecture.Core.csproj.AssemblyReference.cache
+C:\Users\Yiğit\TaskZ_2\Task-Z\taskZ-backend\CleanArchitecture\CleanArchitecture.Application\obj\Debug\net8.0\CleanArchitecture.Core.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Yiğit\TaskZ_2\Task-Z\taskZ-backend\CleanArchitecture\CleanArchitecture.Application\obj\Debug\net8.0\CleanArchitecture.Core.AssemblyInfoInputs.cache
+C:\Users\Yiğit\TaskZ_2\Task-Z\taskZ-backend\CleanArchitecture\CleanArchitecture.Application\obj\Debug\net8.0\CleanArchitecture.Core.AssemblyInfo.cs
+C:\Users\Yiğit\TaskZ_2\Task-Z\taskZ-backend\CleanArchitecture\CleanArchitecture.Application\obj\Debug\net8.0\CleanArchitecture.Core.csproj.CoreCompileInputs.cache
+C:\Users\Yiğit\TaskZ_2\Task-Z\taskZ-backend\CleanArchitecture\CleanArchitecture.Application\obj\Debug\net8.0\CleanArchitecture.Core.sourcelink.json
+C:\Users\Yiğit\TaskZ_2\Task-Z\taskZ-backend\CleanArchitecture\CleanArchitecture.Application\obj\Debug\net8.0\CleanArchitecture.Core.dll
+C:\Users\Yiğit\TaskZ_2\Task-Z\taskZ-backend\CleanArchitecture\CleanArchitecture.Application\obj\Debug\net8.0\refint\CleanArchitecture.Core.dll
+C:\Users\Yiğit\TaskZ_2\Task-Z\taskZ-backend\CleanArchitecture\CleanArchitecture.Application\obj\Debug\net8.0\CleanArchitecture.Core.pdb
+C:\Users\Yiğit\TaskZ_2\Task-Z\taskZ-backend\CleanArchitecture\CleanArchitecture.Application\obj\Debug\net8.0\ref\CleanArchitecture.Core.dll

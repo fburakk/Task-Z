@@ -15,6 +15,7 @@ namespace CleanArchitecture.Core.Entities
         public string AssigneeId { get; set; }
         public string FromAssigneeId { get; set; }
         public string ToAssigneeId { get; set; }
+        public DateTime? AssignedAt { get; set; }  // Snapshot of BoardTask.AssignedAt at Completed time
         public string Priority { get; set; }
         public DateTime? DueDate { get; set; }
         public string Title { get; set; }

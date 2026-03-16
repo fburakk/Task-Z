@@ -11,6 +11,7 @@ namespace CleanArchitecture.Core.Entities
         public string Priority { get; set; }  // "low", "medium", "high"
         public DateTime? DueDate { get; set; }
         public string AssigneeId { get; set; }  // User ID from Identity
+        public DateTime? AssignedAt { get; set; }  // When AssigneeId was last set
         public int Position { get; set; }
 
         // Navigation properties

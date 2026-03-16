@@ -131,6 +131,7 @@ namespace CleanArchitecture.Infrastructure.Migrations
 
                     b.Property<string>("Type")
                         .IsRequired()
+                        .ValueGeneratedOnAdd()
                         .HasMaxLength(32)
                         .HasColumnType("character varying(32)")
                         .HasDefaultValue("custom");
@@ -149,6 +150,9 @@ namespace CleanArchitecture.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("AssignedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("AssigneeId")
                         .HasColumnType("text");
@@ -241,6 +245,9 @@ namespace CleanArchitecture.Infrastructure.Migrations
 
                     b.Property<string>("ActorUserId")
                         .HasColumnType("text");
+
+                    b.Property<DateTime?>("AssignedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("AssigneeId")
                         .HasColumnType("text");

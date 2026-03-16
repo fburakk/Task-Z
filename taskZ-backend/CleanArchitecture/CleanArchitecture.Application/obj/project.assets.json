@@ -460,24 +460,26 @@
     ]
   },
   "packageFolders": {
-    "/Users/burak/.nuget/packages/": {}
+    "C:\\Users\\Yiğit\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.1.0",
     "restore": {
-      "projectUniqueName": "/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Application/CleanArchitecture.Core.csproj",
+      "projectUniqueName": "C:\\Users\\Yiğit\\TaskZ_2\\Task-Z\\taskZ-backend\\CleanArchitecture\\CleanArchitecture.Application\\CleanArchitecture.Core.csproj",
       "projectName": "CleanArchitecture.Core",
-      "projectPath": "/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Application/CleanArchitecture.Core.csproj",
-      "packagesPath": "/Users/burak/.nuget/packages/",
-      "outputPath": "/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Application/obj/",
+      "projectPath": "C:\\Users\\Yiğit\\TaskZ_2\\Task-Z\\taskZ-backend\\CleanArchitecture\\CleanArchitecture.Application\\CleanArchitecture.Core.csproj",
+      "packagesPath": "C:\\Users\\Yiğit\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Yiğit\\TaskZ_2\\Task-Z\\taskZ-backend\\CleanArchitecture\\CleanArchitecture.Application\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/Users/burak/.nuget/NuGet/NuGet.Config"
+        "C:\\Users\\Yiğit\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
       ],
       "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -542,8 +544,20 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.404/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.400/PortableRuntimeIdentifierGraph.json"
       }
     }
-  }
+  },
+  "logs": [
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "'AutoMapper' 14.0.0 paketinde önem derecesi yüksek olan bilinen bir https://github.com/advisories/GHSA-rvv3-g6hj-g44x güvenlik açığı var",
+      "libraryId": "AutoMapper",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    }
+  ]
 }

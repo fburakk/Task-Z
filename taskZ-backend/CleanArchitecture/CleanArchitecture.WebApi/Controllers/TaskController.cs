@@ -100,6 +100,7 @@ namespace CleanArchitecture.WebApi.Controllers
                 AssigneeId = task.AssigneeId,
                 FromAssigneeId = fromAssigneeId,
                 ToAssigneeId = toAssigneeId,
+                AssignedAt = eventType == TaskEventTypes.Completed ? task.AssignedAt : null,
                 Priority = task.Priority,
                 DueDate = task.DueDate,
                 Title = task.Title,
@@ -304,6 +305,7 @@ namespace CleanArchitecture.WebApi.Controllers
                 Priority = request.Priority,
                 DueDate = request.DueDate,
                 AssigneeId = assigneeId,
+                AssignedAt = assigneeId != null ? DateTime.UtcNow : null,
                 Position = maxPosition + 1
             };
 
@@ -368,6 +370,7 @@ namespace CleanArchitecture.WebApi.Controllers
                 if (task.AssigneeId != assignee.Id)
                 {
                     task.AssigneeId = assignee.Id;
+                    task.AssignedAt = DateTime.UtcNow;
                     assigneeChanged = true;
                 }
                 assigneeUsername = request.Username;

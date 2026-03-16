@@ -8581,35 +8581,37 @@
     ]
   },
   "packageFolders": {
-    "/Users/burak/.nuget/packages/": {}
+    "C:\\Users\\Yiğit\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/burak/Desktop/Task-Z/taskZ-backend/Tests/CleanArchitecture.Infrastructure.Tests/CleanArchitecture.Infrastructure.Tests.csproj",
+      "projectUniqueName": "C:\\Users\\Yiğit\\TaskZ_2\\Task-Z\\taskZ-backend\\Tests\\CleanArchitecture.Infrastructure.Tests\\CleanArchitecture.Infrastructure.Tests.csproj",
       "projectName": "CleanArchitecture.Infrastructure.Tests",
-      "projectPath": "/Users/burak/Desktop/Task-Z/taskZ-backend/Tests/CleanArchitecture.Infrastructure.Tests/CleanArchitecture.Infrastructure.Tests.csproj",
-      "packagesPath": "/Users/burak/.nuget/packages/",
-      "outputPath": "/Users/burak/Desktop/Task-Z/taskZ-backend/Tests/CleanArchitecture.Infrastructure.Tests/obj/",
+      "projectPath": "C:\\Users\\Yiğit\\TaskZ_2\\Task-Z\\taskZ-backend\\Tests\\CleanArchitecture.Infrastructure.Tests\\CleanArchitecture.Infrastructure.Tests.csproj",
+      "packagesPath": "C:\\Users\\Yiğit\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Yiğit\\TaskZ_2\\Task-Z\\taskZ-backend\\Tests\\CleanArchitecture.Infrastructure.Tests\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/Users/burak/.nuget/NuGet/NuGet.Config"
+        "C:\\Users\\Yiğit\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
       ],
       "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Application/CleanArchitecture.Core.csproj": {
-              "projectPath": "/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Application/CleanArchitecture.Core.csproj"
+            "C:\\Users\\Yiğit\\TaskZ_2\\Task-Z\\taskZ-backend\\CleanArchitecture\\CleanArchitecture.Application\\CleanArchitecture.Core.csproj": {
+              "projectPath": "C:\\Users\\Yiğit\\TaskZ_2\\Task-Z\\taskZ-backend\\CleanArchitecture\\CleanArchitecture.Application\\CleanArchitecture.Core.csproj"
             },
-            "/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Infrastructure/CleanArchitecture.Infrastructure.csproj": {
-              "projectPath": "/Users/burak/Desktop/Task-Z/taskZ-backend/CleanArchitecture/CleanArchitecture.Infrastructure/CleanArchitecture.Infrastructure.csproj"
+            "C:\\Users\\Yiğit\\TaskZ_2\\Task-Z\\taskZ-backend\\CleanArchitecture\\CleanArchitecture.Infrastructure\\CleanArchitecture.Infrastructure.csproj": {
+              "projectPath": "C:\\Users\\Yiğit\\TaskZ_2\\Task-Z\\taskZ-backend\\CleanArchitecture\\CleanArchitecture.Infrastructure\\CleanArchitecture.Infrastructure.csproj"
             }
           }
         }
@@ -8678,7 +8680,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/8.0.404/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.400/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
