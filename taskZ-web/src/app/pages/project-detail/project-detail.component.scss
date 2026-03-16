@@ -421,6 +421,16 @@ textarea.modal-input {
       background-color: #eee;
     }
   }
+
+  &.ai {
+    background-color: #7c3aed;
+    color: white;
+    border: none;
+
+    &:hover {
+      background-color: #6d28d9;
+    }
+  }
 }
 
 // Form Controls

@@ -100,4 +100,13 @@ export class TaskService {
             username: username
         });
     }
+
+    // AI suggest assignee
+    suggestAssignee(boardId: number, title: string, description: string): Observable<any> {
+        return this.http.post<any>(
+            'http://localhost:5001/api/ai/suggest-assignee',
+            { boardId, title, description },
+            this.authService.getAuthHeaders()
+        );
+    }
 }

@@ -382,6 +382,23 @@ export class ProjectDetailComponent implements OnInit {
     this.newTaskUsername = '';
   }
 
+  suggestAssignee() {
+    if (!this.selectedBoardId) {
+      console.error('Missing board ID');
+      return;
+    }
+
+    this.taskService.suggestAssignee(this.selectedBoardId, this.newTaskTitle, this.newTaskDescription).subscribe({
+      next: (response) => {
+        alert(JSON.stringify(response, null, 2));
+      },
+      error: (error) => {
+        console.error('Error suggesting assignee:', error);
+        alert('Öneri alınırken hata oluştu: ' + (error.error?.message || error.message));
+      }
+    });
+  }
+
   createTask() {
     if (!this.selectedBoardId || !this.currentStatusId) {
       console.error('Missing board ID or status ID');
