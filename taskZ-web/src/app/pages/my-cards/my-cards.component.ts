@@ -16,6 +16,7 @@ export class MyCardsComponent implements OnInit {
   loading: boolean = true;
   error: string | null = null;
   private readonly isBrowser: boolean;
+  aiLoading: { [key: number]: boolean } = {};
 
   constructor(
     private taskService: TaskService,
@@ -62,4 +63,20 @@ export class MyCardsComponent implements OnInit {
   formatDate(date: string): string {
     return new Date(date).toLocaleDateString();
   }
-} 
+
+  getAIAssistantContext(taskId: number, taskTitle: string) {
+    this.aiLoading[taskId] = true;
+    this.taskService.getTaskAssistantContext(taskId).subscribe({
+      next: (response) => {
+        this.aiLoading[taskId] = false;
+        const message = typeof response === 'string' ? response : JSON.stringify(response, null, 2);
+        alert(message);
+      },
+      error: (err) => {
+        this.aiLoading[taskId] = false;
+        console.error('Error getting AI context:', err);
+        alert('Failed to get AI assistant context. Please try again.');
+      }
+    });
+  }
+}

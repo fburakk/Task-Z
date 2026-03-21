@@ -109,4 +109,13 @@ export class TaskService {
             this.authService.getAuthHeaders()
         );
     }
+
+    // Get AI assistant context for task
+    getTaskAssistantContext(taskId: number): Observable<any> {
+        return this.http.post<any>(
+            'http://localhost:5001/api/ai/assigned-task-assistant-context',
+            { taskId },
+            this.authService.getAuthHeaders()
+        );
+    }
 }

@@ -40,6 +40,16 @@
                             <span>Created by: {{ task.createdByUsername }}</span>
                         </div>
                     </div>
+                    <div class="mt-3">
+                        <button 
+                            class="btn btn-sm btn-outline-primary" 
+                            (click)="getAIAssistantContext(task.id, task.title)"
+                            [disabled]="aiLoading[task.id]">
+                            <i *ngIf="!aiLoading[task.id]" class="fas fa-brain"></i>
+                            <span *ngIf="aiLoading[task.id]" class="spinner-border spinner-border-sm me-2"></span>
+                            {{ aiLoading[task.id] ? 'Loading...' : 'AI' }}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
