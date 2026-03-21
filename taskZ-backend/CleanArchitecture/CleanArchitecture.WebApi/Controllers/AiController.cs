@@ -134,6 +134,111 @@ namespace CleanArchitecture.WebApi.Controllers
                 Members = memberDtos
             });
         }
+
+        [HttpPost("assigned-task-assistant-context")]
+        public async Task<ActionResult<AssignedTaskAssistantContextResponse>> GetAssignedTaskAssistantContext(AssignedTaskAssistantContextRequest request)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
+
+            var task = await _context.BoardTasks
+                .Include(t => t.Board)
+                .ThenInclude(b => b.Workspace)
+                .Include(t => t.Board)
+                .ThenInclude(b => b.Users)
+                .Include(t => t.Status)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == request.TaskId &&
+                    t.AssigneeId == userId);
+
+            if (task == null)
+                return NotFound("Assigned task not found or access denied.");
+
+            var board = task.Board;
+            var hasAccess = board.Workspace.UserId == userId || board.Users.Any(u => u.UserId == userId);
+
+            if (!hasAccess)
+                return NotFound("Assigned task not found or access denied.");
+
+            var previousCompletedTasks = await _context.TaskEvents
+                .Where(e => e.EventType == "Completed" &&
+                            e.AssigneeId == userId &&
+                            e.TaskId != request.TaskId)
+                .OrderByDescending(e => e.Created)
+                .Take(_recentTasksLimit)
+                .Select(e => new
+                {
+                    e.Title,
+                    e.Description,
+                    e.Priority,
+                    CompletedAt = e.Created,
+                    e.AssignedAt
+                })
+                .ToListAsync();
+
+            var completedDurations = await _context.TaskEvents
+                .Where(e => e.EventType == "Completed" &&
+                            e.AssigneeId == userId &&
+                            e.AssignedAt != null)
+                .Select(e => new
+                {
+                    Duration = (e.Created - e.AssignedAt.Value).TotalHours
+                })
+                .ToListAsync();
+
+            var avgCompletionHours = completedDurations.Any()
+                ? Math.Round(completedDurations.Average(x => x.Duration), 1)
+                : 0.0;
+
+            var currentOpenAssignedTasks = await _context.BoardTasks
+                .Where(t => t.AssigneeId == userId &&
+                            t.Status.Type != BoardStatus.Done)
+                .CountAsync();
+
+            var previousTaskDtos = previousCompletedTasks.Select(e => new UserCompletedTaskContextDto
+            {
+                Title = e.Title,
+                Description = e.Description,
+                Priority = e.Priority,
+                CompletedAt = e.CompletedAt,
+                CompletionHours = e.AssignedAt != null 
+                    ? Math.Round((e.CompletedAt - e.AssignedAt.Value).TotalHours, 1)
+                    : null
+            }).ToList();
+
+            var userHistory = new UserTaskHistoryContextDto
+            {
+                CompletedTasksTotal = await _context.TaskEvents
+                    .Where(e => e.EventType == "Completed" && e.AssigneeId == userId)
+                    .CountAsync(),
+                AvgCompletionHours = avgCompletionHours,
+                CurrentOpenAssignedTasks = currentOpenAssignedTasks,
+                PreviousCompletedTasks = previousTaskDtos
+            };
+
+            var assignedTask = new AssignedTaskContextDto
+            {
+                TaskId = task.Id,
+                Title = task.Title,
+                Description = task.Description,
+                Priority = task.Priority,
+                DueDate = task.DueDate
+            };
+
+            var expectedResponseFormat = new AssignedTaskExpectedResponseFormatDto
+            {
+                Summary = "1-2 cümle",
+                ActionPlan = new List<string> { "adım-1", "adım-2", "adım-3" },
+                RiskNotes = new List<string> { "risk-1", "risk-2" }
+            };
+
+            return Ok(new AssignedTaskAssistantContextResponse
+            {
+                Instruction = "Sen bir görev koçu yapay zeka asistanısın. Kullanıcıya, kendisine atanmış görevi geçmiş tecrübesine göre nasıl daha iyi tamamlayabileceği konusunda kısa, net ve uygulanabilir öneriler ver. Gereksiz uzun açıklamalardan kaçın. Sadece belirtilen JSON formatında cevap ver.",
+                ExpectedResponseFormat = expectedResponseFormat,
+                AssignedTask = assignedTask,
+                UserHistory = userHistory
+            });
+        }
     }
 
     public class SuggestAssigneeRequest
@@ -179,5 +284,51 @@ namespace CleanArchitecture.WebApi.Controllers
     {
         public string RecommendedUsername { get; set; }
         public string Reason { get; set; }
+    }
+
+    public class AssignedTaskAssistantContextRequest
+    {
+        public int TaskId { get; set; }
+    }
+
+    public class AssignedTaskExpectedResponseFormatDto
+    {
+        public string Summary { get; set; }
+        public List<string> ActionPlan { get; set; }
+        public List<string> RiskNotes { get; set; }
+    }
+
+    public class AssignedTaskContextDto
+    {
+        public int TaskId { get; set; }
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public string Priority { get; set; }
+        public DateTime? DueDate { get; set; }
+    }
+
+    public class UserCompletedTaskContextDto
+    {
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public string Priority { get; set; }
+        public DateTime CompletedAt { get; set; }
+        public double? CompletionHours { get; set; }
+    }
+
+    public class UserTaskHistoryContextDto
+    {
+        public int CompletedTasksTotal { get; set; }
+        public double AvgCompletionHours { get; set; }
+        public int CurrentOpenAssignedTasks { get; set; }
+        public List<UserCompletedTaskContextDto> PreviousCompletedTasks { get; set; }
+    }
+
+    public class AssignedTaskAssistantContextResponse
+    {
+        public string Instruction { get; set; }
+        public AssignedTaskExpectedResponseFormatDto ExpectedResponseFormat { get; set; }
+        public AssignedTaskContextDto AssignedTask { get; set; }
+        public UserTaskHistoryContextDto UserHistory { get; set; }
     }
 }
