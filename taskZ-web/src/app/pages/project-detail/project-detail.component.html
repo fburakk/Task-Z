@@ -221,7 +221,9 @@
 
             <div class="modal-buttons">
                 <button class="modal-button create" (click)="createTask()">Oluştur</button>
-                <button class="modal-button ai" (click)="suggestAssignee()">✨ AI</button>
+                <button class="modal-button ai" (click)="suggestAssignee()" [disabled]="aiSuggestionLoading">
+                    {{ aiSuggestionLoading ? 'Öneriliyor...' : '✨ AI' }}
+                </button>
                 <button class="modal-button cancel" (click)="closeTaskModal()">İptal</button>
             </div>
         </div>

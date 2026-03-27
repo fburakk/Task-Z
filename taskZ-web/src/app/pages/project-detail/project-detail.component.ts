@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Board, BoardService, BoardUser, BoardStatus } from '../../core/services/board.service';
-import { CreateTaskDto, Task, TaskService, UpdateTaskDto } from '../../core/services/task.service';
+import { AiSuggestAssigneeResponse, CreateTaskDto, Task, TaskService, UpdateTaskDto } from '../../core/services/task.service';
 import { Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
@@ -48,6 +48,7 @@ export class ProjectDetailComponent implements OnInit {
   newTaskPriority: 'low' | 'medium' | 'high' = 'low';
   newTaskDueDate = '';
   newTaskUsername = '';
+  aiSuggestionLoading = false;
   private currentStatusId: number | null = null;
 
   isTaskDetailModalOpen = false;
@@ -388,20 +389,34 @@ export class ProjectDetailComponent implements OnInit {
       return;
     }
 
+    if (!this.newTaskTitle.trim()) {
+      alert('AI önerisi için görev başlığı girin.');
+      return;
+    }
+
+    this.aiSuggestionLoading = true;
     this.taskService.suggestAssignee(this.selectedBoardId, this.newTaskTitle, this.newTaskDescription).subscribe({
-      next: (response) => {
-        // Send the response to Ollama API as prompt
-        this.taskService.callOllamaAPI(JSON.stringify(response, null, 2)).subscribe({
-          next: (ollamaResponse) => {
-            alert(`Ollama Yanıtı:\n\n${JSON.stringify(ollamaResponse, null, 2)}`);
-          },
-          error: (error) => {
-            console.error('Error calling Ollama API:', error);
-            alert('Ollama API yanıtı alınamadı: ' + (error.error?.message || error.message));
-          }
-        });
+      next: (response: AiSuggestAssigneeResponse) => {
+        this.aiSuggestionLoading = false;
+
+        if (!response?.recommendedUsername) {
+          alert('Uygun bir öneri bulunamadı.');
+          return;
+        }
+
+        this.newTaskUsername = response.recommendedUsername;
+        const topCandidates = (response.candidates || [])
+          .slice(0, 3)
+          .map((candidate, index) =>
+            `${index + 1}. ${candidate.username} (skor: ${candidate.score}, aktif: ${candidate.activeTasks})`)
+          .join('\n');
+
+        alert(
+          `Önerilen kişi: ${response.recommendedUsername}\nKategori: ${response.taskCategory} (${Math.round((response.taskCategoryConfidence || 0) * 100)}%)\n\nTop adaylar:\n${topCandidates}`
+        );
       },
       error: (error) => {
+        this.aiSuggestionLoading = false;
         console.error('Error suggesting assignee:', error);
         alert('Öneri alınırken hata oluştu: ' + (error.error?.message || error.message));
       }

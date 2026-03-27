@@ -443,6 +443,11 @@ textarea.modal-input {
       background-color: #6d28d9;
     }
   }
+
+  &:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
 }
 
 // Form Controls

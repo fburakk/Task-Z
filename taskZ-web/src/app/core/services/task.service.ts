@@ -41,6 +41,29 @@ export interface UpdateTaskDto {
     position?: number;
 }
 
+export interface AiSuggestedCandidate {
+  userId: string;
+  username: string;
+  firstName?: string;
+  lastName?: string;
+  role: string;
+  score: number;
+  category: string;
+  categoryScore: number;
+  categoryCompletedTasks: number;
+  activeTasks: number;
+  overdueTasks: number;
+}
+
+export interface AiSuggestAssigneeResponse {
+  recommendedUserId?: string;
+  recommendedUsername?: string;
+  taskCategory: string;
+  taskCategoryConfidence: number;
+  generatedAt: string;
+  candidates: AiSuggestedCandidate[];
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -101,11 +124,11 @@ export class TaskService {
         });
     }
 
-    // AI suggest assignee
-    suggestAssignee(boardId: number, title: string, description: string): Observable<any> {
-        return this.http.post<any>(
+    // AI suggest assignee (fast score-based recommendation)
+    suggestAssignee(boardId: number, title: string, description: string, workCategory?: string): Observable<AiSuggestAssigneeResponse> {
+        return this.http.post<AiSuggestAssigneeResponse>(
             'http://localhost:5001/api/ai/suggest-assignee',
-            { boardId, title, description },
+            { boardId, title, description, workCategory: workCategory || null },
             this.authService.getAuthHeaders()
         );
     }
@@ -119,15 +142,4 @@ export class TaskService {
         );
     }
 
-    // Call Ollama API with prompt
-    callOllamaAPI(prompt: string): Observable<any> {
-        return this.http.post<any>(
-            'http://192.168.31.9:11434/api/generate',
-            {
-                model: 'llama3:8b',
-                prompt: prompt,
-                stream: false
-            }
-        );
-    }
 }
