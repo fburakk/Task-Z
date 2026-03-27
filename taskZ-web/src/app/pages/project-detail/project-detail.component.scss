@@ -1,13 +1,13 @@
-/* Task title daha büyük ve kalın */
+/* Larger and bolder task title */
 .task-title {
-    font-size: 1.25rem; /* Başlık boyutunu büyüt */
-    font-weight: bold; /* Kalın yap */
+    font-size: 1.25rem; /* Increase title size */
+    font-weight: bold; /* Make it bold */
 }
 
-/* Task description daha küçük ve normal kalınlıkta */
+/* Smaller task description with normal weight */
 .task-description {
-    font-size: 1rem; /* Description boyutunu biraz daha küçük yap */
-    font-weight: normal; /* Normal kalınlık */
+    font-size: 1rem; /* Slightly smaller description text */
+    font-weight: normal; /* Normal weight */
 }
 
 .kanban-board {

@@ -4,8 +4,8 @@
     <div class="board-header d-flex justify-content-between align-items-center">
   <h1>{{ board?.name }}</h1>
   <div class="d-flex gap-2">
-    <button class="btn btn-primary" (click)="addUserModal()">Yeni Kullanıcı Ekle</button>
-    <button class="btn btn-primary" (click)="openStatusModal()">Yeni Liste Ekle</button>
+    <button class="btn btn-primary" (click)="addUserModal()">Add New User</button>
+    <button class="btn btn-primary" (click)="openStatusModal()">Add New List</button>
   </div>
 </div>
 
@@ -27,7 +27,7 @@
                 (dragend)="onStatusDragEnd()"
             >
                 <div class="column-title-group">
-                    <span class="column-drag-handle" title="Listeyi taşımak için sürükle">⋮⋮</span>
+                    <span class="column-drag-handle" title="Drag to move list">⋮⋮</span>
                     <ng-container *ngIf="editingStatusId !== status.id; else editStatusTemplate">
                         <h3>{{ status.title }}</h3>
                     </ng-container>
@@ -35,7 +35,7 @@
                         <input
                             class="status-title-input"
                             [(ngModel)]="editingStatusName"
-                            placeholder="Liste adı"
+                            placeholder="List name"
                             (keydown.enter)="saveRenameStatus(status)"
                             (keydown.escape)="cancelRenameStatus()"
                         />
@@ -47,13 +47,13 @@
                         type="button"
                         class="status-rename-btn"
                         (click)="startRenameStatus(status); $event.stopPropagation()"
-                        title="Liste adını düzenle"
+                        title="Rename list"
                     >
                         ✎
                     </button>
                     <div class="status-edit-actions" *ngIf="editingStatusId === status.id">
-                        <button type="button" class="status-save-btn" (click)="saveRenameStatus(status)">Kaydet</button>
-                        <button type="button" class="status-cancel-btn" (click)="cancelRenameStatus()">İptal</button>
+                        <button type="button" class="status-save-btn" (click)="saveRenameStatus(status)">Save</button>
+                        <button type="button" class="status-cancel-btn" (click)="cancelRenameStatus()">Cancel</button>
                     </div>
                     <span class="task-count">{{ (tasksByStatus[status.id] || []).length }}</span>
                 </div>
@@ -110,13 +110,13 @@
     <div class="modal-content">
         <div class="modal-box">
             <button class="close-button" (click)="closeStatusModal()">×</button>
-            <h3 class="modal-title">Yeni Liste Ekle</h3>
+            <h3 class="modal-title">Add New List</h3>
             
             <input
                 class="modal-input"
                 [(ngModel)]="newStatusName"
                 type="text"
-                placeholder="Liste adını girin"
+                placeholder="Enter list name"
                 name="statusName"
                 required
             />
@@ -128,13 +128,13 @@
             >
                 <option value="custom">Custom</option>
                 <option value="in_progress">In Progress</option>
-                <option value="todo">Todo (tek)</option>
-                <option value="done">Done (tek)</option>
+                <option value="todo">Todo (single)</option>
+                <option value="done">Done (single)</option>
             </select>
 
             <div class="modal-buttons">
-                <button class="modal-button create" (click)="createStatus()">Oluştur</button>
-                <button class="modal-button cancel" (click)="closeStatusModal()">İptal</button>
+                <button class="modal-button create" (click)="createStatus()">Create</button>
+                <button class="modal-button cancel" (click)="closeStatusModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -147,18 +147,18 @@
         <div class="modal-content">
           <div class="modal-box">
             <button class="close-button" (click)="closeAddUserModal()">×</button>
-            <h3 class="modal-title">Yeni Kullanıcı Ekle</h3>
+            <h3 class="modal-title">Add New User</h3>
             
             <input
               class="modal-input"
               [(ngModel)]="newUsersName"
               type="text"
-              placeholder="Kullanıcı adını girin."
+              placeholder="Enter username."
             />
 
             <div class="modal-buttons">
-              <button class="modal-button create" (click)="addNewUser()">Oluştur</button>
-              <button class="modal-button cancel" (click)="closeAddUserModal()">İptal</button>
+              <button class="modal-button create" (click)="addNewUser()">Create</button>
+              <button class="modal-button cancel" (click)="closeAddUserModal()">Cancel</button>
             </div>
           </div>
         </div>
@@ -170,13 +170,13 @@
     <div class="modal-content">
         <div class="modal-box">
             <button class="close-button" (click)="closeTaskModal()">×</button>
-            <h3 class="modal-title">Yeni Görev Ekle</h3>
+            <h3 class="modal-title">Add New Task</h3>
             
             <input
                 class="modal-input"
                 [(ngModel)]="newTaskTitle"
                 type="text"
-                placeholder="Görev başlığı"
+                placeholder="Task title"
                 name="taskTitle"
                 required
             />
@@ -184,7 +184,7 @@
             <textarea
                 class="modal-input"
                 [(ngModel)]="newTaskDescription"
-                placeholder="Görev açıklaması"
+                placeholder="Task description"
                 name="taskDescription"
                 required
             ></textarea>
@@ -195,16 +195,16 @@
                 name="taskPriority"
                 required
             >
-                <option value="low">Düşük Öncelik</option>
-                <option value="medium">Orta Öncelik</option>
-                <option value="high">Yüksek Öncelik</option>
+                <option value="low">Low Priority</option>
+                <option value="medium">Medium Priority</option>
+                <option value="high">High Priority</option>
             </select>
 
             <input
                 class="modal-input"
                 [(ngModel)]="newTaskDueDate"
                 type="date"
-                placeholder="Son tarih"
+                placeholder="Due date"
                 name="taskDueDate"
             />
 
@@ -213,18 +213,18 @@
                 [(ngModel)]="newTaskUsername"
                 name="taskUsername"
             >
-                <option value="">Görev atanacak kişiyi seçin</option>
+                <option value="">Select assignee</option>
                 <option *ngFor="let user of boardUsers" [value]="user.username">
                     {{ user.username }}
                 </option>
             </select>
 
             <div class="modal-buttons">
-                <button class="modal-button create" (click)="createTask()">Oluştur</button>
+                <button class="modal-button create" (click)="createTask()">Create</button>
                 <button class="modal-button ai" (click)="suggestAssignee()" [disabled]="aiSuggestionLoading">
-                    {{ aiSuggestionLoading ? 'Öneriliyor...' : '✨ AI' }}
+                    {{ aiSuggestionLoading ? 'Suggesting...' : '✨ AI' }}
                 </button>
-                <button class="modal-button cancel" (click)="closeTaskModal()">İptal</button>
+                <button class="modal-button cancel" (click)="closeTaskModal()">Cancel</button>
             </div>
         </div>
     </div>

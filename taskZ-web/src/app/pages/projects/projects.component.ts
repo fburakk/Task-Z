@@ -61,11 +61,11 @@ export class ProjectsComponent implements OnInit, OnDestroy {
       try {
         return JSON.stringify(payload);
       } catch {
-        return 'Bilinmeyen hata';
+        return 'Unknown error';
       }
     }
 
-    return 'Bilinmeyen hata';
+    return 'Unknown error';
   }
   
   openBoardModal(workspaceId: number) {
@@ -92,13 +92,13 @@ export class ProjectsComponent implements OnInit, OnDestroy {
       error: (error) => {
         console.error('Error creating board:', error);
         const message = this.getErrorMessage(error);
-        alert(`Proje oluşturulamadı: ${message}`);
+        alert(`Failed to create project: ${message}`);
       }
     });
   }
 
   deleteWorkspace(workspaceId: number): void {
-    const confirmed = window.confirm('Bu workspace silinsin mi?');
+    const confirmed = window.confirm('Delete this workspace?');
     if (!confirmed) return;
 
     this.workspaceService.deleteWorkspace(workspaceId).subscribe({
@@ -107,7 +107,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
         delete this.boardsByWorkspace[workspaceId];
       },
       error: (error) => {
-        console.error('Workspace silinirken hata oluştu:', error);
+        console.error('Error deleting workspace:', error);
       }
     });
   }
@@ -116,7 +116,7 @@ export class ProjectsComponent implements OnInit, OnDestroy {
     event.preventDefault();
     event.stopPropagation();
 
-    const confirmed = window.confirm('Bu proje silinsin mi?');
+    const confirmed = window.confirm('Delete this project?');
     if (!confirmed) return;
 
     this.boardService.deleteBoard(boardId).subscribe({
@@ -125,9 +125,9 @@ export class ProjectsComponent implements OnInit, OnDestroy {
         this.boardsByWorkspace[workspaceId] = boards.filter((b) => b.id !== boardId);
       },
       error: (error) => {
-        console.error('Proje silinirken hata oluştu:', error);
+        console.error('Error deleting project:', error);
         const message = this.getErrorMessage(error);
-        alert(`Proje silinemedi: ${message}`);
+        alert(`Failed to delete project: ${message}`);
       }
     });
   }

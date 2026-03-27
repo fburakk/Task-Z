@@ -1,19 +1,19 @@
 <div class="analytics-page">
   <div class="header-row">
     <h1>Analytics Dashboard</h1>
-    <span class="meta" *ngIf="overview">Son güncelleme: {{ overview.generatedAt | date:'short' }}</span>
+    <span class="meta" *ngIf="overview">Last updated: {{ overview.generatedAt | date:'short' }}</span>
   </div>
 
   <div class="filters">
     <select [(ngModel)]="selectedWorkspaceId" (change)="onWorkspaceChange()">
-      <option [ngValue]="null">Tüm Workspaceler</option>
+      <option [ngValue]="null">All Workspaces</option>
       <option *ngFor="let workspace of workspaces" [ngValue]="workspace.id">
         {{ workspace.name }}
       </option>
     </select>
 
     <select [(ngModel)]="selectedBoardId" (change)="onBoardChange()">
-      <option [ngValue]="null">Tüm Boardlar</option>
+      <option [ngValue]="null">All Boards</option>
       <option *ngFor="let board of boards" [ngValue]="board.id">
         {{ board.name }}
       </option>
@@ -27,54 +27,54 @@
 
     <input type="date" [(ngModel)]="fromDate" />
     <input type="date" [(ngModel)]="toDate" />
-    <button type="button" (click)="applyFilters()">Uygula</button>
+    <button type="button" (click)="applyFilters()">Apply</button>
   </div>
 
   <div class="error" *ngIf="error">{{ error }}</div>
 
   <div class="overview-grid" *ngIf="overview">
     <div class="metric-card">
-      <span class="label">Toplam Görev</span>
+      <span class="label">Total Tasks</span>
       <strong>{{ overview.totalTasks }}</strong>
     </div>
     <div class="metric-card">
-      <span class="label">Tamamlanan</span>
+      <span class="label">Completed</span>
       <strong>{{ overview.completedTasks }}</strong>
     </div>
     <div class="metric-card">
-      <span class="label">Aktif</span>
+      <span class="label">Active</span>
       <strong>{{ overview.activeTasks }}</strong>
     </div>
     <div class="metric-card">
-      <span class="label">Geciken</span>
+      <span class="label">Overdue</span>
       <strong>{{ overview.overdueTasks }}</strong>
     </div>
     <div class="metric-card">
-      <span class="label">Tamamlama Oranı</span>
+      <span class="label">Completion Rate</span>
       <strong>{{ overview.completionRate }}%</strong>
     </div>
     <div class="metric-card">
-      <span class="label">Ort. Tamamlama</span>
+      <span class="label">Avg. Completion</span>
       <strong>{{ formatDuration(overview.averageCompletionHours) }}</strong>
     </div>
   </div>
 
   <div class="category-visual-card">
     <div class="section-head">
-      <h2>Kategori Bazlı Kullanıcı Skorları</h2>
-      <span class="meta">{{ userCategoryPerformance.length }} kayıt</span>
+      <h2>Category-Based User Scores</h2>
+      <span class="meta">{{ userCategoryPerformance.length }} records</span>
     </div>
-    <div *ngIf="loading" class="loading">Yükleniyor...</div>
-    <div *ngIf="!loading && userCategoryMatrix.length === 0" class="loading">Kategori verisi bulunamadı.</div>
+    <div *ngIf="loading" class="loading">Loading...</div>
+    <div *ngIf="!loading && userCategoryMatrix.length === 0" class="loading">No category data found.</div>
 
     <div class="user-category-grid" *ngIf="!loading && userCategoryMatrix.length > 0">
       <div class="user-category-card" *ngFor="let user of userCategoryMatrix">
         <div class="user-category-head">
           <strong>{{ user.username }}</strong>
-          <span class="score-pill">Genel Skor: {{ user.weightedAverageScore | number:'1.0-1' }}</span>
+          <span class="score-pill">Overall Score: {{ user.weightedAverageScore | number:'1.0-1' }}</span>
         </div>
         <div class="user-summary">
-          <span>{{ user.totalCompletedTasks }} tamamlanan görev</span>
+          <span>{{ user.totalCompletedTasks }} completed tasks</span>
         </div>
         <div class="score-bar">
           <div class="score-fill" [style.width.%]="user.weightedAverageScore"></div>
@@ -90,9 +90,9 @@
               <div class="score-fill" [style.width.%]="category.score"></div>
             </div>
             <div class="category-meta">
-              <span>{{ category.completedTasks }} görev</span>
+              <span>{{ category.completedTasks }} tasks</span>
               <span>On-time: {{ category.onTimeRate | number:'1.0-1' }}%</span>
-              <span>Ort: {{ formatDuration(category.averageCompletionHours) }}</span>
+              <span>Avg: {{ formatDuration(category.averageCompletionHours) }}</span>
             </div>
           </div>
         </div>
@@ -101,18 +101,18 @@
   </div>
 
   <div class="table-card">
-    <h2>Kullanıcı Performansı</h2>
-    <div *ngIf="loading" class="loading">Yükleniyor...</div>
+    <h2>User Performance</h2>
+    <div *ngIf="loading" class="loading">Loading...</div>
     <table *ngIf="!loading">
       <thead>
         <tr>
-          <th>Kullanıcı</th>
-          <th>Atanan</th>
-          <th>Tamamlanan</th>
-          <th>Aktif</th>
-          <th>Geciken</th>
+          <th>User</th>
+          <th>Assigned</th>
+          <th>Completed</th>
+          <th>Active</th>
+          <th>Overdue</th>
           <th>On-time</th>
-          <th>Ort. Süre</th>
+          <th>Avg. Duration</th>
         </tr>
       </thead>
       <tbody>
@@ -130,18 +130,18 @@
   </div>
 
   <div class="table-card">
-    <h2>Görev Kategori Doğrulama</h2>
-    <div *ngIf="loading" class="loading">Yükleniyor...</div>
+    <h2>Task Category Audit</h2>
+    <div *ngIf="loading" class="loading">Loading...</div>
     <table *ngIf="!loading">
       <thead>
         <tr>
           <th>ID</th>
-          <th>Görev</th>
+          <th>Task</th>
           <th>Board</th>
-          <th>Kategori</th>
-          <th>Güven</th>
-          <th>Atanan</th>
-          <th>Oluşturulma</th>
+          <th>Category</th>
+          <th>Confidence</th>
+          <th>Assignee</th>
+          <th>Created At</th>
         </tr>
       </thead>
       <tbody>
@@ -157,21 +157,21 @@
       </tbody>
     </table>
     <div *ngIf="!loading && taskCategoryAuditRows.length === 0" class="loading">
-      Filtrelere uygun görev bulunamadı.
+      No tasks found for the selected filters.
     </div>
   </div>
 
   <div class="recommendation-card">
-    <h2>Assignee Önerisi</h2>
+    <h2>Assignee Recommendation</h2>
     <div class="recommendation-form">
       <input
         type="text"
-        placeholder="Görev başlığı"
+        placeholder="Task title"
         [(ngModel)]="recommendationInput.title"
       />
       <textarea
         rows="3"
-        placeholder="Görev açıklaması"
+        placeholder="Task description"
         [(ngModel)]="recommendationInput.description"
       ></textarea>
       <div class="row">
@@ -181,35 +181,35 @@
           <option value="high">high</option>
         </select>
         <select [(ngModel)]="recommendationInput.workCategory">
-          <option [value]="''">Kategori: Otomatik</option>
+          <option [value]="''">Category: Auto</option>
           <option *ngFor="let category of recommendationCategoryOptions" [value]="category.value">
             {{ category.label }}
           </option>
         </select>
         <input type="date" [(ngModel)]="recommendationInput.dueDate" />
         <input type="number" min="1" max="10" [(ngModel)]="recommendationInput.topN" />
-        <button type="button" (click)="generateRecommendation()">Öneri Üret</button>
+        <button type="button" (click)="generateRecommendation()">Generate Recommendation</button>
       </div>
     </div>
 
     <div class="error" *ngIf="recommendationError">{{ recommendationError }}</div>
-    <div *ngIf="recommendationLoading" class="loading">Öneri hazırlanıyor...</div>
+    <div *ngIf="recommendationLoading" class="loading">Preparing recommendation...</div>
     <div class="recommendation-meta" *ngIf="!recommendationLoading && recommendationTaskCategory">
-      Görev kategorisi: <strong>{{ getCategoryLabel(recommendationTaskCategory) }}</strong>
-      ({{ (recommendationTaskCategoryConfidence * 100) | number:'1.0-0' }}% güven)
+      Task category: <strong>{{ getCategoryLabel(recommendationTaskCategory) }}</strong>
+      ({{ (recommendationTaskCategoryConfidence * 100) | number:'1.0-0' }}% confidence)
     </div>
 
     <div class="candidate-list" *ngIf="!recommendationLoading">
       <div class="candidate" *ngFor="let candidate of recommendation">
         <div class="candidate-head">
           <strong>{{ candidate.username }}</strong>
-          <span>Skor: {{ candidate.score }}</span>
+          <span>Score: {{ candidate.score }}</span>
         </div>
         <div class="signals">
-          <span>Aktif: {{ candidate.signals.activeTasks }}</span>
-          <span>Geciken: {{ candidate.signals.overdueActiveTasks }}</span>
+          <span>Active: {{ candidate.signals.activeTasks }}</span>
+          <span>Overdue: {{ candidate.signals.overdueActiveTasks }}</span>
           <span>On-time: {{ candidate.signals.onTimeRate }}%</span>
-          <span>Kategori Skoru: {{ candidate.signals.categoryScore | number:'1.0-1' }}</span>
+          <span>Category Score: {{ candidate.signals.categoryScore | number:'1.0-1' }}</span>
         </div>
         <ul>
           <li *ngFor="let reason of candidate.reasons">{{ reason }}</li>

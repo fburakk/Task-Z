@@ -66,13 +66,13 @@ export class NavbarComponent implements OnInit {
     this.workSpaceService.createWorkspace(this.newWorkSpaceName).subscribe({
       next: (newWorkSpace) => {
 
-        console.log('Yeni workspace oluşturuldu:', newWorkSpace);
+        console.log('New workspace created:', newWorkSpace);
         
         this.closeWorkSpaceModal();
         
         this.newWorkSpaceName = '';},
       error: (error) => {
-        console.error('Workspace oluşturulurken hata oluştu:', error);
+        console.error('Error creating workspace:', error);
       }
     });
 

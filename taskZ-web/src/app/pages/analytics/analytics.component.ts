@@ -40,7 +40,7 @@ interface UserCategoryMatrixRow {
 export class AnalyticsComponent implements OnInit {
   private readonly isBrowser: boolean;
   readonly categoryOptions: { value: string; label: string }[] = [
-    { value: '', label: 'Tüm kategoriler' },
+    { value: '', label: 'All categories' },
     { value: 'frontend', label: 'Frontend' },
     { value: 'backend', label: 'Backend' },
     { value: 'ui_bug', label: 'UI Bug' },
@@ -121,7 +121,7 @@ export class AnalyticsComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error loading workspaces:', err);
-        this.error = 'Workspace bilgileri yüklenemedi.';
+        this.error = 'Unable to load workspace data.';
       }
     });
   }
@@ -165,7 +165,7 @@ export class AnalyticsComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error loading boards:', err);
-        this.error = 'Board bilgileri yüklenemedi.';
+        this.error = 'Unable to load board data.';
         this.loadAnalytics();
       }
     });
@@ -191,7 +191,7 @@ export class AnalyticsComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error loading overview:', err);
-        this.error = 'Analytics overview yüklenemedi.';
+        this.error = 'Unable to load analytics overview.';
         completeRequest();
       }
     });
@@ -203,7 +203,7 @@ export class AnalyticsComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error loading user analytics:', err);
-        this.error = 'Kullanıcı analytics verisi yüklenemedi.';
+        this.error = 'Unable to load user analytics data.';
         completeRequest();
       }
     });
@@ -216,7 +216,7 @@ export class AnalyticsComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error loading user category performance:', err);
-        this.error = 'Kategori bazlı kullanıcı performansı yüklenemedi.';
+        this.error = 'Unable to load category-based user performance.';
         this.userCategoryPerformance = [];
         this.userCategoryMatrix = [];
         completeRequest();
@@ -230,7 +230,7 @@ export class AnalyticsComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error loading task category audit rows:', err);
-        this.error = 'Görev kategori doğrulama verisi yüklenemedi.';
+        this.error = 'Unable to load task category audit data.';
         this.taskCategoryAuditRows = [];
         completeRequest();
       }
@@ -244,12 +244,12 @@ export class AnalyticsComponent implements OnInit {
     this.recommendationTaskCategoryConfidence = 0;
 
     if (!this.selectedBoardId) {
-      this.recommendationError = 'Önce bir board seçin.';
+      this.recommendationError = 'Select a board first.';
       return;
     }
 
     if (!this.recommendationInput.title.trim()) {
-      this.recommendationError = 'Görev başlığı zorunlu.';
+      this.recommendationError = 'Task title is required.';
       return;
     }
 
@@ -280,7 +280,7 @@ export class AnalyticsComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error generating recommendation:', err);
-        this.recommendationError = 'Öneri alınamadı.';
+        this.recommendationError = 'Unable to generate recommendation.';
         this.recommendationLoading = false;
       }
     });
@@ -369,12 +369,12 @@ export class AnalyticsComponent implements OnInit {
   }
 
   getAssigneeLabel(row: TaskCategoryAudit): string {
-    return row.assigneeUsername?.trim() || 'Atanmamış';
+    return row.assigneeUsername?.trim() || 'Unassigned';
   }
 
   formatDuration(hours: number | null | undefined): string {
     if (!hours || hours <= 0) {
-      return '0 saniye';
+      return '0 sec';
     }
 
     const totalSeconds = Math.max(0, Math.round(hours * 3600));
@@ -384,12 +384,12 @@ export class AnalyticsComponent implements OnInit {
 
     const parts: string[] = [];
     if (hourPart > 0) {
-      parts.push(`${hourPart} saat`);
+      parts.push(`${hourPart} h`);
     }
     if (minutePart > 0 || hourPart > 0) {
-      parts.push(`${minutePart} dk`);
+      parts.push(`${minutePart} min`);
     }
-    parts.push(`${secondPart} saniye`);
+    parts.push(`${secondPart} sec`);
 
     return parts.join(' ');
   }

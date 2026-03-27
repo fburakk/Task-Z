@@ -4,14 +4,12 @@
     <div class="d-flex align-items-center">
       <a class="navbar-brand me-3" href="javascript:void(0)">TaskZ</a>
       <div class="nav-links d-flex">
-        <!-- Çalışma Alanları Butonu -->
         <button class="btn nav-btn me-2" routerLink="/projects">
-          Projelerim
+          My Projects
         </button>
     
-        <!-- Geçmiş Butonu -->
         <button class="btn nav-btn me-2" routerLink="/myCards">
-          Görevlerim
+          My Tasks
         </button>
 
         <button class="btn nav-btn me-2" routerLink="/analytics">
@@ -21,9 +19,8 @@
       
     
     
-        <!-- Oluştur Butonu -->
         <button *ngIf="showButton" class="btn create-btn" (click)="openWorkSpaceModal()">
-          Workspace Ekle
+          Add Workspace
         </button>
       </div>
     </div>
@@ -34,7 +31,7 @@
       <!-- Search -->
       <div class="search-wrapper me-2">
         <div class="input-group">
-          <input type="text" class="form-control search-input" placeholder="Arama">
+          <input type="text" class="form-control search-input" placeholder="Search">
           <span class="input-group-text search-icon">
             <i class="fas fa-search"></i>
           </span>
@@ -90,18 +87,18 @@
   <div class="modal-content">
     <div class="modal-box">
       <button class="close-button" (click)="closeWorkSpaceModal()">×</button>
-      <h3 class="modal-title">Yeni Workspace Oluştur</h3>
+      <h3 class="modal-title">Create New Workspace</h3>
       
       <input
         class="modal-input"
         [(ngModel)]="newWorkSpaceName"
         type="text"
-        placeholder="Workspace ismini girin"
+        placeholder="Enter workspace name"
       />
 
       <div class="modal-buttons">
-        <button class="modal-button create" (click)="createWorkSpace()">Oluştur</button>
-        <button class="modal-button cancel" (click)="closeWorkSpaceModal()">İptal</button>
+        <button class="modal-button create" (click)="createWorkSpace()">Create</button>
+        <button class="modal-button cancel" (click)="closeWorkSpaceModal()">Cancel</button>
       </div>
     </div>
   </div>

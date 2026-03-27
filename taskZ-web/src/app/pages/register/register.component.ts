@@ -28,29 +28,22 @@ export class RegisterComponent {
   onRegister(){
     this.authService.register(this.userRegisterObj).subscribe({
       next: (response) => {
-        // Kayıt başarılı olduysa
-        alert("Kayıt başarılı!");
+        alert("Registration successful!");
         // this.router.navigateByUrl('/login');
       },
       error: (error: HttpErrorResponse) => {
-        // Hata durumunda daha fazla bilgi alıyoruz
-        console.error("Kayıt işlemi başarısız:", error);
-  
-        // HTTP hata kodu
-        console.error("Hata Kodu:", error.status);
-  
-        // HTTP hata mesajı
-        console.error("Hata Mesajı:", error.message);
-  
-        // Geri dönen hata verisi (Backend'in döndürdüğü detaylı mesajlar)
+        console.error("Registration failed:", error);
+        console.error("HTTP Status Code:", error.status);
+        console.error("Error Message:", error.message);
+
         if (error.error) {
-          console.error("Backend Hata Mesajı:", error.error);
+          console.error("Backend Error:", error.error);
         }
-  
-        alert("Kayıt sırasında bir hata oluştu!");
+
+        alert("An error occurred during registration!");
       },
       complete: () => {
-        console.log("Register işlemi tamamlandı.");
+        console.log("Registration process completed.");
       }
     });
 

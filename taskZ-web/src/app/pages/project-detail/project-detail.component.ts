@@ -36,7 +36,7 @@ export class ProjectDetailComponent implements OnInit {
   public tasksByStatus: TasksByStatus = {};
   public statuses: BoardStatus[] = [];
 
-  selectedBoardId!: number; //////burda değişiklik yaptık sıkıntı çıkarsa bak
+  selectedBoardId!: number;
 
   isModalOpen = false;
   isStatusModalOpen = false;
@@ -97,11 +97,11 @@ export class ProjectDetailComponent implements OnInit {
       try {
         return JSON.stringify(payload);
       } catch {
-        return 'Bilinmeyen hata';
+        return 'Unknown error';
       }
     }
 
-    return 'Bilinmeyen hata';
+    return 'Unknown error';
   }
 
   ngOnInit(): void {
@@ -130,7 +130,7 @@ export class ProjectDetailComponent implements OnInit {
     if (!this.newUsersName.trim()) return;
 
     this.boardService.addUserToBoard(this.selectedBoardId, this.newUsersName, 'editor').subscribe(newUser => {
-      console.log('Yeni kullanıcı eklendi:', newUser);
+      console.log('New user added:', newUser);
       this.closeAddUserModal();})
   }
 
@@ -206,7 +206,7 @@ export class ProjectDetailComponent implements OnInit {
 
     if ((this.newStatusType === 'todo' || this.newStatusType === 'done') &&
       this.statuses.some((s) => s.type === this.newStatusType)) {
-      alert(`Bu board içinde '${this.newStatusType}' tipi zaten var.`);
+      alert(`A '${this.newStatusType}' status already exists in this board.`);
       return;
     }
 
@@ -255,7 +255,7 @@ export class ProjectDetailComponent implements OnInit {
       error: (error) => {
         console.error('Error renaming status:', error);
         const message = this.getErrorMessage(error);
-        alert(`Liste adı değiştirilemedi: ${message}`);
+        alert(`Failed to rename list: ${message}`);
       }
     });
   }
@@ -356,7 +356,7 @@ export class ProjectDetailComponent implements OnInit {
       error: (error) => {
         console.error('Error reordering statuses:', error);
         const message = this.getErrorMessage(error);
-        alert(`Liste sırası kaydedilemedi: ${message}`);
+        alert(`Failed to save list order: ${message}`);
         this.statuses = previousStatuses;
         this.draggedStatusId = null;
         this.loadStatuses();
@@ -390,7 +390,7 @@ export class ProjectDetailComponent implements OnInit {
     }
 
     if (!this.newTaskTitle.trim()) {
-      alert('AI önerisi için görev başlığı girin.');
+      alert('Enter a task title to get an AI suggestion.');
       return;
     }
 
@@ -400,7 +400,7 @@ export class ProjectDetailComponent implements OnInit {
         this.aiSuggestionLoading = false;
 
         if (!response?.recommendedUsername) {
-          alert('Uygun bir öneri bulunamadı.');
+          alert('No suitable recommendation found.');
           return;
         }
 
@@ -412,13 +412,13 @@ export class ProjectDetailComponent implements OnInit {
           .join('\n');
 
         alert(
-          `Önerilen kişi: ${response.recommendedUsername}\nKategori: ${response.taskCategory} (${Math.round((response.taskCategoryConfidence || 0) * 100)}%)\n\nTop adaylar:\n${topCandidates}`
+          `Recommended assignee: ${response.recommendedUsername}\nCategory: ${response.taskCategory} (${Math.round((response.taskCategoryConfidence || 0) * 100)}%)\n\nTop candidates:\n${topCandidates}`
         );
       },
       error: (error) => {
         this.aiSuggestionLoading = false;
         console.error('Error suggesting assignee:', error);
-        alert('Öneri alınırken hata oluştu: ' + (error.error?.message || error.message));
+        alert('An error occurred while getting recommendation: ' + (error.error?.message || error.message));
       }
     });
   }
