@@ -118,4 +118,16 @@ export class TaskService {
             this.authService.getAuthHeaders()
         );
     }
+
+    // Call Ollama API with prompt
+    callOllamaAPI(prompt: string): Observable<any> {
+        return this.http.post<any>(
+            'http://192.168.31.9:11434/api/generate',
+            {
+                model: 'llama3:8b',
+                prompt: prompt,
+                stream: false
+            }
+        );
+    }
 }

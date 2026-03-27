@@ -390,7 +390,16 @@ export class ProjectDetailComponent implements OnInit {
 
     this.taskService.suggestAssignee(this.selectedBoardId, this.newTaskTitle, this.newTaskDescription).subscribe({
       next: (response) => {
-        alert(JSON.stringify(response, null, 2));
+        // Send the response to Ollama API as prompt
+        this.taskService.callOllamaAPI(JSON.stringify(response, null, 2)).subscribe({
+          next: (ollamaResponse) => {
+            alert(`Ollama Yanıtı:\n\n${JSON.stringify(ollamaResponse, null, 2)}`);
+          },
+          error: (error) => {
+            console.error('Error calling Ollama API:', error);
+            alert('Ollama API yanıtı alınamadı: ' + (error.error?.message || error.message));
+          }
+        });
       },
       error: (error) => {
         console.error('Error suggesting assignee:', error);
