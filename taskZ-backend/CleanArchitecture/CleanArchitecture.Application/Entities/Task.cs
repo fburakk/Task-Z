@@ -4,6 +4,8 @@ namespace CleanArchitecture.Core.Entities
 {
     public class BoardTask : AuditableBaseEntity
     {
+        public const string DefaultWorkCategory = "other";
+
         public int BoardId { get; set; }
         public int StatusId { get; set; }
         public string Title { get; set; }
@@ -13,9 +15,12 @@ namespace CleanArchitecture.Core.Entities
         public string AssigneeId { get; set; }  // User ID from Identity
         public DateTime? AssignedAt { get; set; }  // When AssigneeId was last set
         public int Position { get; set; }
+        public string WorkCategory { get; set; } = DefaultWorkCategory;
+        public double WorkCategoryConfidence { get; set; }
+        public DateTime? WorkCategoryClassifiedAt { get; set; }
 
         // Navigation properties
         public virtual Board Board { get; set; }
         public virtual BoardStatus Status { get; set; }
     }
-} 
+}

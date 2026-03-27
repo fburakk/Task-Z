@@ -27,6 +27,7 @@ namespace CleanArchitecture.Infrastructure.Contexts
         public DbSet<BoardStatus> BoardStatuses { get; set; }
         public DbSet<BoardTask> BoardTasks { get; set; }
         public DbSet<TaskEvent> TaskEvents { get; set; }
+        public DbSet<UserCategoryScore> UserCategoryScores { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -68,11 +69,32 @@ namespace CleanArchitecture.Infrastructure.Contexts
                 .HasForeignKey(t => t.StatusId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<BoardTask>()
+                .Property(t => t.WorkCategory)
+                .HasMaxLength(64)
+                .HasDefaultValue(BoardTask.DefaultWorkCategory)
+                .IsRequired();
+
+            modelBuilder.Entity<BoardTask>()
+                .HasIndex(t => new { t.BoardId, t.WorkCategory });
+
             modelBuilder.Entity<TaskEvent>()
                 .HasIndex(te => new { te.BoardId, te.WorkspaceId, te.EventType, te.Created });
 
             modelBuilder.Entity<TaskEvent>()
                 .HasIndex(te => new { te.TaskId, te.Created });
+
+            modelBuilder.Entity<UserCategoryScore>()
+                .Property(x => x.Category)
+                .HasMaxLength(64)
+                .IsRequired();
+
+            modelBuilder.Entity<UserCategoryScore>()
+                .HasIndex(x => new { x.UserId, x.Category })
+                .IsUnique();
+
+            modelBuilder.Entity<UserCategoryScore>()
+                .HasIndex(x => x.Category);
         }
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())

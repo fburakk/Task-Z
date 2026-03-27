@@ -3,6 +3,7 @@ using CleanArchitecture.Core.Interfaces;
 using CleanArchitecture.Infrastructure;
 using CleanArchitecture.Infrastructure.Models;
 using CleanArchitecture.WebApi.Extensions;
+using CleanArchitecture.WebApi.Settings;
 using CleanArchitecture.WebApi.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -31,6 +32,8 @@ builder.Services.AddControllers();
 builder.Services.AddApiVersioningExtension();
 builder.Services.AddHealthChecks();
 builder.Services.AddScoped<IAuthenticatedUserService, AuthenticatedUserService>();
+builder.Services.Configure<TaskClassificationSettings>(builder.Configuration.GetSection("AiSettings:TaskClassification"));
+builder.Services.AddHttpClient<ITaskClassificationService, OllamaTaskClassificationService>();
 
 //Build the application
 var app = builder.Build();

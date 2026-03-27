@@ -190,9 +190,24 @@ namespace CleanArchitecture.Infrastructure.Migrations
                     b.Property<string>("Title")
                         .HasColumnType("text");
 
+                    b.Property<string>("WorkCategory")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasDefaultValue("other");
+
+                    b.Property<DateTime?>("WorkCategoryClassifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double>("WorkCategoryConfidence")
+                        .HasColumnType("double precision");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BoardId");
+
+                    b.HasIndex("BoardId", "WorkCategory");
 
                     b.HasIndex("StatusId");
 
@@ -313,6 +328,53 @@ namespace CleanArchitecture.Infrastructure.Migrations
                     b.HasIndex("BoardId", "WorkspaceId", "EventType", "Created");
 
                     b.ToTable("TaskEvents");
+                });
+
+            modelBuilder.Entity("CleanArchitecture.Core.Entities.UserCategoryScore", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<double>("AverageCompletionHours")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("CompletedTasks")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("LastCompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("LastTaskId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OnTimeCompletedTasks")
+                        .HasColumnType("integer");
+
+                    b.Property<double>("Score")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("TotalCompletionHours")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Category");
+
+                    b.HasIndex("UserId", "Category")
+                        .IsUnique();
+
+                    b.ToTable("UserCategoryScores");
                 });
 
             modelBuilder.Entity("CleanArchitecture.Core.Entities.Workspace", b =>

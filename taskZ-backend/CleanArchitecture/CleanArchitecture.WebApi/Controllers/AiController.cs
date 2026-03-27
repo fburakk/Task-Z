@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CleanArchitecture.Core.Entities;
 using CleanArchitecture.Infrastructure.Contexts;
 using CleanArchitecture.Infrastructure.Models;
+using CleanArchitecture.WebApi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -21,22 +22,34 @@ namespace CleanArchitecture.WebApi.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ITaskClassificationService _taskClassificationService;
         private readonly int _recentTasksLimit;
 
         public AiController(
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
+            ITaskClassificationService taskClassificationService,
             IConfiguration configuration)
         {
             _context = context;
             _userManager = userManager;
+            _taskClassificationService = taskClassificationService;
             _recentTasksLimit = int.TryParse(configuration["AiSettings:RecentTasksLimit"], out var limit) ? limit : 5;
         }
 
         [HttpPost("suggest-assignee")]
-        public async Task<ActionResult<AssigneeContextResponse>> SuggestAssignee(SuggestAssigneeRequest request)
+        public async Task<ActionResult<SuggestAssigneeResponse>> SuggestAssignee(SuggestAssigneeRequest request)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User.FindFirst("uid")?.Value;
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return Unauthorized();
+            }
+
+            if (string.IsNullOrWhiteSpace(request?.Title))
+            {
+                return BadRequest("Task title is required.");
+            }
 
             var board = await _context.Boards
                 .Include(b => b.Workspace)
@@ -49,50 +62,43 @@ namespace CleanArchitecture.WebApi.Controllers
             if (board == null)
                 return NotFound("Board not found or access denied.");
 
-            var memberUserIds = board.Users.Select(u => u.UserId).ToList();
+            var memberUserIds = board.Users.Select(u => u.UserId).Distinct().ToList();
+            if (!memberUserIds.Contains(board.Workspace.UserId))
+            {
+                memberUserIds.Add(board.Workspace.UserId);
+            }
 
             if (!memberUserIds.Any())
                 return BadRequest("Board has no members.");
 
-            var openTaskCounts = await _context.BoardTasks
+            string taskCategory;
+            double taskCategoryConfidence;
+            if (!string.IsNullOrWhiteSpace(request.WorkCategory))
+            {
+                taskCategory = TaskCategoryHelper.Normalize(request.WorkCategory);
+                taskCategoryConfidence = 1;
+            }
+            else
+            {
+                var classification = await _taskClassificationService.ClassifyAsync(request.Title, request.Description);
+                taskCategory = TaskCategoryHelper.Normalize(classification.Category);
+                taskCategoryConfidence = classification.Confidence;
+            }
+
+            var now = DateTime.UtcNow;
+            var openTaskStats = await _context.BoardTasks
                 .Where(t => t.BoardId == request.BoardId &&
                             t.AssigneeId != null &&
-                            memberUserIds.Contains(t.AssigneeId))
+                            memberUserIds.Contains(t.AssigneeId) &&
+                            t.Status.Type != BoardStatus.Done)
                 .GroupBy(t => t.AssigneeId)
-                .Select(g => new { UserId = g.Key, Count = g.Count() })
-                .ToDictionaryAsync(x => x.UserId, x => x.Count);
-
-            var completedEvents = await _context.TaskEvents
-                .Where(e => e.BoardId == request.BoardId &&
-                            e.EventType == "Completed" &&
-                            e.AssigneeId != null &&
-                            memberUserIds.Contains(e.AssigneeId))
                 .Select(e => new
                 {
-                    e.AssigneeId,
-                    e.Title,
-                    e.Description,
-                    e.AssignedAt,
-                    CompletedAt = e.Created
+                    UserId = e.Key,
+                    ActiveTasks = e.Count(),
+                    OverdueTasks = e.Count(t => t.DueDate.HasValue && t.DueDate.Value < now)
                 })
-                .ToListAsync();
-
-            var memberStats = completedEvents
-                .GroupBy(e => e.AssigneeId)
-                .ToDictionary(
-                    g => g.Key,
-                    g => new
-                    {
-                        CompletedCount = g.Count(),
-                        AvgHours = g.Any(e => e.AssignedAt != null)
-                            ? Math.Round(g.Where(e => e.AssignedAt != null)
-                                .Average(e => (e.CompletedAt - e.AssignedAt.Value).TotalHours), 1)
-                            : 0.0,
-                        RecentTasks = g.OrderByDescending(e => e.CompletedAt)
-                                        .Take(_recentTasksLimit)
-                                        .Select(e => new CompletedTaskDto { Title = e.Title, Description = e.Description })
-                                        .ToList()
-                    });
+                .ToDictionaryAsync(x => x.UserId, x => new { x.ActiveTasks, x.OverdueTasks });
 
             var members = await _userManager.Users
                 .Where(u => memberUserIds.Contains(u.Id))
@@ -100,38 +106,67 @@ namespace CleanArchitecture.WebApi.Controllers
                 .ToListAsync();
 
             var memberRole = board.Users.ToDictionary(u => u.UserId, u => u.Role);
+            var categoryScores = await _context.UserCategoryScores
+                .AsNoTracking()
+                .Where(x => memberUserIds.Contains(x.UserId) && x.Category == taskCategory)
+                .ToDictionaryAsync(x => x.UserId, x => x);
 
-            var memberDtos = members.Select(m =>
+            var candidateScores = members.Select(m =>
             {
-                memberStats.TryGetValue(m.Id, out var stats);
-                openTaskCounts.TryGetValue(m.Id, out var openCount);
-                return new MemberContextDto
+                openTaskStats.TryGetValue(m.Id, out var taskStat);
+                categoryScores.TryGetValue(m.Id, out var categoryScore);
+
+                var categoryCompletedTasks = categoryScore?.CompletedTasks ?? 0;
+                var categoryScoreValue = Math.Round(categoryScore?.Score ?? 50, 2);
+                var role = memberRole.TryGetValue(m.Id, out var resolvedRole) ? resolvedRole : "member";
+                var activeTaskCount = taskStat?.ActiveTasks ?? 0;
+                var overdueTaskCount = taskStat?.OverdueTasks ?? 0;
+
+                // Fast score: category skill + lightweight workload penalties.
+                var categoryWeight = categoryScoreValue / 100.0;
+                var categoryExperience = Math.Min(categoryCompletedTasks, 10) / 10.0;
+                var workloadPenalty = Math.Min(activeTaskCount, 8) / 8.0;
+                var overduePenalty = Math.Min(overdueTaskCount, 5) / 5.0;
+                var roleBonus = string.Equals(role, "owner", StringComparison.OrdinalIgnoreCase) ? 0.03 : 0;
+
+                var finalScore = (categoryWeight * 70)
+                    + (categoryExperience * 20)
+                    + ((1 - workloadPenalty) * 7)
+                    + ((1 - overduePenalty) * 3)
+                    + (roleBonus * 100);
+                finalScore = Math.Round(Math.Max(0, Math.Min(100, finalScore)), 2);
+
+                return new SuggestedAssigneeCandidate
                 {
+                    UserId = m.Id,
                     Username = m.UserName,
                     FirstName = m.FirstName,
                     LastName = m.LastName,
-                    Role = memberRole.TryGetValue(m.Id, out var role) ? role : "member",
-                    CurrentOpenTasks = openCount,
-                    CompletedTasksTotal = stats?.CompletedCount ?? 0,
-                    AvgCompletionHours = stats?.AvgHours ?? 0,
-                    RecentCompletedTasks = stats?.RecentTasks ?? new List<CompletedTaskDto>()
+                    Role = role,
+                    Score = finalScore,
+                    Category = taskCategory,
+                    CategoryScore = categoryScoreValue,
+                    CategoryCompletedTasks = categoryCompletedTasks,
+                    ActiveTasks = activeTaskCount,
+                    OverdueTasks = overdueTaskCount
                 };
             }).ToList();
 
-            return Ok(new AssigneeContextResponse
+            var orderedCandidates = candidateScores
+                .OrderByDescending(x => x.Score)
+                .ThenBy(x => x.ActiveTasks)
+                .ThenBy(x => x.OverdueTasks)
+                .ToList();
+
+            var recommendation = orderedCandidates.FirstOrDefault();
+            return Ok(new SuggestAssigneeResponse
             {
-                Instruction = "Sen bir görev yönetim sistemi için çalışan bir yapay zeka asistanısın. Verilen göreve en uygun ekip üyesini öner.",
-                ExpectedResponseFormat = new ExpectedResponseFormatDto
-                {
-                    RecommendedUsername = "string",
-                    Reason = "kısa-açıklama"
-                },
-                Task = new TaskContextDto
-                {
-                    Title = request.Title,
-                    Description = request.Description
-                },
-                Members = memberDtos
+                RecommendedUserId = recommendation?.UserId,
+                RecommendedUsername = recommendation?.Username,
+                TaskCategory = taskCategory,
+                TaskCategoryConfidence = Math.Round(taskCategoryConfidence, 3),
+                GeneratedAt = now,
+                Candidates = orderedCandidates
             });
         }
 
@@ -226,14 +261,14 @@ namespace CleanArchitecture.WebApi.Controllers
 
             var expectedResponseFormat = new AssignedTaskExpectedResponseFormatDto
             {
-                Summary = "1-2 cümle",
-                ActionPlan = new List<string> { "adım-1", "adım-2", "adım-3" },
+                Summary = "1-2 sentences",
+                ActionPlan = new List<string> { "step-1", "step-2", "step-3" },
                 RiskNotes = new List<string> { "risk-1", "risk-2" }
             };
 
             return Ok(new AssignedTaskAssistantContextResponse
             {
-                Instruction = "Sen bir görev koçu yapay zeka asistanısın. Kullanıcıya, kendisine atanmış görevi geçmiş tecrübesine göre nasıl daha iyi tamamlayabileceği konusunda kısa, net ve uygulanabilir öneriler ver. Gereksiz uzun açıklamalardan kaçın. Sadece belirtilen JSON formatında cevap ver.",
+                Instruction = "You are a task coach AI assistant. Provide concise, actionable guidance on how the user can complete the assigned task better based on their past experience. Avoid unnecessary long explanations. Respond only in the specified JSON format.",
                 ExpectedResponseFormat = expectedResponseFormat,
                 AssignedTask = assignedTask,
                 UserHistory = userHistory
@@ -246,44 +281,32 @@ namespace CleanArchitecture.WebApi.Controllers
         public int BoardId { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
+        public string WorkCategory { get; set; }
     }
 
-    public class TaskContextDto
+    public class SuggestedAssigneeCandidate
     {
-        public string Title { get; set; }
-        public string Description { get; set; }
-    }
-
-    public class MemberContextDto
-    {
+        public string UserId { get; set; }
         public string Username { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Role { get; set; }
-        public int CurrentOpenTasks { get; set; }
-        public int CompletedTasksTotal { get; set; }
-        public double AvgCompletionHours { get; set; }
-        public List<CompletedTaskDto> RecentCompletedTasks { get; set; }
+        public double Score { get; set; }
+        public string Category { get; set; }
+        public double CategoryScore { get; set; }
+        public int CategoryCompletedTasks { get; set; }
+        public int ActiveTasks { get; set; }
+        public int OverdueTasks { get; set; }
     }
 
-    public class CompletedTaskDto
+    public class SuggestAssigneeResponse
     {
-        public string Title { get; set; }
-        public string Description { get; set; }
-    }
-
-    public class AssigneeContextResponse
-    {
-        public string Instruction { get; set; }
-        public ExpectedResponseFormatDto ExpectedResponseFormat { get; set; }
-        public TaskContextDto Task { get; set; }
-        public List<MemberContextDto> Members { get; set; }
-    }
-
-    public class ExpectedResponseFormatDto
-    {
+        public string RecommendedUserId { get; set; }
         public string RecommendedUsername { get; set; }
-        public string Reason { get; set; }
+        public string TaskCategory { get; set; }
+        public double TaskCategoryConfidence { get; set; }
+        public DateTime GeneratedAt { get; set; }
+        public List<SuggestedAssigneeCandidate> Candidates { get; set; } = new();
     }
 
     public class AssignedTaskAssistantContextRequest

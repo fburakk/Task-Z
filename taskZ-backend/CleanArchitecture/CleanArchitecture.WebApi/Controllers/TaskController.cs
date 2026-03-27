@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using CleanArchitecture.WebApi.Services;
 
 namespace CleanArchitecture.WebApi.Controllers
 {
@@ -21,6 +22,7 @@ namespace CleanArchitecture.WebApi.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ITaskClassificationService _taskClassificationService;
         private static readonly HashSet<string> CompletedStatusKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "done",
@@ -28,12 +30,7 @@ namespace CleanArchitecture.WebApi.Controllers
             "complete",
             "closed",
             "finish",
-            "finished",
-            "tamam",
-            "tamamlandi",
-            "tamamlandı",
-            "bitti",
-            "bitirildi"
+            "finished"
         };
 
         private static class TaskEventTypes
@@ -47,10 +44,14 @@ namespace CleanArchitecture.WebApi.Controllers
             public const string Deleted = "Deleted";
         }
 
-        public TaskController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public TaskController(
+            ApplicationDbContext context,
+            UserManager<ApplicationUser> userManager,
+            ITaskClassificationService taskClassificationService)
         {
             _context = context;
             _userManager = userManager;
+            _taskClassificationService = taskClassificationService;
         }
 
         private string GetCurrentUserId()
@@ -109,6 +110,154 @@ namespace CleanArchitecture.WebApi.Controllers
             };
         }
 
+        private static string ResolveWorkCategory(string requestedCategory, string aiCategory)
+        {
+            if (!string.IsNullOrWhiteSpace(requestedCategory))
+            {
+                return TaskCategoryHelper.Normalize(requestedCategory);
+            }
+
+            return TaskCategoryHelper.Normalize(aiCategory);
+        }
+
+        private static double CalculateTaskSpeedScore(double completionHours, string priority)
+        {
+            var priorityFactor = string.Equals(priority, "high", StringComparison.OrdinalIgnoreCase)
+                ? 1.35
+                : string.Equals(priority, "low", StringComparison.OrdinalIgnoreCase)
+                    ? 0.9
+                    : 1.0;
+            var normalizedHours = completionHours / priorityFactor;
+            return Math.Clamp(100 - (normalizedHours * 5), 5, 100);
+        }
+
+        private async Task RecalculateUserCategoryScoresAsync(IEnumerable<string> userIds)
+        {
+            var impactedUserIds = userIds
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .Distinct()
+                .ToList();
+
+            if (!impactedUserIds.Any())
+            {
+                return;
+            }
+
+            var completedTasks = await _context.BoardTasks
+                .AsNoTracking()
+                .Where(t => t.AssigneeId != null && impactedUserIds.Contains(t.AssigneeId))
+                .Select(t => new
+                {
+                    t.Id,
+                    t.AssigneeId,
+                    t.WorkCategory,
+                    t.Priority,
+                    t.DueDate,
+                    t.AssignedAt,
+                    t.Created,
+                    StatusType = t.Status.Type,
+                    StatusTitle = t.Status.Title
+                })
+                .ToListAsync();
+
+            var currentlyCompletedTasks = completedTasks
+                .Where(t => IsCompletedStatus(t.StatusType, t.StatusTitle))
+                .ToList();
+
+            var completedTaskIds = currentlyCompletedTasks.Select(t => t.Id).ToList();
+            var completedAtLookup = completedTaskIds.Any()
+                ? await _context.TaskEvents
+                    .AsNoTracking()
+                    .Where(e => e.EventType == TaskEventTypes.Completed && completedTaskIds.Contains(e.TaskId))
+                    .GroupBy(e => e.TaskId)
+                    .Select(g => new { TaskId = g.Key, CompletedAt = g.Max(x => x.Created) })
+                    .ToDictionaryAsync(x => x.TaskId, x => x.CompletedAt)
+                : new Dictionary<int, DateTime>();
+
+            var recalculatedStats = currentlyCompletedTasks
+                .GroupBy(t => new
+                {
+                    UserId = t.AssigneeId,
+                    Category = TaskCategoryHelper.Normalize(t.WorkCategory)
+                })
+                .Select(group =>
+                {
+                    var taskStats = group.Select(task =>
+                    {
+                        var completedAt = completedAtLookup.ContainsKey(task.Id) ? completedAtLookup[task.Id] : task.Created;
+                        var effectiveStart = task.AssignedAt ?? task.Created;
+                        var completionHours = Math.Max(0.1, (completedAt - effectiveStart).TotalHours);
+                        var speedScore = CalculateTaskSpeedScore(completionHours, task.Priority);
+                        var onTime = !task.DueDate.HasValue || completedAt <= task.DueDate.Value;
+
+                        return new
+                        {
+                            task.Id,
+                            CompletedAt = completedAt,
+                            CompletionHours = completionHours,
+                            SpeedScore = speedScore,
+                            OnTime = onTime
+                        };
+                    }).ToList();
+
+                    var latestTask = taskStats
+                        .OrderByDescending(x => x.CompletedAt)
+                        .First();
+
+                    return new UserCategoryScore
+                    {
+                        UserId = group.Key.UserId,
+                        Category = group.Key.Category,
+                        CompletedTasks = taskStats.Count,
+                        OnTimeCompletedTasks = taskStats.Count(x => x.OnTime),
+                        TotalCompletionHours = taskStats.Sum(x => x.CompletionHours),
+                        AverageCompletionHours = taskStats.Average(x => x.CompletionHours),
+                        Score = Math.Round(taskStats.Average(x => x.SpeedScore), 2),
+                        LastCompletedAt = latestTask.CompletedAt,
+                        LastTaskId = latestTask.Id
+                    };
+                })
+                .ToList();
+
+            var existingStats = await _context.UserCategoryScores
+                .Where(x => impactedUserIds.Contains(x.UserId))
+                .ToListAsync();
+
+            foreach (var recalculated in recalculatedStats)
+            {
+                var existing = existingStats.FirstOrDefault(x =>
+                    x.UserId == recalculated.UserId &&
+                    x.Category == recalculated.Category);
+
+                if (existing == null)
+                {
+                    _context.UserCategoryScores.Add(recalculated);
+                    continue;
+                }
+
+                existing.CompletedTasks = recalculated.CompletedTasks;
+                existing.OnTimeCompletedTasks = recalculated.OnTimeCompletedTasks;
+                existing.TotalCompletionHours = recalculated.TotalCompletionHours;
+                existing.AverageCompletionHours = recalculated.AverageCompletionHours;
+                existing.Score = recalculated.Score;
+                existing.LastCompletedAt = recalculated.LastCompletedAt;
+                existing.LastTaskId = recalculated.LastTaskId;
+            }
+
+            var activeKeys = recalculatedStats
+                .Select(x => $"{x.UserId}::{x.Category}")
+                .ToHashSet(StringComparer.Ordinal);
+            var staleStats = existingStats
+                .Where(x => !activeKeys.Contains($"{x.UserId}::{x.Category}"))
+                .ToList();
+            if (staleStats.Any())
+            {
+                _context.UserCategoryScores.RemoveRange(staleStats);
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
         private async Task<TaskDto> MapToTaskDto(BoardTask task, string assigneeUsername = null)
         {
             var createdByUser = await _userManager.FindByIdAsync(task.CreatedBy);
@@ -126,6 +275,8 @@ namespace CleanArchitecture.WebApi.Controllers
                 DueDate = task.DueDate,
                 AssigneeId = task.AssigneeId,
                 AssigneeUsername = assigneeUsername ?? assigneeUser?.UserName,
+                WorkCategory = TaskCategoryHelper.Normalize(task.WorkCategory),
+                WorkCategoryConfidence = task.WorkCategoryConfidence,
                 Position = task.Position,
                 CreatedBy = task.CreatedBy,
                 CreatedByUsername = createdByUser?.UserName,
@@ -289,6 +440,21 @@ namespace CleanArchitecture.WebApi.Controllers
                 targetStatusId = defaultStatus.Id;
             }
 
+            var createdAtUtc = DateTime.UtcNow;
+            string workCategory;
+            double workCategoryConfidence;
+            if (!string.IsNullOrWhiteSpace(request.WorkCategory))
+            {
+                workCategory = TaskCategoryHelper.Normalize(request.WorkCategory);
+                workCategoryConfidence = 1;
+            }
+            else
+            {
+                var classification = await _taskClassificationService.ClassifyAsync(request.Title, request.Description);
+                workCategory = ResolveWorkCategory(null, classification.Category);
+                workCategoryConfidence = classification.Confidence;
+            }
+
             // Get max position in the target status
             var maxPosition = await _context.BoardTasks
                 .Where(t => t.StatusId == targetStatusId)
@@ -306,7 +472,10 @@ namespace CleanArchitecture.WebApi.Controllers
                 DueDate = request.DueDate,
                 AssigneeId = assigneeId,
                 AssignedAt = assigneeId != null ? DateTime.UtcNow : null,
-                Position = maxPosition + 1
+                Position = maxPosition + 1,
+                WorkCategory = workCategory,
+                WorkCategoryConfidence = workCategoryConfidence,
+                WorkCategoryClassifiedAt = createdAtUtc
             };
 
             _context.BoardTasks.Add(task);
@@ -321,6 +490,11 @@ namespace CleanArchitecture.WebApi.Controllers
             }
 
             await _context.SaveChangesAsync();
+
+            if (IsCompletedStatus(status?.Type, status?.Title) && !string.IsNullOrWhiteSpace(task.AssigneeId))
+            {
+                await RecalculateUserCategoryScoresAsync(new[] { task.AssigneeId });
+            }
 
             return await MapToTaskDto(task, request.Username);
         }
@@ -355,8 +529,12 @@ namespace CleanArchitecture.WebApi.Controllers
             var oldDescription = task.Description;
             var oldPriority = task.Priority;
             var oldDueDate = task.DueDate;
+            var oldWorkCategory = task.WorkCategory;
             var statusChanged = false;
             var assigneeChanged = false;
+            var wasCompletedBeforeStatusChange = false;
+            var isCompletedAfterStatusChange = false;
+            var statusCompletionEvaluated = false;
 
             string assigneeUsername = null;
             // Update assignee if username provided
@@ -437,6 +615,12 @@ namespace CleanArchitecture.WebApi.Controllers
                 task.Priority = request.Priority;
             if (request.DueDate.HasValue)
                 task.DueDate = request.DueDate;
+            if (request.WorkCategory != null)
+            {
+                task.WorkCategory = TaskCategoryHelper.Normalize(request.WorkCategory);
+                task.WorkCategoryConfidence = 1;
+                task.WorkCategoryClassifiedAt = DateTime.UtcNow;
+            }
 
             await _context.SaveChangesAsync();
 
@@ -444,7 +628,8 @@ namespace CleanArchitecture.WebApi.Controllers
             var isAnyFieldUpdated = oldTitle != task.Title
                 || oldDescription != task.Description
                 || oldPriority != task.Priority
-                || oldDueDate != task.DueDate;
+                || oldDueDate != task.DueDate
+                || oldWorkCategory != task.WorkCategory;
 
             if (isAnyFieldUpdated)
             {
@@ -479,23 +664,53 @@ namespace CleanArchitecture.WebApi.Controllers
 
                 var oldStatus = statusTitles.FirstOrDefault(s => s.Id == oldStatusId);
                 var newStatus = statusTitles.FirstOrDefault(s => s.Id == task.StatusId);
-                var wasCompleted = IsCompletedStatus(oldStatus?.Type, oldStatus?.Title);
-                var isCompleted = IsCompletedStatus(newStatus?.Type, newStatus?.Title);
+                wasCompletedBeforeStatusChange = IsCompletedStatus(oldStatus?.Type, oldStatus?.Title);
+                isCompletedAfterStatusChange = IsCompletedStatus(newStatus?.Type, newStatus?.Title);
+                statusCompletionEvaluated = true;
 
-                if (!wasCompleted && isCompleted)
+                if (!wasCompletedBeforeStatusChange && isCompletedAfterStatusChange)
                 {
                     changedEvents.Add(BuildTaskEvent(task, task.Board.WorkspaceId, TaskEventTypes.Completed, userId));
                 }
-                else if (wasCompleted && !isCompleted)
+                else if (wasCompletedBeforeStatusChange && !isCompletedAfterStatusChange)
                 {
                     changedEvents.Add(BuildTaskEvent(task, task.Board.WorkspaceId, TaskEventTypes.Reopened, userId));
                 }
+            }
+
+            var shouldRecalculateCategoryScores = false;
+            var fieldsAffectingScoreChanged = assigneeChanged
+                || oldPriority != task.Priority
+                || oldDueDate != task.DueDate
+                || oldWorkCategory != task.WorkCategory;
+
+            if (statusChanged || fieldsAffectingScoreChanged)
+            {
+                var currentStatus = statusCompletionEvaluated
+                    ? null
+                    : await _context.BoardStatuses
+                        .Where(s => s.Id == task.StatusId)
+                        .Select(s => new { s.Type, s.Title })
+                        .FirstOrDefaultAsync();
+
+                var isCompletedNow = statusCompletionEvaluated
+                    ? isCompletedAfterStatusChange
+                    : IsCompletedStatus(currentStatus?.Type, currentStatus?.Title);
+
+                shouldRecalculateCategoryScores =
+                    (statusChanged && statusCompletionEvaluated && wasCompletedBeforeStatusChange != isCompletedAfterStatusChange)
+                    || (isCompletedNow && fieldsAffectingScoreChanged);
             }
 
             if (changedEvents.Any())
             {
                 _context.TaskEvents.AddRange(changedEvents);
                 await _context.SaveChangesAsync();
+            }
+
+            if (shouldRecalculateCategoryScores)
+            {
+                await RecalculateUserCategoryScoresAsync(new[] { oldAssigneeId, task.AssigneeId });
             }
 
             return await MapToTaskDto(task, assigneeUsername);
@@ -532,6 +747,11 @@ namespace CleanArchitecture.WebApi.Controllers
                 metadata: "Task hard deleted"));
             _context.BoardTasks.Remove(task);
             await _context.SaveChangesAsync();
+
+            if (!string.IsNullOrWhiteSpace(task.AssigneeId))
+            {
+                await RecalculateUserCategoryScoresAsync(new[] { task.AssigneeId });
+            }
 
             return NoContent();
         }
