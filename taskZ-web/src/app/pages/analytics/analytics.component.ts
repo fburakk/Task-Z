@@ -7,6 +7,7 @@ import {
   AnalyticsService,
   RecommendationCandidate,
   RecommendationRequest,
+  TaskCategoryAudit,
   UserAnalytics,
   UserCategoryPerformance
 } from '../../core/services/analytics.service';
@@ -73,6 +74,7 @@ export class AnalyticsComponent implements OnInit {
   userAnalytics: UserAnalytics[] = [];
   userCategoryPerformance: UserCategoryPerformance[] = [];
   userCategoryMatrix: UserCategoryMatrixRow[] = [];
+  taskCategoryAuditRows: TaskCategoryAudit[] = [];
 
   recommendationLoading = false;
   recommendationError = '';
@@ -174,7 +176,7 @@ export class AnalyticsComponent implements OnInit {
     this.error = '';
 
     const query = this.buildQuery();
-    let pendingRequestCount = 3;
+    let pendingRequestCount = 4;
     const completeRequest = (): void => {
       pendingRequestCount -= 1;
       if (pendingRequestCount <= 0) {
@@ -217,6 +219,19 @@ export class AnalyticsComponent implements OnInit {
         this.error = 'Kategori bazlı kullanıcı performansı yüklenemedi.';
         this.userCategoryPerformance = [];
         this.userCategoryMatrix = [];
+        completeRequest();
+      }
+    });
+
+    this.analyticsService.getTaskCategoryAudit(query).subscribe({
+      next: (rows) => {
+        this.taskCategoryAuditRows = rows;
+        completeRequest();
+      },
+      error: (err) => {
+        console.error('Error loading task category audit rows:', err);
+        this.error = 'Görev kategori doğrulama verisi yüklenemedi.';
+        this.taskCategoryAuditRows = [];
         completeRequest();
       }
     });
@@ -351,6 +366,10 @@ export class AnalyticsComponent implements OnInit {
 
   getCategoryLabel(category: string): string {
     return this.categoryLabelMap.get(category) ?? category;
+  }
+
+  getAssigneeLabel(row: TaskCategoryAudit): string {
+    return row.assigneeUsername?.trim() || 'Atanmamış';
   }
 
   formatDuration(hours: number | null | undefined): string {

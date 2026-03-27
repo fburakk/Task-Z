@@ -129,6 +129,38 @@
     </table>
   </div>
 
+  <div class="table-card">
+    <h2>Görev Kategori Doğrulama</h2>
+    <div *ngIf="loading" class="loading">Yükleniyor...</div>
+    <table *ngIf="!loading">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Görev</th>
+          <th>Board</th>
+          <th>Kategori</th>
+          <th>Güven</th>
+          <th>Atanan</th>
+          <th>Oluşturulma</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of taskCategoryAuditRows">
+          <td>#{{ row.taskId }}</td>
+          <td>{{ row.taskTitle }}</td>
+          <td>{{ row.boardName || row.boardId }}</td>
+          <td>{{ getCategoryLabel(row.category) }}</td>
+          <td>{{ (row.categoryConfidence * 100) | number:'1.0-0' }}%</td>
+          <td>{{ getAssigneeLabel(row) }}</td>
+          <td>{{ row.createdAt | date:'short' }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <div *ngIf="!loading && taskCategoryAuditRows.length === 0" class="loading">
+      Filtrelere uygun görev bulunamadı.
+    </div>
+  </div>
+
   <div class="recommendation-card">
     <h2>Assignee Önerisi</h2>
     <div class="recommendation-form">

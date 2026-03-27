@@ -87,6 +87,18 @@ export interface UserCategoryPerformance {
   lastCompletedAt?: string | null;
 }
 
+export interface TaskCategoryAudit {
+  taskId: number;
+  taskTitle: string;
+  boardId: number;
+  boardName: string;
+  category: string;
+  categoryConfidence: number;
+  assigneeId?: string | null;
+  assigneeUsername?: string | null;
+  createdAt: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -111,6 +123,13 @@ export class AnalyticsService {
 
   getUserCategoryPerformance(query: AnalyticsQuery): Observable<UserCategoryPerformance[]> {
     return this.http.get<UserCategoryPerformance[]>(`${this.baseUrl}/users/category-performance`, {
+      ...this.authService.getAuthHeaders(),
+      params: this.buildParams(query)
+    });
+  }
+
+  getTaskCategoryAudit(query: AnalyticsQuery): Observable<TaskCategoryAudit[]> {
+    return this.http.get<TaskCategoryAudit[]>(`${this.baseUrl}/tasks/category-audit`, {
       ...this.authService.getAuthHeaders(),
       params: this.buildParams(query)
     });
