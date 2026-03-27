@@ -8,6 +8,7 @@ export interface AnalyticsQuery {
   boardId?: number;
   from?: string;
   to?: string;
+  category?: string;
 }
 
 export interface AnalyticsOverview {
@@ -42,6 +43,7 @@ export interface RecommendationRequest {
   priority: 'low' | 'medium' | 'high';
   dueDate?: string;
   topN?: number;
+  workCategory?: string;
 }
 
 export interface RecommendationSignals {
@@ -52,6 +54,10 @@ export interface RecommendationSignals {
   averageCompletionHours: number;
   expertiseScore: number;
   priorityMatchRate: number;
+  category: string;
+  categoryCompletedTasks: number;
+  categoryAverageCompletionHours: number;
+  categoryScore: number;
 }
 
 export interface RecommendationCandidate {
@@ -64,8 +70,21 @@ export interface RecommendationCandidate {
 
 export interface RecommendationResponse {
   boardId: number;
+  taskCategory: string;
+  taskCategoryConfidence: number;
   generatedAt: string;
   candidates: RecommendationCandidate[];
+}
+
+export interface UserCategoryPerformance {
+  userId: string;
+  username: string;
+  category: string;
+  completedTasks: number;
+  onTimeRate: number;
+  averageCompletionHours: number;
+  score: number;
+  lastCompletedAt?: string | null;
 }
 
 @Injectable({
@@ -90,6 +109,13 @@ export class AnalyticsService {
     });
   }
 
+  getUserCategoryPerformance(query: AnalyticsQuery): Observable<UserCategoryPerformance[]> {
+    return this.http.get<UserCategoryPerformance[]>(`${this.baseUrl}/users/category-performance`, {
+      ...this.authService.getAuthHeaders(),
+      params: this.buildParams(query)
+    });
+  }
+
   recommendAssignee(payload: RecommendationRequest): Observable<RecommendationResponse> {
     return this.http.post<RecommendationResponse>(
       `${this.baseUrl}/recommend-assignee`,
@@ -104,6 +130,7 @@ export class AnalyticsService {
     if (query.boardId) params = params.set('boardId', String(query.boardId));
     if (query.from) params = params.set('from', query.from);
     if (query.to) params = params.set('to', query.to);
+    if (query.category) params = params.set('category', query.category);
     return params;
   }
 }

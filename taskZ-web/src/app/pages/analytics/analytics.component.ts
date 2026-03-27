@@ -2,14 +2,32 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
+  AnalyticsQuery,
   AnalyticsOverview,
   AnalyticsService,
   RecommendationCandidate,
   RecommendationRequest,
-  UserAnalytics
+  UserAnalytics,
+  UserCategoryPerformance
 } from '../../core/services/analytics.service';
 import { Workspace, WorkspaceService } from '../../core/services/workspace.service';
 import { Board, BoardService } from '../../core/services/board.service';
+
+interface UserCategoryMatrixCell {
+  category: string;
+  completedTasks: number;
+  onTimeRate: number;
+  averageCompletionHours: number;
+  score: number;
+}
+
+interface UserCategoryMatrixRow {
+  userId: string;
+  username: string;
+  totalCompletedTasks: number;
+  weightedAverageScore: number;
+  categories: UserCategoryMatrixCell[];
+}
 
 @Component({
   selector: 'app-analytics',
@@ -20,12 +38,31 @@ import { Board, BoardService } from '../../core/services/board.service';
 })
 export class AnalyticsComponent implements OnInit {
   private readonly isBrowser: boolean;
+  readonly categoryOptions: { value: string; label: string }[] = [
+    { value: '', label: 'Tüm kategoriler' },
+    { value: 'frontend', label: 'Frontend' },
+    { value: 'backend', label: 'Backend' },
+    { value: 'ui_bug', label: 'UI Bug' },
+    { value: 'api_bug', label: 'API Bug' },
+    { value: 'mobile', label: 'Mobile' },
+    { value: 'qa_test', label: 'QA/Test' },
+    { value: 'infra_devops', label: 'Infra/DevOps' },
+    { value: 'data', label: 'Data' },
+    { value: 'other', label: 'Other' }
+  ];
+  readonly recommendationCategoryOptions = this.categoryOptions.filter((option) => option.value.length > 0);
+  private readonly categoryLabelMap = new Map<string, string>(
+    this.categoryOptions
+      .filter((option) => option.value.length > 0)
+      .map((option) => [option.value, option.label])
+  );
 
   workspaces: Workspace[] = [];
   boards: Board[] = [];
 
   selectedWorkspaceId: number | null = null;
   selectedBoardId: number | null = null;
+  selectedCategory = '';
   fromDate = '';
   toDate = '';
 
@@ -34,16 +71,21 @@ export class AnalyticsComponent implements OnInit {
 
   overview: AnalyticsOverview | null = null;
   userAnalytics: UserAnalytics[] = [];
+  userCategoryPerformance: UserCategoryPerformance[] = [];
+  userCategoryMatrix: UserCategoryMatrixRow[] = [];
 
   recommendationLoading = false;
   recommendationError = '';
   recommendation: RecommendationCandidate[] = [];
+  recommendationTaskCategory = '';
+  recommendationTaskCategoryConfidence = 0;
   recommendationInput: RecommendationRequest = {
     boardId: 0,
     title: '',
     description: '',
     priority: 'medium',
-    topN: 3
+    topN: 3,
+    workCategory: ''
   };
 
   constructor(
@@ -97,6 +139,10 @@ export class AnalyticsComponent implements OnInit {
     this.loadAnalytics();
   }
 
+  onCategoryChange(): void {
+    this.loadAnalytics();
+  }
+
   private loadBoardsAndAnalytics(): void {
     if (!this.selectedWorkspaceId) {
       this.loadAnalytics();
@@ -128,25 +174,50 @@ export class AnalyticsComponent implements OnInit {
     this.error = '';
 
     const query = this.buildQuery();
+    let pendingRequestCount = 3;
+    const completeRequest = (): void => {
+      pendingRequestCount -= 1;
+      if (pendingRequestCount <= 0) {
+        this.loading = false;
+      }
+    };
+
     this.analyticsService.getOverview(query).subscribe({
       next: (overview) => {
         this.overview = overview;
+        completeRequest();
       },
       error: (err) => {
         console.error('Error loading overview:', err);
         this.error = 'Analytics overview yüklenemedi.';
+        completeRequest();
       }
     });
 
     this.analyticsService.getUserAnalytics(query).subscribe({
       next: (users) => {
         this.userAnalytics = users;
-        this.loading = false;
+        completeRequest();
       },
       error: (err) => {
         console.error('Error loading user analytics:', err);
         this.error = 'Kullanıcı analytics verisi yüklenemedi.';
-        this.loading = false;
+        completeRequest();
+      }
+    });
+
+    this.analyticsService.getUserCategoryPerformance(query).subscribe({
+      next: (rows) => {
+        this.userCategoryPerformance = rows;
+        this.userCategoryMatrix = this.buildUserCategoryMatrix(rows);
+        completeRequest();
+      },
+      error: (err) => {
+        console.error('Error loading user category performance:', err);
+        this.error = 'Kategori bazlı kullanıcı performansı yüklenemedi.';
+        this.userCategoryPerformance = [];
+        this.userCategoryMatrix = [];
+        completeRequest();
       }
     });
   }
@@ -154,6 +225,8 @@ export class AnalyticsComponent implements OnInit {
   generateRecommendation(): void {
     this.recommendationError = '';
     this.recommendation = [];
+    this.recommendationTaskCategory = '';
+    this.recommendationTaskCategoryConfidence = 0;
 
     if (!this.selectedBoardId) {
       this.recommendationError = 'Önce bir board seçin.';
@@ -178,10 +251,16 @@ export class AnalyticsComponent implements OnInit {
       payload.dueDate = dueDate.toISOString();
     }
 
+    if (this.recommendationInput.workCategory?.trim()) {
+      payload.workCategory = this.recommendationInput.workCategory.trim();
+    }
+
     this.recommendationLoading = true;
     this.analyticsService.recommendAssignee(payload).subscribe({
       next: (res) => {
         this.recommendation = res.candidates ?? [];
+        this.recommendationTaskCategory = res.taskCategory ?? '';
+        this.recommendationTaskCategoryConfidence = res.taskCategoryConfidence ?? 0;
         this.recommendationLoading = false;
       },
       error: (err) => {
@@ -192,8 +271,8 @@ export class AnalyticsComponent implements OnInit {
     });
   }
 
-  private buildQuery(): { workspaceId?: number; boardId?: number; from?: string; to?: string } {
-    const query: { workspaceId?: number; boardId?: number; from?: string; to?: string } = {};
+  private buildQuery(): AnalyticsQuery {
+    const query: AnalyticsQuery = {};
 
     if (this.selectedWorkspaceId) {
       query.workspaceId = this.selectedWorkspaceId;
@@ -213,7 +292,65 @@ export class AnalyticsComponent implements OnInit {
       query.to = endOfDay.toISOString();
     }
 
+    if (this.selectedCategory) {
+      query.category = this.selectedCategory;
+    }
+
     return query;
+  }
+
+  private buildUserCategoryMatrix(rows: UserCategoryPerformance[]): UserCategoryMatrixRow[] {
+    const groupedByUser = new Map<string, UserCategoryMatrixRow>();
+
+    for (const row of rows) {
+      const existing = groupedByUser.get(row.userId);
+      const normalizedCell: UserCategoryMatrixCell = {
+        category: row.category,
+        completedTasks: row.completedTasks,
+        onTimeRate: row.onTimeRate,
+        averageCompletionHours: row.averageCompletionHours,
+        score: row.score
+      };
+
+      if (!existing) {
+        groupedByUser.set(row.userId, {
+          userId: row.userId,
+          username: row.username,
+          totalCompletedTasks: row.completedTasks,
+          weightedAverageScore: row.score,
+          categories: [normalizedCell]
+        });
+        continue;
+      }
+
+      existing.totalCompletedTasks += row.completedTasks;
+      existing.categories.push(normalizedCell);
+    }
+
+    const matrix = Array.from(groupedByUser.values()).map((userRow) => {
+      const weightedScoreSum = userRow.categories.reduce(
+        (acc, categoryCell) => acc + (categoryCell.score * Math.max(1, categoryCell.completedTasks)),
+        0
+      );
+      const weightedTaskCount = userRow.categories.reduce(
+        (acc, categoryCell) => acc + Math.max(1, categoryCell.completedTasks),
+        0
+      );
+
+      return {
+        ...userRow,
+        weightedAverageScore: weightedTaskCount > 0
+          ? Number((weightedScoreSum / weightedTaskCount).toFixed(2))
+          : 0,
+        categories: [...userRow.categories].sort((a, b) => b.score - a.score)
+      };
+    });
+
+    return matrix.sort((a, b) => b.weightedAverageScore - a.weightedAverageScore);
+  }
+
+  getCategoryLabel(category: string): string {
+    return this.categoryLabelMap.get(category) ?? category;
   }
 
   formatDuration(hours: number | null | undefined): string {

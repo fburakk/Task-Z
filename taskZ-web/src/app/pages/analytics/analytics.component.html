@@ -19,6 +19,12 @@
       </option>
     </select>
 
+    <select [(ngModel)]="selectedCategory" (change)="onCategoryChange()">
+      <option *ngFor="let category of categoryOptions" [value]="category.value">
+        {{ category.label }}
+      </option>
+    </select>
+
     <input type="date" [(ngModel)]="fromDate" />
     <input type="date" [(ngModel)]="toDate" />
     <button type="button" (click)="applyFilters()">Uygula</button>
@@ -50,6 +56,47 @@
     <div class="metric-card">
       <span class="label">Ort. Tamamlama</span>
       <strong>{{ formatDuration(overview.averageCompletionHours) }}</strong>
+    </div>
+  </div>
+
+  <div class="category-visual-card">
+    <div class="section-head">
+      <h2>Kategori Bazlı Kullanıcı Skorları</h2>
+      <span class="meta">{{ userCategoryPerformance.length }} kayıt</span>
+    </div>
+    <div *ngIf="loading" class="loading">Yükleniyor...</div>
+    <div *ngIf="!loading && userCategoryMatrix.length === 0" class="loading">Kategori verisi bulunamadı.</div>
+
+    <div class="user-category-grid" *ngIf="!loading && userCategoryMatrix.length > 0">
+      <div class="user-category-card" *ngFor="let user of userCategoryMatrix">
+        <div class="user-category-head">
+          <strong>{{ user.username }}</strong>
+          <span class="score-pill">Genel Skor: {{ user.weightedAverageScore | number:'1.0-1' }}</span>
+        </div>
+        <div class="user-summary">
+          <span>{{ user.totalCompletedTasks }} tamamlanan görev</span>
+        </div>
+        <div class="score-bar">
+          <div class="score-fill" [style.width.%]="user.weightedAverageScore"></div>
+        </div>
+
+        <div class="category-rows">
+          <div class="category-row" *ngFor="let category of user.categories">
+            <div class="category-row-top">
+              <span>{{ getCategoryLabel(category.category) }}</span>
+              <strong>{{ category.score | number:'1.0-1' }}</strong>
+            </div>
+            <div class="score-bar small">
+              <div class="score-fill" [style.width.%]="category.score"></div>
+            </div>
+            <div class="category-meta">
+              <span>{{ category.completedTasks }} görev</span>
+              <span>On-time: {{ category.onTimeRate | number:'1.0-1' }}%</span>
+              <span>Ort: {{ formatDuration(category.averageCompletionHours) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -101,6 +148,12 @@
           <option value="medium">medium</option>
           <option value="high">high</option>
         </select>
+        <select [(ngModel)]="recommendationInput.workCategory">
+          <option [value]="''">Kategori: Otomatik</option>
+          <option *ngFor="let category of recommendationCategoryOptions" [value]="category.value">
+            {{ category.label }}
+          </option>
+        </select>
         <input type="date" [(ngModel)]="recommendationInput.dueDate" />
         <input type="number" min="1" max="10" [(ngModel)]="recommendationInput.topN" />
         <button type="button" (click)="generateRecommendation()">Öneri Üret</button>
@@ -109,6 +162,10 @@
 
     <div class="error" *ngIf="recommendationError">{{ recommendationError }}</div>
     <div *ngIf="recommendationLoading" class="loading">Öneri hazırlanıyor...</div>
+    <div class="recommendation-meta" *ngIf="!recommendationLoading && recommendationTaskCategory">
+      Görev kategorisi: <strong>{{ getCategoryLabel(recommendationTaskCategory) }}</strong>
+      ({{ (recommendationTaskCategoryConfidence * 100) | number:'1.0-0' }}% güven)
+    </div>
 
     <div class="candidate-list" *ngIf="!recommendationLoading">
       <div class="candidate" *ngFor="let candidate of recommendation">
@@ -120,6 +177,7 @@
           <span>Aktif: {{ candidate.signals.activeTasks }}</span>
           <span>Geciken: {{ candidate.signals.overdueActiveTasks }}</span>
           <span>On-time: {{ candidate.signals.onTimeRate }}%</span>
+          <span>Kategori Skoru: {{ candidate.signals.categoryScore | number:'1.0-1' }}</span>
         </div>
         <ul>
           <li *ngFor="let reason of candidate.reasons">{{ reason }}</li>
